@@ -310,7 +310,7 @@ abstract contract EVMAuthExpiringERC1155 is EVMAuthPurchasableERC1155 {
             }
             // Burning
             else if (to == address(0)) {
-                address _account = to;
+                address _account = from;
                 _burnGroupBalances(_account, _id, _amount);
                 _pruneGroups(_account, _id);
             }
