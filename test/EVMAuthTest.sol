@@ -301,6 +301,55 @@ contract EVMAuthTest is Test {
         assertEq(token.balanceOf(user2, TOKEN_ID_0), 1);
     }
 
+    // Test batch token transfer
+    function test_BatchTokenTransfer() public {
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = TOKEN_ID_0;
+        ids[1] = TOKEN_ID_1;
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 5;
+        amounts[1] = 10;
+
+        // Set up token metadata first (make them transferable)
+        vm.startPrank(tokenManager);
+        token.setMetadata(TOKEN_ID_0, true, true, true, 0, 0);
+        token.setMetadata(TOKEN_ID_1, true, true, true, 0, 0);
+        vm.stopPrank();
+
+        // Issue tokens to user1
+        vm.startPrank(tokenMinter);
+        token.issueBatch(user1, ids, amounts, "");
+        vm.stopPrank();
+
+        // Transfer tokens from user1 to user2 in batch
+        vm.prank(user1);
+        token.safeBatchTransferFrom(user1, user2, ids, amounts, "");
+
+        // Check token balances
+        assertEq(token.balanceOf(user1, TOKEN_ID_0), 0);
+        assertEq(token.balanceOf(user1, TOKEN_ID_1), 0);
+        assertEq(token.balanceOf(user2, TOKEN_ID_0), 5);
+        assertEq(token.balanceOf(user2, TOKEN_ID_1), 10);
+    }
+
+    // Test token transfer with insufficient balance
+    function test_TokenTransferInsufficientBalance() public {
+        // Set up token metadata first (make it transferable)
+        vm.startPrank(tokenManager);
+        token.setMetadata(TOKEN_ID_0, true, true, true, 0, 0);
+        vm.stopPrank();
+
+        // Issue token to user1
+        vm.startPrank(tokenMinter);
+        token.issue(user1, TOKEN_ID_0, 1, "");
+        vm.stopPrank();
+
+        // Try to transfer more tokens than owned (should fail)
+        vm.expectRevert();
+        vm.prank(user1);
+        token.safeTransferFrom(user1, user2, TOKEN_ID_0, 2, "");
+    }
+
     // Test non-transferable token
     function test_NonTransferableToken() public {
         // Set up token metadata (not transferable)
@@ -406,6 +455,63 @@ contract EVMAuthTest is Test {
         // Confirm user1 got a refund
         assertEq(address(user1).balance, 0.9 ether); // 1 ether - 0.1 ether (purchase) = 0.9 ether
         assertEq(address(user2).balance, 0 ether); // user2 should have 0 ether
+    }
+
+    // Test token burning
+    function test_TokenBurn() public {
+        // Set up token metadata first
+        vm.startPrank(tokenManager);
+        token.setMetadata(TOKEN_ID_0, true, true, true, 0, 0);
+        vm.stopPrank();
+
+        // Issue token to user1
+        vm.startPrank(tokenMinter);
+        token.issue(user1, TOKEN_ID_0, 1, "");
+        vm.stopPrank();
+
+        // Check initial balance
+        assertEq(token.balanceOf(user1, TOKEN_ID_0), 1);
+
+        // Burn the token as token burner
+        vm.startPrank(tokenBurner);
+        token.burn(user1, TOKEN_ID_0, 1);
+        vm.stopPrank();
+
+        // Check balance after burning
+        assertEq(token.balanceOf(user1, TOKEN_ID_0), 0);
+    }
+
+    // Test batch burning
+    function test_BatchBurn() public {
+        // Set up token metadata first
+        vm.startPrank(tokenManager);
+        token.setMetadata(TOKEN_ID_0, true, true, true, 0, 0);
+        token.setMetadata(TOKEN_ID_1, true, true, true, 0, 0);
+        vm.stopPrank();
+
+        // Issue tokens to user1
+        vm.startPrank(tokenMinter);
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = TOKEN_ID_0;
+        ids[1] = TOKEN_ID_1;
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 5;
+        amounts[1] = 10;
+        token.issueBatch(user1, ids, amounts, "");
+        vm.stopPrank();
+
+        // Check initial balances
+        assertEq(token.balanceOf(user1, TOKEN_ID_0), 5);
+        assertEq(token.balanceOf(user1, TOKEN_ID_1), 10);
+
+        // Burn the tokens in batch as token burner
+        vm.startPrank(tokenBurner);
+        token.burnBatch(user1, ids, amounts);
+        vm.stopPrank();
+
+        // Check balances after burning
+        assertEq(token.balanceOf(user1, TOKEN_ID_0), 0);
+        assertEq(token.balanceOf(user1, TOKEN_ID_1), 0);
     }
 
     // Test token with expiration
