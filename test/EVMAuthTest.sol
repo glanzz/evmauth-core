@@ -479,6 +479,16 @@ contract EVMAuthTest is Test {
 
         // Check balance after burning
         assertEq(token.balanceOf(user1, TOKEN_ID_0), 0);
+
+        // Verify the token is no longer transferable
+        vm.expectRevert();
+        vm.prank(user1);
+        token.safeTransferFrom(user1, user2, TOKEN_ID_0, 1, "");
+
+        // Verify the token is no longer burnable
+        vm.expectRevert();
+        vm.prank(tokenBurner);
+        token.burn(user1, TOKEN_ID_0, 1);
     }
 
     // Test batch burning
@@ -512,6 +522,16 @@ contract EVMAuthTest is Test {
         // Check balances after burning
         assertEq(token.balanceOf(user1, TOKEN_ID_0), 0);
         assertEq(token.balanceOf(user1, TOKEN_ID_1), 0);
+
+        // Verify the tokens are no longer transferable
+        vm.expectRevert();
+        vm.prank(user1);
+        token.safeBatchTransferFrom(user1, user2, ids, amounts, "");
+
+        // Verify the tokens are no longer burnable
+        vm.expectRevert();
+        vm.prank(tokenBurner);
+        token.burnBatch(user1, ids, amounts);
     }
 
     // Test token with expiration
@@ -533,9 +553,17 @@ contract EVMAuthTest is Test {
         vm.warp(block.timestamp + 7200);
 
         // Check token balance again - should be 0 after burning the expired token
-        // (Note: In reality, the token isn't automatically burned until some action triggers it,
-        // but balanceOf should still return 0 for expired tokens)
         assertEq(token.balanceOf(user1, TOKEN_ID_0), 0);
+
+        // Verify the token is no longer transferable
+        vm.expectRevert();
+        vm.prank(user1);
+        token.safeTransferFrom(user1, user2, TOKEN_ID_0, 1, "");
+
+        // Verify the token is no longer burnable
+        vm.expectRevert();
+        vm.prank(tokenBurner);
+        token.burn(user1, TOKEN_ID_0, 1);
     }
 
     // Test blacklisting

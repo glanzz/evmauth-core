@@ -173,8 +173,9 @@ abstract contract EVMAuthExpiringERC1155 is EVMAuthPurchasableERC1155 {
      * @dev Delete token groups that are expired or have no balance
      * @param account The address whose token groups need pruning
      * @param id The ID of the token
+     * @return The total amount of expired tokens that were removed
      */
-    function _pruneGroups(address account, uint256 id) internal {
+    function _pruneGroups(address account, uint256 id) internal returns (uint256) {
         Group[] storage groups = _group[account][id];
         uint256 _now = block.timestamp;
 
@@ -202,6 +203,8 @@ abstract contract EVMAuthExpiringERC1155 is EVMAuthPurchasableERC1155 {
         if (expiredAmount > 0) {
             emit ExpiredTokensBurned(account, id, expiredAmount);
         }
+
+        return expiredAmount;
     }
 
     /**
@@ -219,7 +222,7 @@ abstract contract EVMAuthExpiringERC1155 is EVMAuthPurchasableERC1155 {
         uint256 _now = block.timestamp;
         uint256 debt = amount;
 
-        // First pass: Reduce balances from sender's groups (FIFO order)
+        // Reduce balances from sender's groups (FIFO order)
         for (uint256 i = 0; i < groups.length && debt > 0; i++) {
             // Skip token groups that are expired or have no balance
             if (groups[i].expiresAt <= _now || groups[i].balance == 0) {
@@ -238,9 +241,6 @@ abstract contract EVMAuthExpiringERC1155 is EVMAuthPurchasableERC1155 {
                 groups[i].balance = 0;
             }
         }
-
-        // Clean up from account token groups that are expired or have zero balance
-        _pruneGroups(from, id);
     }
 
     /**
@@ -296,29 +296,46 @@ abstract contract EVMAuthExpiringERC1155 is EVMAuthPurchasableERC1155 {
         virtual
         override
     {
-        super._update(from, to, ids, values);
+        // Arrays to track expired token IDs and their amounts, to burn before transfer
+        uint256[] memory expiredValues = new uint256[](values.length);
+        bool hasExpired = false;
 
+        // Update the token groups based on the type of operation
         for (uint256 i = 0; i < ids.length; i++) {
             uint256 _id = ids[i];
             uint256 _amount = values[i];
 
             // Minting
             if (from == address(0)) {
-                address _account = to;
                 uint256 _expiresAt = expirationFor(_id);
-                _upsertGroup(_account, _id, _amount, _expiresAt);
+                _upsertGroup(to, _id, _amount, _expiresAt);
             }
             // Burning
             else if (to == address(0)) {
-                address _account = from;
-                _burnGroupBalances(_account, _id, _amount);
-                _pruneGroups(_account, _id);
+                _burnGroupBalances(from, _id, _amount);
+                uint256 expiredValue = _pruneGroups(from, _id);
+                // For burning, we can just add expired values to the total being burned
+                values[i] += expiredValue;
             }
             // Transferring
             else {
                 _transferGroups(from, to, _id, _amount);
+                uint256 expiredValue = _pruneGroups(from, _id);
+                // Track expired values, so we can burn them before the transfer
+                if (expiredValue > 0) {
+                    hasExpired = true;
+                    expiredValues[i] = expiredValue;
+                }
             }
         }
+
+        // Burn expired tokens (if any) before proceeding with a transfer
+        if (hasExpired) {
+            super._update(from, address(0), ids, expiredValues);
+        }
+
+        // Call the parent method to handle the rest of the update logic
+        super._update(from, to, ids, values);
     }
 
     /**
