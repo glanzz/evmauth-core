@@ -42,7 +42,7 @@ abstract contract EVMAuthAccessControl is AccessControlDefaultAdminRules {
      * @dev Add a account to the blacklist; cannot blacklist a blacklist manager or the zero address
      * @param account The address of the account to blacklist
      */
-    function addToBlacklist(address account) external onlyRole(BLACKLIST_MANAGER_ROLE) {
+    function addToBlacklist(address account) public onlyRole(BLACKLIST_MANAGER_ROLE) {
         require(!hasRole(BLACKLIST_MANAGER_ROLE, account), "Account is a blacklist manager");
         require(account != address(0), "Account is the zero address");
 
@@ -57,7 +57,7 @@ abstract contract EVMAuthAccessControl is AccessControlDefaultAdminRules {
      */
     function addBatchToBlacklist(address[] memory accounts) external onlyRole(BLACKLIST_MANAGER_ROLE) {
         for (uint256 i = 0; i < accounts.length; i++) {
-            _blacklisted[accounts[i]] = true;
+            addToBlacklist(accounts[i]);
         }
     }
 
@@ -95,7 +95,7 @@ abstract contract EVMAuthAccessControl is AccessControlDefaultAdminRules {
      * @dev Remove a account from the blacklist
      * @param account The address of the account to remove from the blacklist
      */
-    function removeFromBlacklist(address account) external onlyRole(BLACKLIST_MANAGER_ROLE) {
+    function removeFromBlacklist(address account) public onlyRole(BLACKLIST_MANAGER_ROLE) {
         delete _blacklisted[account];
 
         emit RemovedFromBlacklist(account);
@@ -107,7 +107,7 @@ abstract contract EVMAuthAccessControl is AccessControlDefaultAdminRules {
      */
     function removeBatchFromBlacklist(address[] memory accounts) external onlyRole(BLACKLIST_MANAGER_ROLE) {
         for (uint256 i = 0; i < accounts.length; i++) {
-            _blacklisted[accounts[i]] = false;
+            removeFromBlacklist(accounts[i]);
         }
     }
 
