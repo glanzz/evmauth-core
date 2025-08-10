@@ -5,6 +5,10 @@ import "forge-std/Test.sol";
 import "../src/EVMAuth.sol";
 
 contract EVMAuthTest is Test {
+    // Events
+    event AddedToBlacklist(address indexed account);
+    event RemovedFromBlacklist(address indexed account);
+
     // Test contract
     EVMAuth public token;
 
@@ -578,6 +582,10 @@ contract EVMAuthTest is Test {
         token.issue(user1, TOKEN_ID_0, 1, "");
         vm.stopPrank();
 
+        // Ensure AddedToBlacklist event is emitted
+        vm.expectEmit();
+        emit AddedToBlacklist(user1);
+
         // Blacklist user1
         vm.prank(blacklistManager);
         token.addToBlacklist(user1);
@@ -598,6 +606,12 @@ contract EVMAuthTest is Test {
         blacklistAddresses[0] = user1;
         blacklistAddresses[1] = user2;
 
+        // Ensure AddedToBlacklist event is emitted for all addresses
+        vm.expectEmit();
+        emit AddedToBlacklist(user1);
+        vm.expectEmit();
+        emit AddedToBlacklist(user2);
+
         // Blacklist the addresses
         vm.prank(blacklistManager);
         token.addBatchToBlacklist(blacklistAddresses);
@@ -616,12 +630,46 @@ contract EVMAuthTest is Test {
         // Check if user1 is blacklisted
         assertTrue(token.isBlacklisted(user1));
 
+        // Ensure RemovedFromBlacklist event is emitted
+        vm.expectEmit();
+        emit RemovedFromBlacklist(user1);
+
         // Remove user1 from blacklist
         vm.prank(blacklistManager);
         token.removeFromBlacklist(user1);
 
         // Check if user1 is no longer blacklisted
         assertFalse(token.isBlacklisted(user1));
+    }
+
+    // Test batch removing from blacklist
+    function test_BatchRemoveFromBlacklist() public {
+        // Create array of addresses to blacklist
+        address[] memory blacklistAddresses = new address[](2);
+        blacklistAddresses[0] = user1;
+        blacklistAddresses[1] = user2;
+
+        // Blacklist the addresses
+        vm.prank(blacklistManager);
+        token.addBatchToBlacklist(blacklistAddresses);
+
+        // Check if both addresses are blacklisted
+        assertTrue(token.isBlacklisted(user1));
+        assertTrue(token.isBlacklisted(user2));
+
+        // Ensure RemovedFromBlacklist event is emitted for all addresses
+        vm.expectEmit();
+        emit RemovedFromBlacklist(user1);
+        vm.expectEmit();
+        emit RemovedFromBlacklist(user2);
+
+        // Remove batch from blacklist
+        vm.prank(blacklistManager);
+        token.removeBatchFromBlacklist(blacklistAddresses);
+
+        // Check if both addresses are no longer blacklisted
+        assertFalse(token.isBlacklisted(user1));
+        assertFalse(token.isBlacklisted(user2));
     }
 
     // Test that the contract does not accept direct ETH transfers
