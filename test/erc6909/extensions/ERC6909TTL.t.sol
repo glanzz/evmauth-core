@@ -2,12 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {IERC6909Expiring} from "../../src/erc6909/IERC6909Expiring.sol";
-import {ERC6909Expiring} from "../../src/erc6909/ERC6909Expiring.sol";
+import {IERC6909TTL} from "src/erc6909/extensions/IERC6909TTL.sol";
+import {ERC6909TTL} from "src/erc6909/extensions/ERC6909TTL.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {ERC6909} from "@openzeppelin/contracts/token/ERC6909/draft-ERC6909.sol";
 
-contract MockERC6909Expiring is ERC6909Expiring {
+contract MockERC6909TTL is ERC6909TTL {
     // This contract is for testing purposes only, so it performs no permission checks
 
     function mint(address to, uint256 id, uint256 amount) external {
@@ -39,14 +39,14 @@ contract MockERC6909Expiring is ERC6909Expiring {
     }
 
     // Helper function to get the underlying ERC6909 balance value
-    // This bypasses the ERC6909Expiring override and calls the parent contract's balanceOf method
+    // This bypasses the ERC6909TTL override and calls the parent contract's balanceOf method
     function getUnderlyingBalance(address owner, uint256 id) external view returns (uint256) {
         return super.balanceOf(owner, id);
     }
 }
 
-contract ERC6909ExpiringTest is Test {
-    MockERC6909Expiring public token;
+contract ERC6909TTLTest is Test {
+    MockERC6909TTL public token;
 
     address public owner;
     address public alice;
@@ -67,12 +67,12 @@ contract ERC6909ExpiringTest is Test {
         bob = makeAddr("bob");
         charlie = makeAddr("charlie");
 
-        token = new MockERC6909Expiring();
+        token = new MockERC6909TTL();
     }
 
     function test_supportsInterface() public view {
         assertTrue(token.supportsInterface(type(IERC6909).interfaceId));
-        assertTrue(token.supportsInterface(type(IERC6909Expiring).interfaceId));
+        assertTrue(token.supportsInterface(type(IERC6909TTL).interfaceId));
     }
 
     function test_setTokenTTL() public {
@@ -92,14 +92,14 @@ contract ERC6909ExpiringTest is Test {
         token.setTokenTTL(TOKEN_ID_1, ttl);
 
         vm.expectRevert(
-            abi.encodeWithSelector(ERC6909Expiring.ERC6909ExpiringTokenTTLAlreadyConfigured.selector, TOKEN_ID_1, ttl)
+            abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTTLAlreadySet.selector, TOKEN_ID_1, ttl)
         );
         token.setTokenTTL(TOKEN_ID_1, ttl);
     }
 
     function test_ttlOf_tokenNotFound() public {
         vm.expectRevert(
-            abi.encodeWithSelector(ERC6909Expiring.ERC6909ExpiringTokenTLLNotConfigured.selector, TOKEN_ID_1)
+            abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTLLNotSet.selector, TOKEN_ID_1)
         );
         token.ttlOf(TOKEN_ID_1);
     }
@@ -606,7 +606,7 @@ contract ERC6909ExpiringTest is Test {
     function test_expirationForUnsetTokenTTL() public {
         // Test calling expirationFor on a token that has no TTL set
         vm.expectRevert(
-            abi.encodeWithSelector(ERC6909Expiring.ERC6909ExpiringTokenTLLNotConfigured.selector, TOKEN_ID_3)
+            abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTLLNotSet.selector, TOKEN_ID_3)
         );
         token.expirationFor(TOKEN_ID_3);
     }

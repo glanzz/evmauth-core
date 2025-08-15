@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.20;
 
-import {IEVMAuthERC6909} from "./IEVMAuthERC6909.sol";
-import {ERC6909Base} from "./erc6909/ERC6909Base.sol";
-import {ERC6909Expiring} from "./erc6909/ERC6909Expiring.sol";
-import {ERC6909Purchasable} from "./erc6909/ERC6909Purchasable.sol";
+import {IERC6906AccessControl} from "./IERC6906AccessControl.sol";
+import {ERC6909Base} from "./extensions/ERC6909Base.sol";
+import {ERC6909TTL} from "./extensions/ERC6909TTL.sol";
+import {ERC6909Price} from "./extensions/ERC6909Price.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {ERC6909} from "@openzeppelin/contracts/token/ERC6909/draft-ERC6909.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -13,11 +13,12 @@ import {AccessControlDefaultAdminRules} from
     "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 
 /**
- * @dev EVMAuthERC6909 is an implementation of the EVMAuth standard that is compliant with ERC-6909.
- * It supports expiring tokens, purchasable tokens, content URIs, metadata, and token supply.
+ * @dev Implementation of an ERC-6909 compliant contract with extended features and access controls.
+ * It supports expiring tokens, purchasable tokens, content URIs, token metadata, and token supply.
  * It inherits from AccessControlDefaultAdminRules to manage access control with default admin rules.
+ * Extend this contract and either ERC6909Purchase or ERC6909PurchaseWithERC20 to add purchase functionality.
  */
-contract EVMAuthERC6909 is AccessControlDefaultAdminRules, ERC6909Base, ERC6909Expiring, ERC6909Purchasable {
+abstract contract ERC6906AccessControl is AccessControlDefaultAdminRules, ERC6909Base, ERC6909TTL, ERC6909Price {
     // Role required to manage token metadata and content URIs
     bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
 
@@ -36,7 +37,7 @@ contract EVMAuthERC6909 is AccessControlDefaultAdminRules, ERC6909Base, ERC6909E
      */
     constructor(uint48 initialDelay, address initialDefaultAdmin, address payable treasuryAccount)
         AccessControlDefaultAdminRules(initialDelay, initialDefaultAdmin)
-        ERC6909Purchasable(treasuryAccount)
+        ERC6909Price(treasuryAccount)
     {
         // Initialize the contract with the provided admin and default admin addresses.
         // The treasury address is set for handling purchase revenues.
@@ -46,17 +47,17 @@ contract EVMAuthERC6909 is AccessControlDefaultAdminRules, ERC6909Base, ERC6909E
         public
         view
         virtual
-        override(AccessControlDefaultAdminRules, ERC6909Base, ERC6909Expiring, ERC6909Purchasable)
+        override(AccessControlDefaultAdminRules, ERC6909Base, ERC6909TTL, ERC6909Price)
         returns (bool)
     {
-        return interfaceId == type(IEVMAuthERC6909).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IERC6906AccessControl).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function balanceOf(address account, uint256 id)
         public
         view
         virtual
-        override(ERC6909, IERC6909, ERC6909Expiring)
+        override(ERC6909, IERC6909, ERC6909TTL)
         returns (uint256)
     {
         return super.balanceOf(account, id);
@@ -118,7 +119,7 @@ contract EVMAuthERC6909 is AccessControlDefaultAdminRules, ERC6909Base, ERC6909E
      * Requirements:
      * - The caller must have the `TOKEN_MANAGER_ROLE`.
      */
-    function setTTL(uint256 id, uint256 ttl) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
+    function setTokenTTL(uint256 id, uint256 ttl) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setTokenTTL(id, ttl);
     }
 
@@ -128,8 +129,8 @@ contract EVMAuthERC6909 is AccessControlDefaultAdminRules, ERC6909Base, ERC6909E
      * Requirements:
      * - The caller must have the `FINANCE_MANAGER_ROLE`.
      */
-    function setPrice(uint256 id, uint256 price) external virtual onlyRole(FINANCE_MANAGER_ROLE) {
-        _setPrice(id, price);
+    function setTokenPrice(uint256 id, uint256 price) external virtual onlyRole(FINANCE_MANAGER_ROLE) {
+        _setTokenPrice(id, price);
     }
 
     /**
@@ -172,7 +173,7 @@ contract EVMAuthERC6909 is AccessControlDefaultAdminRules, ERC6909Base, ERC6909E
     function _update(address from, address to, uint256 id, uint256 amount)
         internal
         virtual
-        override(ERC6909, ERC6909Base, ERC6909Expiring)
+        override(ERC6909, ERC6909Base, ERC6909TTL)
     {
         super._update(from, to, id, amount);
     }

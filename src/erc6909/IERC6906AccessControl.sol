@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC6909Expiring} from "./erc6909/IERC6909Expiring.sol";
-import {IERC6909Purchasable} from "./erc6909/IERC6909Purchasable.sol";
+import {IERC6909TTL} from "./extensions/IERC6909TTL.sol";
+import {IERC6909Price} from "./extensions/IERC6909Price.sol";
 import {
     IERC6909ContentURI,
     IERC6909Metadata,
@@ -13,13 +13,12 @@ import {IAccessControlDefaultAdminRules} from
     "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
 
 /**
- * @dev Interface of EVMAuth that is an ERC-6909 compliant contract with support for expiring tokens,
- * purchasable tokens, content URIs, metadata, and token supply.
+ * @dev Interface of an ERC-6909 compliant contract with extended features and access controls.
  */
-interface IEVMAuthERC6909 is
+interface IERC6906AccessControl is
     IAccessControlDefaultAdminRules,
-    IERC6909Expiring,
-    IERC6909Purchasable,
+    IERC6909TTL,
+    IERC6909Price,
     IERC6909ContentURI,
     IERC6909Metadata,
     IERC6909TokenSupply
@@ -98,7 +97,7 @@ interface IEVMAuthERC6909 is
      * Requirements:
      * - The caller must have the `FINANCE_MANAGER_ROLE`.
      */
-    function setPrice(uint256 id, uint256 price) external;
+    function setTokenPrice(uint256 id, uint256 price) external;
 
     /**
      * @dev Sets the treasury address that will receive token purchase revenues.

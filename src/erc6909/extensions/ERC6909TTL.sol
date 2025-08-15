@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC6909Expiring} from "./IERC6909Expiring.sol";
+import {IERC6909TTL} from "./IERC6909TTL.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {ERC6909} from "@openzeppelin/contracts/token/ERC6909/draft-ERC6909.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -10,7 +10,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 /**
  * @dev Implementation of an ERC-6909 compliant contract with expiring tokens.
  */
-contract ERC6909Expiring is ERC6909, IERC6909Expiring {
+abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
     // Maximum per address, per token ID
     uint256 public constant MAX_BALANCE_RECORDS = 30;
 
@@ -20,7 +20,7 @@ contract ERC6909Expiring is ERC6909, IERC6909Expiring {
         uint256 expiresAt; // Set to max value to indicate no expiration
     }
 
-    // Token configuration data structure that holds the TTL (time-to-live) for a token ID
+    // Data structure that holds the TTL (time-to-live) for a token and whether it has been set
     struct TTLConfig {
         bool isSet; // TTL can be 0, so we need a flag to indicate if it was intentionally set to 0
         uint256 ttl; // Seconds until expiration (if 0, the token never expires)
@@ -32,24 +32,25 @@ contract ERC6909Expiring is ERC6909, IERC6909Expiring {
     // Token ID => token configuration (cannot be changed after being set)
     mapping(uint256 id => TTLConfig) private _ttlConfigs;
 
-    error ERC6909ExpiringTokenTTLAlreadyConfigured(uint256 id, uint256 ttl);
-    error ERC6909ExpiringTokenTLLNotConfigured(uint256 id);
+    // Errors
+    error ERC6909TTLTokenTTLAlreadySet(uint256 id, uint256 ttl);
+    error ERC6909TTLTokenTLLNotSet(uint256 id);
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC6909, IERC165) returns (bool) {
-        return interfaceId == type(IERC6909Expiring).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IERC6909TTL).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    /// @inheritdoc IERC6909Expiring
+    /// @inheritdoc IERC6909TTL
     function ttlIsSet(uint256 id) external view returns (bool) {
         return _ttlConfigs[id].isSet;
     }
 
-    /// @inheritdoc IERC6909Expiring
+    /// @inheritdoc IERC6909TTL
     function ttlOf(uint256 id) external view returns (uint256) {
         if (!_ttlConfigs[id].isSet) {
             // We need to revert here, to prevent un-configured tokens from being treated as non-expiring
-            revert ERC6909ExpiringTokenTLLNotConfigured(id);
+            revert ERC6909TTLTokenTLLNotSet(id);
         }
 
         return _ttlConfigs[id].ttl;
@@ -81,6 +82,11 @@ contract ERC6909Expiring is ERC6909, IERC6909Expiring {
      * - if `to` is the zero address, `from` must not be the zero address (burning).
      * - if both `from` and `to` are non-zero, `from` must have enough balance to cover `amount`.
      * - if `from` and `to` are the same, it does nothing.
+     *
+     * @param from The address to transfer tokens from. If zero, it mints tokens to `to`.
+     * @param to The address to transfer tokens to. If zero, it burns tokens from `from`.
+     * @param id The identifier of the token type to transfer.
+     * @param amount The number of tokens to transfer.
      */
     function _update(address from, address to, uint256 id, uint256 amount) internal virtual override {
         if (from == address(0)) {
@@ -112,8 +118,13 @@ contract ERC6909Expiring is ERC6909, IERC6909Expiring {
 
     /**
      * @dev Insert or update a balance record for a given account and token `id`.
-     * Maintains sorted order by expiration (oldest to newest).
+     * Maintains sorted order by expiration bucket (oldest to newest).
      * If a record with the same expiration already exists, it combines the amounts.
+     *
+     * @param account The address of the account to update.
+     * @param id The identifier of the token type to update.
+     * @param amount The amount to add to the balance record.
+     * @param expiresAt The expiration time for the balance record.
      */
     function _addToBalanceRecord(address account, uint256 id, uint256 amount, uint256 expiresAt) internal {
         // First, prune expired records to free up space
@@ -155,9 +166,14 @@ contract ERC6909Expiring is ERC6909, IERC6909Expiring {
     }
 
     /**
-     * @dev Burn tokens using FIFO (oldest expiration first).
+     * @dev Deducts the specified `amount` from the balance records of the `account` for the given `id`.
+     * Uses FIFO order (oldest expiration first).
      *
      * Reverts if the account does not have enough balance to cover the `amount`.
+     *
+     * @param account The address of the account to deduct from.
+     * @param id The identifier of the token type to deduct from.
+     * @param amount The amount to deduct from the balance records.
      */
     function _deductFromBalanceRecords(address account, uint256 id, uint256 amount) internal {
         BalanceRecord[MAX_BALANCE_RECORDS] storage records = _balanceRecords[account][id];
@@ -196,6 +212,11 @@ contract ERC6909Expiring is ERC6909, IERC6909Expiring {
      * If `from` and `to` are the same, or `amount` is 0, it does nothing.
      *
      * Reverts if the `from` account does not have enough balance to cover the `amount`.
+     *
+     * @param from The address to transfer tokens from.
+     * @param to The address to transfer tokens to.
+     * @param id The identifier of the token type to transfer.
+     * @param amount The number of tokens to transfer.
      */
     function _transferBalanceRecords(address from, address to, uint256 id, uint256 amount) internal {
         if (from == to || amount == 0) return;
@@ -233,6 +254,9 @@ contract ERC6909Expiring is ERC6909, IERC6909Expiring {
 
     /**
      * @dev Remove expired or empty balance records and compact the array.
+     *
+     * @param account The address of the account to prune.
+     * @param id The identifier of the token type to prune.
      */
     function _pruneBalanceRecords(address account, uint256 id) internal {
         BalanceRecord[MAX_BALANCE_RECORDS] storage records = _balanceRecords[account][id];
@@ -264,10 +288,13 @@ contract ERC6909Expiring is ERC6909, IERC6909Expiring {
      * Emits an {TokenConfigured} event.
      *
      * Revert if the token configuration does not exist.
+     *
+     * @param id The identifier of the token type to set the TTL for.
+     * @param ttl The time-to-live in seconds for the token. If 0, the token does not expire.
      */
     function _setTokenTTL(uint256 id, uint256 ttl) internal {
         if (_ttlConfigs[id].isSet) {
-            revert ERC6909ExpiringTokenTTLAlreadyConfigured(id, ttl);
+            revert ERC6909TTLTokenTTLAlreadySet(id, ttl);
         }
 
         _ttlConfigs[id] = TTLConfig(true, ttl);
@@ -289,10 +316,13 @@ contract ERC6909Expiring is ERC6909, IERC6909Expiring {
      * rounded up to the next day, giving the recipient at most an additional 23:59:59 to use the token.
      *
      * Revert if the token configuration does not exist.
+     *
+     * @param id The identifier of the token type to get the expiration time for.
+     * @return The expiration timestamp for the token `id`.
      */
     function _expirationFor(uint256 id) internal view returns (uint256) {
         if (!_ttlConfigs[id].isSet) {
-            revert ERC6909ExpiringTokenTLLNotConfigured(id);
+            revert ERC6909TTLTokenTLLNotSet(id);
         }
 
         uint256 ttl = _ttlConfigs[id].ttl;

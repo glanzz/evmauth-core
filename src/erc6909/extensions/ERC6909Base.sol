@@ -19,7 +19,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  * This contract consolidates ERC6909 with the ContentURI, Metadata, and TokenSupply extensions.
  * It serves as a base contract for more complex implementations.
  */
-contract ERC6909Base is ERC6909ContentURI, ERC6909Metadata, ERC6909TokenSupply {
+abstract contract ERC6909Base is ERC6909ContentURI, ERC6909Metadata, ERC6909TokenSupply {
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC6909, IERC165) returns (bool) {
         return super.supportsInterface(interfaceId);

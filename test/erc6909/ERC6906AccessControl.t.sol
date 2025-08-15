@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {EVMAuthERC6909} from "../src/EVMAuthERC6909.sol";
-import {IEVMAuthERC6909} from "../src/IEVMAuthERC6909.sol";
+import {IERC6906AccessControl} from "src/erc6909/IERC6906AccessControl.sol";
+import {ERC6906AccessControl} from "src/erc6909/ERC6906AccessControl.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {IERC6909ContentURI} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {IERC6909Metadata} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
@@ -12,8 +12,8 @@ import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol"
 import {IAccessControlDefaultAdminRules} from
     "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
 
-contract EVMAuthERC6909Test is Test {
-    EVMAuthERC6909 public token;
+contract ERC6906AccessControlTest is Test {
+    ERC6906AccessControl public token;
 
     address public defaultAdmin;
     address public tokenManager;
@@ -52,10 +52,10 @@ contract EVMAuthERC6909Test is Test {
     event Purchase(address caller, address indexed receiver, uint256 indexed id, uint256 amount, uint256 totalPrice);
     event TokenPriceSet(address caller, uint256 indexed id, uint256 price);
 
-    // Helper function to set TTL for a token (required before minting with ERC6909Expiring)
+    // Helper function to set TTL for a token (required before minting with ERC6909TTL)
     function _setTokenTTL(uint256 tokenId, uint256 ttl) internal {
         vm.prank(tokenManager);
-        token.setTTL(tokenId, ttl);
+        token.setTokenTTL(tokenId, ttl);
     }
 
     function setUp() public {
@@ -74,7 +74,7 @@ contract EVMAuthERC6909Test is Test {
         vm.deal(financeManager, 100 ether);
 
         vm.prank(defaultAdmin);
-        token = new EVMAuthERC6909(INITIAL_DELAY, defaultAdmin, treasury);
+        token = new ERC6906AccessControl(INITIAL_DELAY, defaultAdmin, treasury);
 
         // Grant roles
         vm.startPrank(defaultAdmin);
@@ -94,7 +94,7 @@ contract EVMAuthERC6909Test is Test {
 
     function test_supportsInterface() public view {
         assertTrue(token.supportsInterface(type(IERC6909).interfaceId));
-        assertTrue(token.supportsInterface(type(IEVMAuthERC6909).interfaceId));
+        assertTrue(token.supportsInterface(type(IERC6906AccessControl).interfaceId));
         assertTrue(token.supportsInterface(type(IAccessControl).interfaceId));
         assertTrue(token.supportsInterface(type(IAccessControlDefaultAdminRules).interfaceId));
     }
@@ -216,9 +216,9 @@ contract EVMAuthERC6909Test is Test {
     function test_mint() public {
         uint256 amount = 1000;
 
-        // Set TTL first (required by ERC6909Expiring)
+        // Set TTL first (required by ERC6909TTL)
         vm.prank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
+        token.setTokenTTL(TOKEN_ID_1, 30 days);
 
         vm.expectEmit(true, true, true, true);
         emit Transfer(tokenMinter, address(0), alice, TOKEN_ID_1, amount);
@@ -236,11 +236,11 @@ contract EVMAuthERC6909Test is Test {
         uint256 amount2 = 2000;
         uint256 amount3 = 3000;
 
-        // Set TTL for all tokens first (required by ERC6909Expiring)
+        // Set TTL for all tokens first (required by ERC6909TTL)
         vm.startPrank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
-        token.setTTL(TOKEN_ID_2, 60 days);
-        token.setTTL(TOKEN_ID_3, 0); // Non-expiring
+        token.setTokenTTL(TOKEN_ID_1, 30 days);
+        token.setTokenTTL(TOKEN_ID_2, 60 days);
+        token.setTokenTTL(TOKEN_ID_3, 0); // Non-expiring
         vm.stopPrank();
 
         vm.startPrank(tokenMinter);
@@ -563,19 +563,19 @@ contract EVMAuthERC6909Test is Test {
         token.mint(alice, TOKEN_ID_1, 1000);
     }
 
-    function test_setPrice() public {
+    function test_setTokenPrice() public {
         uint256 price = 1 ether;
 
         vm.expectEmit(true, true, false, true);
         emit TokenPriceSet(financeManager, TOKEN_ID_1, price);
 
         vm.prank(financeManager);
-        token.setPrice(TOKEN_ID_1, price);
+        token.setTokenPrice(TOKEN_ID_1, price);
 
         assertEq(token.priceOf(TOKEN_ID_1), price);
     }
 
-    function test_setPrice_unauthorized() public {
+    function test_setTokenPrice_unauthorized() public {
         uint256 price = 1 ether;
 
         vm.expectRevert(
@@ -584,7 +584,7 @@ contract EVMAuthERC6909Test is Test {
             )
         );
         vm.prank(alice);
-        token.setPrice(TOKEN_ID_1, price);
+        token.setTokenPrice(TOKEN_ID_1, price);
     }
 
     function test_setTreasury() public {
@@ -612,7 +612,7 @@ contract EVMAuthERC6909Test is Test {
         uint256 ttl = 30 days;
 
         vm.prank(tokenManager);
-        token.setTTL(TOKEN_ID_1, ttl);
+        token.setTokenTTL(TOKEN_ID_1, ttl);
 
         assertEq(token.ttlOf(TOKEN_ID_1), ttl);
     }
@@ -624,7 +624,7 @@ contract EVMAuthERC6909Test is Test {
             abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, TOKEN_MANAGER_ROLE)
         );
         vm.prank(alice);
-        token.setTTL(TOKEN_ID_1, ttl);
+        token.setTokenTTL(TOKEN_ID_1, ttl);
     }
 
     function test_complexScenario() public {
@@ -633,11 +633,11 @@ contract EVMAuthERC6909Test is Test {
         token.setTokenName(TOKEN_ID_1, "Gold");
         token.setTokenSymbol(TOKEN_ID_1, "GLD");
         token.setTokenDecimals(TOKEN_ID_1, 18);
-        token.setTTL(TOKEN_ID_1, 30 days);
+        token.setTokenTTL(TOKEN_ID_1, 30 days);
         token.setTokenName(TOKEN_ID_2, "Silver");
         token.setTokenSymbol(TOKEN_ID_2, "SLV");
         token.setTokenDecimals(TOKEN_ID_2, 18);
-        token.setTTL(TOKEN_ID_2, 60 days);
+        token.setTokenTTL(TOKEN_ID_2, 60 days);
         vm.stopPrank();
 
         // Mint different tokens

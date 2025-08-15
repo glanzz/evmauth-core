@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {IERC6909Base} from "../../src/erc6909/IERC6909Base.sol";
-import {ERC6909Base} from "../../src/erc6909/ERC6909Base.sol";
+import {IERC6909Base} from "src/erc6909/extensions/IERC6909Base.sol";
+import {ERC6909Base} from "src/erc6909/extensions/ERC6909Base.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 
 contract MockERC6909Base is ERC6909Base {
