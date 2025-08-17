@@ -18,7 +18,7 @@ import {AccessControlDefaultAdminRules} from
  * It inherits from AccessControlDefaultAdminRules to manage access control with default admin rules.
  * Extend this contract and either ERC6909Purchase or ERC6909PurchaseWithERC20 to add purchase functionality.
  */
-abstract contract ERC6906AccessControl is AccessControlDefaultAdminRules, ERC6909Base, ERC6909TTL, ERC6909Price {
+contract ERC6906AccessControl is AccessControlDefaultAdminRules, ERC6909Base, ERC6909TTL, ERC6909Price {
     // Role required to manage token metadata and content URIs
     bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
 
@@ -43,6 +43,7 @@ abstract contract ERC6906AccessControl is AccessControlDefaultAdminRules, ERC690
         // The treasury address is set for handling purchase revenues.
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -53,6 +54,7 @@ abstract contract ERC6906AccessControl is AccessControlDefaultAdminRules, ERC690
         return interfaceId == type(IERC6906AccessControl).interfaceId || super.supportsInterface(interfaceId);
     }
 
+    /// @inheritdoc IERC6909
     function balanceOf(address account, uint256 id)
         public
         view

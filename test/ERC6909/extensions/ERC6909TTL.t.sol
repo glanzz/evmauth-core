@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {IERC6909TTL} from "src/erc6909/extensions/IERC6909TTL.sol";
-import {ERC6909TTL} from "src/erc6909/extensions/ERC6909TTL.sol";
+import {IERC6909TTL} from "src/ERC6909/extensions/IERC6909TTL.sol";
+import {ERC6909TTL} from "src/ERC6909/extensions/ERC6909TTL.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {ERC6909} from "@openzeppelin/contracts/token/ERC6909/draft-ERC6909.sol";
 
@@ -73,6 +73,9 @@ contract ERC6909TTLTest is Test {
     function test_supportsInterface() public view {
         assertTrue(token.supportsInterface(type(IERC6909).interfaceId));
         assertTrue(token.supportsInterface(type(IERC6909TTL).interfaceId));
+
+        // Test an unsupported interface
+        assertFalse(token.supportsInterface(0xffffffff));
     }
 
     function test_setTokenTTL() public {
@@ -91,16 +94,12 @@ contract ERC6909TTLTest is Test {
         uint256 ttl = 3600;
         token.setTokenTTL(TOKEN_ID_1, ttl);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTTLAlreadySet.selector, TOKEN_ID_1, ttl)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTTLAlreadySet.selector, TOKEN_ID_1, ttl));
         token.setTokenTTL(TOKEN_ID_1, ttl);
     }
 
     function test_ttlOf_tokenNotFound() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTLLNotSet.selector, TOKEN_ID_1)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTLLNotSet.selector, TOKEN_ID_1));
         token.ttlOf(TOKEN_ID_1);
     }
 
@@ -605,9 +604,7 @@ contract ERC6909TTLTest is Test {
 
     function test_expirationForUnsetTokenTTL() public {
         // Test calling expirationFor on a token that has no TTL set
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTLLNotSet.selector, TOKEN_ID_3)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTLLNotSet.selector, TOKEN_ID_3));
         token.expirationFor(TOKEN_ID_3);
     }
 

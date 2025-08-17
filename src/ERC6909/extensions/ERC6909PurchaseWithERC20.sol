@@ -7,16 +7,19 @@ import {IERC6909PurchaseWithERC20} from "./IERC6909PurchaseWithERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
- * @dev Implementation of an ERC-6909 compliant contract that supports the direct purchase of tokens using ERC-20 tokens.
+ * @dev Implementation of an ERC-6909 compliant contract that supports the direct purchase of tokens
+ * using ERC-20 tokens (e.g. USDC, USDT).
  */
-abstract contract ERC6909PurchaseWithERC20 is ERC6909Price, IERC6909PurchaseWithERC20 {
+abstract contract ERC6909PurchaseWithERC20 is ERC6909Price, IERC6909PurchaseWithERC20, Pausable {
+    // Import SafeERC20 to revert if a transfer returns false
     using SafeERC20 for IERC20;
 
     // Mapping of supported ERC-20 token addresses
     mapping(address => bool) private _paymentTokens;
-    
+
     // Array to track all supported tokens for enumeration
     address[] private _paymentTokensList;
 
@@ -39,10 +42,11 @@ abstract contract ERC6909PurchaseWithERC20 is ERC6909Price, IERC6909PurchaseWith
 
     /// @inheritdoc IERC6909PurchaseWithERC20
     function purchaseWithERC20(address paymentToken, uint256 id, uint256 amount)
-        external 
-        virtual 
-        nonReentrant 
-        returns (bool) 
+        external
+        virtual
+        whenNotPaused
+        nonReentrant
+        returns (bool)
     {
         _purchaseWithERC20For(paymentToken, _msgSender(), id, amount);
 
@@ -53,6 +57,7 @@ abstract contract ERC6909PurchaseWithERC20 is ERC6909Price, IERC6909PurchaseWith
     function purchaseWithERC20For(address paymentToken, address receiver, uint256 id, uint256 amount)
         external
         virtual
+        whenNotPaused
         nonReentrant
         returns (bool)
     {
@@ -92,7 +97,10 @@ abstract contract ERC6909PurchaseWithERC20 is ERC6909Price, IERC6909PurchaseWith
      * @param id The identifier of the token type to purchase.
      * @param amount The number of tokens to purchase.
      */
-    function _purchaseWithERC20For(address paymentToken, address receiver, uint256 id, uint256 amount) internal virtual {
+    function _purchaseWithERC20For(address paymentToken, address receiver, uint256 id, uint256 amount)
+        internal
+        virtual
+    {
         if (!_paymentTokens[paymentToken]) {
             revert ERC6909PriceInvalidERC20PaymentToken(paymentToken);
         }
@@ -100,13 +108,13 @@ abstract contract ERC6909PurchaseWithERC20 is ERC6909Price, IERC6909PurchaseWith
         uint256 totalPrice = _validatePurchase(receiver, id, amount);
 
         IERC20 erc20Token = IERC20(paymentToken);
-        
+
         // Check balance
         uint256 balance = erc20Token.balanceOf(_msgSender());
         if (balance < totalPrice) {
             revert ERC6909PriceInsufficientERC20PaymentTokenBalance(paymentToken, totalPrice, balance);
         }
-        
+
         // Check allowance
         uint256 allowance = erc20Token.allowance(_msgSender(), address(this));
         if (allowance < totalPrice) {
@@ -159,7 +167,7 @@ abstract contract ERC6909PurchaseWithERC20 is ERC6909Price, IERC6909PurchaseWith
 
         if (_paymentTokens[token]) {
             _paymentTokens[token] = false;
-            
+
             // Remove from array
             for (uint256 i = 0; i < _paymentTokensList.length; i++) {
                 if (_paymentTokensList[i] == token) {
@@ -168,7 +176,7 @@ abstract contract ERC6909PurchaseWithERC20 is ERC6909Price, IERC6909PurchaseWith
                     break;
                 }
             }
-            
+
             emit ERC20PaymentTokenRemoved(token);
         }
     }

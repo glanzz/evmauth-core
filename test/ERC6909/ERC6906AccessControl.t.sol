@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {IERC6906AccessControl} from "src/erc6909/IERC6906AccessControl.sol";
-import {ERC6906AccessControl} from "src/erc6909/ERC6906AccessControl.sol";
+import {IERC6906AccessControl} from "src/ERC6909/IERC6906AccessControl.sol";
+import {ERC6906AccessControl} from "src/ERC6909/ERC6906AccessControl.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {IERC6909ContentURI} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {IERC6909Metadata} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";

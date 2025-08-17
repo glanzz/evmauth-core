@@ -5,11 +5,13 @@ pragma solidity ^0.8.20;
 import {ERC6909Price} from "./ERC6909Price.sol";
 import {IERC6909Purchase} from "./IERC6909Purchase.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
- * @dev Implementation of an ERC-6909 compliant contract that supports the direct purchase of tokens using native currency (ETH).
+ * @dev Implementation of an ERC-6909 compliant contract that supports the direct purchase of tokens
+ * using native currency (i.e. ETH).
  */
-abstract contract ERC6909Purchase is ERC6909Price, IERC6909Purchase {
+abstract contract ERC6909Purchase is ERC6909Price, IERC6909Purchase, Pausable {
     // Errors
     error ERC6909PriceInsufficientPayment(uint256 id, uint256 amount, uint256 price, uint256 paid);
 
@@ -26,7 +28,15 @@ abstract contract ERC6909Purchase is ERC6909Price, IERC6909Purchase {
     }
 
     /// @inheritdoc IERC6909Purchase
-    function purchase(uint256 id, uint256 amount) external payable virtual override nonReentrant returns (bool) {
+    function purchase(uint256 id, uint256 amount)
+        external
+        payable
+        virtual
+        override
+        whenNotPaused
+        nonReentrant
+        returns (bool)
+    {
         _purchaseFor(_msgSender(), id, amount);
         return true;
     }
@@ -37,6 +47,7 @@ abstract contract ERC6909Purchase is ERC6909Price, IERC6909Purchase {
         payable
         virtual
         override
+        whenNotPaused
         nonReentrant
         returns (bool)
     {
@@ -64,7 +75,7 @@ abstract contract ERC6909Purchase is ERC6909Price, IERC6909Purchase {
      */
     function _purchaseFor(address receiver, uint256 id, uint256 amount) internal virtual {
         uint256 totalPrice = _validatePurchase(receiver, id, amount);
-        
+
         if (msg.value < totalPrice) {
             revert ERC6909PriceInsufficientPayment(id, amount, totalPrice, msg.value);
         }

@@ -2,12 +2,13 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {IERC6909PurchaseWithERC20} from "src/erc6909/extensions/IERC6909PurchaseWithERC20.sol";
-import {ERC6909PurchaseWithERC20} from "src/erc6909/extensions/ERC6909PurchaseWithERC20.sol";
-import {ERC6909Price} from "src/erc6909/extensions/ERC6909Price.sol";
+import {IERC6909PurchaseWithERC20} from "src/ERC6909/extensions/IERC6909PurchaseWithERC20.sol";
+import {ERC6909PurchaseWithERC20} from "src/ERC6909/extensions/ERC6909PurchaseWithERC20.sol";
+import {ERC6909Price} from "src/ERC6909/extensions/ERC6909Price.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20Mock} from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract MockERC6909PurchaseWithERC20 is ERC6909PurchaseWithERC20 {
     // This contract is for testing purposes only, so it performs no permission checks
@@ -24,21 +25,29 @@ contract MockERC6909PurchaseWithERC20 is ERC6909PurchaseWithERC20 {
     function removeERC20PaymentToken(address token) external {
         _removeERC20PaymentToken(token);
     }
+
+    function pause() external {
+        _pause();
+    }
+
+    function unpause() external {
+        _unpause();
+    }
 }
 
 contract ERC6909PurchaseWithERC20Test is Test {
     MockERC6909PurchaseWithERC20 public token;
     ERC20Mock public paymentToken1;
     ERC20Mock public paymentToken2;
-    
+
     address payable public treasury = payable(address(0x123));
     address public alice = address(0x456);
     address public bob = address(0x789);
-    
+
     uint256 public constant TOKEN_ID_1 = 1;
     uint256 public constant TOKEN_ID_2 = 2;
-    uint256 public constant PRICE_1 = 100 * 10**18; // 100 tokens
-    uint256 public constant PRICE_2 = 200 * 10**18; // 200 tokens
+    uint256 public constant PRICE_1 = 100 * 10 ** 18; // 100 tokens
+    uint256 public constant PRICE_2 = 200 * 10 ** 18; // 200 tokens
 
     event Purchase(address caller, address indexed receiver, uint256 indexed id, uint256 amount, uint256 price);
     event TokenPriceSet(address caller, uint256 indexed id, uint256 price);
@@ -49,21 +58,21 @@ contract ERC6909PurchaseWithERC20Test is Test {
 
     function setUp() public {
         token = new MockERC6909PurchaseWithERC20(treasury);
-        
+
         // Deploy mock ERC20 tokens
         paymentToken1 = new ERC20Mock();
         paymentToken2 = new ERC20Mock();
-        
+
         // Mint tokens to test accounts
-        paymentToken1.mint(alice, 10000 * 10**18);
-        paymentToken1.mint(bob, 10000 * 10**18);
-        paymentToken2.mint(alice, 10000 * 10**18);
-        paymentToken2.mint(bob, 10000 * 10**18);
-        
+        paymentToken1.mint(alice, 10000 * 10 ** 18);
+        paymentToken1.mint(bob, 10000 * 10 ** 18);
+        paymentToken2.mint(alice, 10000 * 10 ** 18);
+        paymentToken2.mint(bob, 10000 * 10 ** 18);
+
         // Add payment tokens
         token.addERC20PaymentToken(address(paymentToken1));
         token.addERC20PaymentToken(address(paymentToken2));
-        
+
         // Set prices for tokens
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
         token.setTokenPrice(TOKEN_ID_2, PRICE_2);
@@ -118,10 +127,7 @@ contract ERC6909PurchaseWithERC20Test is Test {
 
     function test_addERC20PaymentToken_zeroAddress() public {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ERC6909PurchaseWithERC20.ERC6909PriceInvalidERC20PaymentToken.selector,
-                address(0)
-            )
+            abi.encodeWithSelector(ERC6909PurchaseWithERC20.ERC6909PriceInvalidERC20PaymentToken.selector, address(0))
         );
         token.addERC20PaymentToken(address(0));
     }
@@ -143,11 +149,11 @@ contract ERC6909PurchaseWithERC20Test is Test {
     function test_removeERC20PaymentToken() public {
         vm.expectEmit(true, false, false, false);
         emit ERC20PaymentTokenRemoved(address(paymentToken2));
-        
+
         token.removeERC20PaymentToken(address(paymentToken2));
-        
+
         assertFalse(token.isERC20PaymentTokenAccepted(address(paymentToken2)));
-        
+
         address[] memory acceptedTokens = token.acceptedERC20PaymentTokens();
         assertEq(acceptedTokens.length, 1);
         assertEq(acceptedTokens[0], address(paymentToken1));
@@ -166,18 +172,18 @@ contract ERC6909PurchaseWithERC20Test is Test {
     function test_purchaseWithERC20() public {
         uint256 amount = 2;
         uint256 totalPrice = PRICE_1 * amount;
-        
+
         // Approve token spending
         vm.prank(alice);
         paymentToken2.approve(address(token), totalPrice);
-        
+
         uint256 aliceTokenBalanceBefore = paymentToken2.balanceOf(alice);
         uint256 treasuryTokenBalanceBefore = paymentToken2.balanceOf(treasury);
-        
+
         vm.prank(alice);
         bool success = token.purchaseWithERC20(address(paymentToken2), TOKEN_ID_1, amount);
         assertTrue(success);
-        
+
         assertEq(token.balanceOf(alice, TOKEN_ID_1), amount);
         assertEq(paymentToken2.balanceOf(alice), aliceTokenBalanceBefore - totalPrice);
         assertEq(paymentToken2.balanceOf(treasury), treasuryTokenBalanceBefore + totalPrice);
@@ -185,12 +191,11 @@ contract ERC6909PurchaseWithERC20Test is Test {
 
     function test_purchaseWithERC20_invalidERC20PaymentToken() public {
         ERC20Mock invalidToken = new ERC20Mock();
-        
+
         vm.prank(alice);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ERC6909PurchaseWithERC20.ERC6909PriceInvalidERC20PaymentToken.selector,
-                address(invalidToken)
+                ERC6909PurchaseWithERC20.ERC6909PriceInvalidERC20PaymentToken.selector, address(invalidToken)
             )
         );
         token.purchaseWithERC20(address(invalidToken), TOKEN_ID_1, 1);
@@ -199,13 +204,13 @@ contract ERC6909PurchaseWithERC20Test is Test {
     function test_purchaseWithERC20_insufficientBalance() public {
         uint256 amount = 1;
         uint256 totalPrice = PRICE_1 * amount;
-        
+
         // Create new account with no tokens
         address charlie = address(0xABC);
-        
+
         vm.prank(charlie);
         paymentToken1.approve(address(token), totalPrice);
-        
+
         vm.prank(charlie);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -221,9 +226,9 @@ contract ERC6909PurchaseWithERC20Test is Test {
     function test_purchaseWithERC20_insufficientAllowance() public {
         uint256 amount = 1;
         uint256 totalPrice = PRICE_1 * amount;
-        
+
         // Don't approve any tokens
-        
+
         vm.prank(alice);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -239,7 +244,7 @@ contract ERC6909PurchaseWithERC20Test is Test {
     function test_purchaseWithERC20_zeroAmount() public {
         vm.prank(alice);
         paymentToken1.approve(address(token), PRICE_1);
-        
+
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(ERC6909Price.ERC6909PriceInvalidAmount.selector, 0));
         token.purchaseWithERC20(address(paymentToken1), TOKEN_ID_1, 0);
@@ -263,9 +268,7 @@ contract ERC6909PurchaseWithERC20Test is Test {
         paymentToken1.approve(address(token), PRICE_1);
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909Price.ERC6909PriceTokenPriceNotSet.selector, unsetTokenId)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Price.ERC6909PriceTokenPriceNotSet.selector, unsetTokenId));
         token.purchaseWithERC20(address(paymentToken1), unsetTokenId, 1);
     }
 
@@ -292,37 +295,106 @@ contract ERC6909PurchaseWithERC20Test is Test {
     function test_purchaseWithERC20For_zeroAddress() public {
         vm.prank(alice);
         paymentToken1.approve(address(token), PRICE_1);
-        
+
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909Price.ERC6909PriceInvalidReceiver.selector, address(0))
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Price.ERC6909PriceInvalidReceiver.selector, address(0)));
         token.purchaseWithERC20For(address(paymentToken1), address(0), TOKEN_ID_1, 1);
     }
 
     function testFuzz_purchaseWithERC20(uint256 price, uint256 amount) public {
         // Bound inputs to reasonable values
-        price = bound(price, 0, 1000 * 10**18);
+        price = bound(price, 0, 1000 * 10 ** 18);
         amount = bound(amount, 1, 100);
-        
+
         token.setTokenPrice(TOKEN_ID_1, price);
-        
+
         uint256 totalPrice = price * amount;
-        
+
         // Mint enough tokens for the purchase
         paymentToken1.mint(alice, totalPrice);
-        
+
         // Approve token spending
         vm.prank(alice);
         paymentToken1.approve(address(token), totalPrice);
-        
+
         uint256 treasuryBalanceBefore = paymentToken1.balanceOf(treasury);
-        
+
         vm.prank(alice);
         bool success = token.purchaseWithERC20(address(paymentToken1), TOKEN_ID_1, amount);
         assertTrue(success);
-        
+
         assertEq(token.balanceOf(alice, TOKEN_ID_1), amount);
         assertEq(paymentToken1.balanceOf(treasury), treasuryBalanceBefore + totalPrice);
+    }
+
+    function test_purchaseWithERC20_paused() public {
+        uint256 amount = 5;
+        uint256 totalPrice = PRICE_1 * amount;
+
+        // Approve token spending
+        vm.prank(alice);
+        paymentToken1.approve(address(token), totalPrice);
+
+        // Pause the contract
+        token.pause();
+        assertTrue(token.paused());
+
+        // Attempt purchase while paused - should revert
+        vm.prank(alice);
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        token.purchaseWithERC20(address(paymentToken1), TOKEN_ID_1, amount);
+
+        // Unpause the contract
+        token.unpause();
+        assertFalse(token.paused());
+
+        // Purchase should now succeed
+        uint256 aliceTokenBalanceBefore = paymentToken1.balanceOf(alice);
+        uint256 treasuryTokenBalanceBefore = paymentToken1.balanceOf(treasury);
+
+        vm.prank(alice);
+        bool success = token.purchaseWithERC20(address(paymentToken1), TOKEN_ID_1, amount);
+        assertTrue(success);
+
+        // Verify the purchase worked
+        assertEq(token.balanceOf(alice, TOKEN_ID_1), amount);
+        assertEq(paymentToken1.balanceOf(alice), aliceTokenBalanceBefore - totalPrice);
+        assertEq(paymentToken1.balanceOf(treasury), treasuryTokenBalanceBefore + totalPrice);
+    }
+
+    function test_purchaseWithERC20For_paused() public {
+        uint256 amount = 3;
+        uint256 totalPrice = PRICE_1 * amount;
+
+        // Approve token spending
+        vm.prank(alice);
+        paymentToken1.approve(address(token), totalPrice);
+
+        // Pause the contract
+        token.pause();
+        assertTrue(token.paused());
+
+        // Attempt purchaseFor while paused - should revert
+        vm.prank(alice);
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        token.purchaseWithERC20For(address(paymentToken1), bob, TOKEN_ID_1, amount);
+
+        // Unpause the contract
+        token.unpause();
+        assertFalse(token.paused());
+
+        // PurchaseFor should now succeed
+        uint256 aliceTokenBalanceBefore = paymentToken1.balanceOf(alice);
+        uint256 treasuryTokenBalanceBefore = paymentToken1.balanceOf(treasury);
+
+        vm.prank(alice);
+        bool success = token.purchaseWithERC20For(address(paymentToken1), bob, TOKEN_ID_1, amount);
+        assertTrue(success);
+
+        // Verify the purchase worked
+        assertEq(token.balanceOf(bob, TOKEN_ID_1), amount);
+        assertEq(token.balanceOf(alice, TOKEN_ID_1), 0);
+        assertEq(paymentToken1.balanceOf(alice), aliceTokenBalanceBefore - totalPrice);
+        assertEq(paymentToken1.balanceOf(treasury), treasuryTokenBalanceBefore + totalPrice);
     }
 }

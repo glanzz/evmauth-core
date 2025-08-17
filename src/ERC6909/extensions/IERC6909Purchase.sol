@@ -6,7 +6,7 @@ import {IERC6909Price} from "./IERC6909Price.sol";
 
 /**
  * @dev Interface of an ERC-6909 compliant contract that supports the direct purchase of tokens
- * using the native currency (e.g., Ether).
+ * using the native currency (i.e. ETH).
  */
 interface IERC6909Purchase is IERC6909Price {
     /**

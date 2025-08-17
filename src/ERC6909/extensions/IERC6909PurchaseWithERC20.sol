@@ -6,7 +6,7 @@ import {IERC6909Price} from "./IERC6909Price.sol";
 
 /**
  * @dev Interface of an ERC-6909 compliant contract that supports the direct purchase of tokens
- * using ERC-20 tokens as payment.
+ * using ERC-20 tokens (e.g. USDC, USDT).
  */
 interface IERC6909PurchaseWithERC20 is IERC6909Price {
     /**
@@ -33,9 +33,7 @@ interface IERC6909PurchaseWithERC20 is IERC6909Price {
      * @param amount The number of tokens to purchase.
      * @return bool indicating whether the purchase was successful.
      */
-    function purchaseWithERC20(address paymentToken, uint256 id, uint256 amount)
-        external
-        returns (bool);
+    function purchaseWithERC20(address paymentToken, uint256 id, uint256 amount) external returns (bool);
 
     /**
      * @dev Purchases `amount` tokens of type `id` using a specific ERC-20 token as payment for a specific `receiver`.
