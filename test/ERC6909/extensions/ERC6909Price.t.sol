@@ -49,8 +49,8 @@ contract ERC6909PriceTest is Test {
     uint256 public constant PRICE_2 = 0.2 ether;
 
     event Purchase(address caller, address indexed receiver, uint256 indexed id, uint256 amount, uint256 price);
-    event TokenPriceSet(address caller, uint256 indexed id, uint256 price);
-    event TreasurySet(address caller, address indexed account);
+    event ERC6909PriceUpdated(address caller, uint256 indexed id, uint256 price);
+    event TreasuryUpdated(address caller, address indexed account);
     event Transfer(address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount);
 
     function setUp() public {
@@ -68,7 +68,7 @@ contract ERC6909PriceTest is Test {
 
     function test_setTokenPrice() public {
         vm.expectEmit(true, true, true, true);
-        emit TokenPriceSet(address(this), TOKEN_ID_1, PRICE_1);
+        emit ERC6909PriceUpdated(address(this), TOKEN_ID_1, PRICE_1);
 
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
 
@@ -85,7 +85,7 @@ contract ERC6909PriceTest is Test {
 
     function test_setTreasury() public {
         vm.expectEmit(true, true, true, true);
-        emit TreasurySet(address(this), newTreasury);
+        emit TreasuryUpdated(address(this), newTreasury);
 
         token.setTreasury(newTreasury);
 

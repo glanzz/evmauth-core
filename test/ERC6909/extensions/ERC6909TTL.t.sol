@@ -60,7 +60,7 @@ contract ERC6909TTLTest is Test {
     event Transfer(address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount);
     event Approval(address indexed owner, address indexed spender, uint256 indexed id, uint256 amount);
     event OperatorSet(address indexed owner, address indexed spender, bool approved);
-    event TokenTTLSet(address caller, uint256 indexed id, uint256 ttl);
+    event ERC6909TTLUpdated(address caller, uint256 indexed id, uint256 ttl);
 
     function setUp() public {
         alice = makeAddr("alice");
@@ -82,7 +82,7 @@ contract ERC6909TTLTest is Test {
         uint256 ttl = 3600; // 1 hour
 
         vm.expectEmit(true, true, false, true);
-        emit TokenTTLSet(address(this), TOKEN_ID_1, ttl);
+        emit ERC6909TTLUpdated(address(this), TOKEN_ID_1, ttl);
 
         token.setTokenTTL(TOKEN_ID_1, ttl);
 

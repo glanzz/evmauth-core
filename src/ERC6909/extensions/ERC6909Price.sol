@@ -35,7 +35,7 @@ abstract contract ERC6909Price is ReentrancyGuard, ERC6909, IERC6909Price {
     /**
      * @dev Sets the initial `_treasury` address that will receive token purchase revenues.
      *
-     * Emits a {TreasurySet} event.
+     * Emits a {TreasuryUpdated} event.
      *
      * Revert if `treasuryAccount` is the zero address.
      */
@@ -127,13 +127,15 @@ abstract contract ERC6909Price is ReentrancyGuard, ERC6909, IERC6909Price {
     /**
      * @dev Sets the price for a specific token `id`.
      *
+     * Emits a {ERC6909PriceUpdated} event.
+     *
      * @param id The identifier of the token type for which to set the price.
      * @param price The price to set for the token type.
      */
     function _setTokenPrice(uint256 id, uint256 price) internal {
         _priceConfigs[id] = PriceConfig({isSet: true, price: price});
 
-        emit TokenPriceSet(_msgSender(), id, price);
+        emit ERC6909PriceUpdated(_msgSender(), id, price);
     }
 
     /**
@@ -142,7 +144,7 @@ abstract contract ERC6909Price is ReentrancyGuard, ERC6909, IERC6909Price {
      * If you want to keep the treasury address private or implement custom logic,
      * you can override this function and the `treasury` function.
      *
-     * Emits a {TreasurySet} event.
+     * Emits a {TreasuryUpdated} event.
      *
      * Reverts if `treasuryAccount` is the zero address.
      *
@@ -155,6 +157,6 @@ abstract contract ERC6909Price is ReentrancyGuard, ERC6909, IERC6909Price {
 
         _treasury = treasuryAccount;
 
-        emit TreasurySet(_msgSender(), treasuryAccount);
+        emit TreasuryUpdated(_msgSender(), treasuryAccount);
     }
 }

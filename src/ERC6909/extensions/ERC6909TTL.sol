@@ -285,7 +285,7 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
      * This function can only be called once per token `id`. If the token configuration
      * already exists, it reverts with an error.
      *
-     * Emits an {TokenConfigured} event.
+     * Emits a {ERC6909TTLUpdated} event.
      *
      * Revert if the token configuration does not exist.
      *
@@ -299,7 +299,7 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
 
         _ttlConfigs[id] = TTLConfig(true, ttl);
 
-        emit TokenTTLSet(_msgSender(), id, ttl);
+        emit ERC6909TTLUpdated(_msgSender(), id, ttl);
     }
 
     /**

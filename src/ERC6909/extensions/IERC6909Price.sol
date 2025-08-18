@@ -16,12 +16,12 @@ interface IERC6909Price is IERC6909 {
     /**
      * @dev Emitted when the price of a token `id` is set by `caller`.
      */
-    event TokenPriceSet(address caller, uint256 indexed id, uint256 price);
+    event ERC6909PriceUpdated(address caller, uint256 indexed id, uint256 price);
 
     /**
      * @dev Emitted when the treasury address is set by `caller`.
      */
-    event TreasurySet(address caller, address indexed account);
+    event TreasuryUpdated(address caller, address indexed account);
 
     /**
      * @dev Returns true if the price for a specific token `id` has been set.

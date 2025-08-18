@@ -9,9 +9,9 @@ import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
  */
 interface IERC6909TTL is IERC6909 {
     /**
-     * @dev Emitted when the token configuration for a token `id` is set by `caller`.
+     * @dev Emitted when the TTL for a token `id` is set by `caller`.
      */
-    event TokenTTLSet(address caller, uint256 indexed id, uint256 ttl);
+    event ERC6909TTLUpdated(address caller, uint256 indexed id, uint256 ttl);
 
     /**
      * @dev Returns true if the TTL for a specific token `id` has been set.

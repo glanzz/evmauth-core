@@ -50,8 +50,8 @@ contract ERC6909PurchaseWithERC20Test is Test {
     uint256 public constant PRICE_2 = 200 * 10 ** 18; // 200 tokens
 
     event Purchase(address caller, address indexed receiver, uint256 indexed id, uint256 amount, uint256 price);
-    event TokenPriceSet(address caller, uint256 indexed id, uint256 price);
-    event TreasurySet(address caller, address indexed account);
+    event ERC6909PriceUpdated(address caller, uint256 indexed id, uint256 price);
+    event TreasuryUpdated(address caller, address indexed account);
     event Transfer(address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount);
     event ERC20PaymentTokenAdded(address indexed token);
     event ERC20PaymentTokenRemoved(address indexed token);
