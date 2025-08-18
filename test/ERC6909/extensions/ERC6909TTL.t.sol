@@ -23,7 +23,11 @@ contract MockERC6909TTL is ERC6909TTL {
     }
 
     function expirationFor(uint256 id) external view returns (uint256) {
-        return _expirationFor(id);
+        return _expiration(id);
+    }
+
+    function maxBalanceRecords() external view returns (uint256) {
+        return _maxBalanceRecords();
     }
 
     function update(address from, address to, uint256 id, uint256 amount) external {
@@ -42,6 +46,11 @@ contract MockERC6909TTL is ERC6909TTL {
     // This bypasses the ERC6909TTL override and calls the parent contract's balanceOf method
     function getUnderlyingBalance(address owner, uint256 id) external view returns (uint256) {
         return super.balanceOf(owner, id);
+    }
+
+    // Helper function to get the length of the balance records array for testing
+    function getBalanceRecordsLength(address owner, uint256 id) external view returns (uint256) {
+        return _getBalanceRecordsLength(owner, id);
     }
 }
 
@@ -377,7 +386,7 @@ contract ERC6909TTLTest is Test {
     }
 
     function test_expirationBucketing() public {
-        uint256 ttl = 3000; // 50 minutes (with 30 MAX_BALANCE_RECORDS, bucket size = 100 seconds)
+        uint256 ttl = 3000; // 50 minutes (with DEFAULT_MAX_BALANCE_RECORDS, bucket size = 100 seconds)
         token.setTokenTTL(TOKEN_ID_1, ttl);
 
         uint256 expiration = token.expirationFor(TOKEN_ID_1);
@@ -389,18 +398,18 @@ contract ERC6909TTLTest is Test {
     }
 
     function test_maxBalanceRecordsLimit() public {
-        uint256 ttl = 30; // Very short TTL to create many distinct records
+        uint256 arraySize = token.maxBalanceRecords();
+        uint256 ttl = arraySize; // Very short TTL to create many distinct records
         token.setTokenTTL(TOKEN_ID_1, ttl);
 
-        // Try to create more than MAX_BALANCE_RECORDS (30) distinct expiration times
-        for (uint256 i = 0; i < 30; i++) {
+        // Try to create more than token.maxBalanceRecords (30) distinct expiration times
+        for (uint256 i = 0; i < arraySize; i++) {
             vm.warp(block.timestamp + i + 1);
             token.mint(alice, TOKEN_ID_1, 1);
         }
 
-        // 31st mint should succeed because pruning happens automatically
-        // Old expired records will be pruned to make room
-        vm.warp(block.timestamp + 31);
+        // Mint number (TTL + 1) should succeed because expired records are pruned automatically
+        vm.warp(block.timestamp + ttl + 1);
         token.mint(alice, TOKEN_ID_1, 1);
 
         // Balance should include only non-expired tokens
@@ -412,7 +421,7 @@ contract ERC6909TTLTest is Test {
         token.setTokenTTL(TOKEN_ID_1, ttl);
 
         uint256 baseTime = block.timestamp;
-        uint256 increment = ttl / token.MAX_BALANCE_RECORDS(); // 2880 seconds (48 minutes)
+        uint256 increment = ttl / token.maxBalanceRecords(); // 2880 seconds (48 minutes)
 
         // Mint at different times
         token.mint(alice, TOKEN_ID_1, 100); // Expires first
@@ -602,8 +611,8 @@ contract ERC6909TTLTest is Test {
         assertEq(token.balanceOf(bob, TOKEN_ID_1), 30);
     }
 
-    function test_expirationForUnsetTokenTTL() public {
-        // Test calling expirationFor on a token that has no TTL set
+    function test_expiration_UnsetTokenTTL() public {
+        // Test calling _expiration on a token that has no TTL set
         vm.expectRevert(abi.encodeWithSelector(ERC6909TTL.ERC6909TTLTokenTLLNotSet.selector, TOKEN_ID_3));
         token.expirationFor(TOKEN_ID_3);
     }
@@ -742,7 +751,7 @@ contract ERC6909TTLTest is Test {
 
     function test_minimumBucketSize() public {
         // Test when TTL is so small that bucketSize would be 0
-        uint256 ttl = 29; // Less than MAX_BALANCE_RECORDS
+        uint256 ttl = token.maxBalanceRecords() - 1;
         token.setTokenTTL(TOKEN_ID_1, ttl);
 
         token.mint(alice, TOKEN_ID_1, 100);
@@ -1082,5 +1091,122 @@ contract ERC6909TTLTest is Test {
         // Verify all tokens are accounted for
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 750);
         assertEq(token.getUnderlyingBalance(alice, TOKEN_ID_1), 750);
+    }
+
+    function test_arrayShrinkingWhenLargeAndHalfEmpty() public {
+        // Test the array shrinking logic when less than half is used and array is large
+        // The shrinking occurs when: currentLength > writeIndex * 2 && currentLength > 10
+
+        uint256 ttl = 20;
+        token.setTokenTTL(TOKEN_ID_1, ttl);
+
+        uint256 maxRecords = token.maxBalanceRecords();
+        uint256 recordsToCreate = maxRecords / 2 + 1; // Create just over half of max records
+
+        // Create records with different expiration times
+        // Each mint happens 1 second apart to ensure different expiration buckets
+        uint256 startTime = block.timestamp;
+        for (uint256 i = 0; i < recordsToCreate; i++) {
+            vm.warp(startTime + i);
+            token.mint(alice, TOKEN_ID_1, 10);
+        }
+
+        // Verify the array has the expected number of records
+        uint256 initialLength = token.getBalanceRecordsLength(alice, TOKEN_ID_1);
+        assertEq(initialLength, recordsToCreate, "Initial array length should match records created");
+
+        // Now wait for all records to expire
+        vm.warp(startTime + ttl + recordsToCreate + 1);
+
+        // At this point, all records have expired
+        assertEq(token.balanceOf(alice, TOKEN_ID_1), 0, "All tokens should have expired");
+
+        // Trigger pruning by minting a new token
+        // This will call _pruneBalanceRecords which should detect that:
+        // 1. All existing records are expired (writeIndex will be 0)
+        // 2. currentLength > 10 (we have 16 records)
+        // 3. currentLength > writeIndex * 2 (16 > 0 * 2)
+        // Therefore it should clear the entire array
+        token.mint(alice, TOKEN_ID_1, 5);
+
+        // Check that the array was shrunk
+        uint256 finalLength = token.getBalanceRecordsLength(alice, TOKEN_ID_1);
+        assertEq(finalLength, 1, "Array should be shrunk to just the new record");
+
+        // Verify the balance is correct
+        assertEq(token.balanceOf(alice, TOKEN_ID_1), 5, "Balance should be the newly minted amount");
+    }
+
+    function test_arrayShrinkingAllRecordsInvalid() public {
+        // Test complete array clearing when all records are invalid
+        // This tests the condition: writeIndex == 0 && currentLength > 0
+
+        uint256 ttl = 10; // 10 seconds
+        token.setTokenTTL(TOKEN_ID_1, ttl);
+
+        // Create some records
+        token.mint(alice, TOKEN_ID_1, 100);
+        vm.warp(block.timestamp + 1);
+        token.mint(alice, TOKEN_ID_1, 200);
+        vm.warp(block.timestamp + 1);
+        token.mint(alice, TOKEN_ID_1, 300);
+
+        // Verify we have 3 records
+        uint256 initialLength = token.getBalanceRecordsLength(alice, TOKEN_ID_1);
+        assertEq(initialLength, 3, "Should have 3 records initially");
+
+        // Wait for all to expire
+        vm.warp(block.timestamp + ttl + 10);
+
+        // Balance should be 0 since all expired
+        assertEq(token.balanceOf(alice, TOKEN_ID_1), 0, "All tokens should have expired");
+
+        // Trigger pruning by minting a new token
+        // This will detect all records are invalid (writeIndex = 0) and clear the array
+        token.mint(alice, TOKEN_ID_1, 50);
+
+        // Check that the array was completely cleared and rebuilt with just the new record
+        uint256 finalLength = token.getBalanceRecordsLength(alice, TOKEN_ID_1);
+        assertEq(finalLength, 1, "Array should be cleared and have just the new record");
+
+        // Verify the balance is correct
+        assertEq(token.balanceOf(alice, TOKEN_ID_1), 50, "Balance should be the newly minted amount");
+    }
+
+    function test_arrayShrinkingPartiallyUsed() public {
+        // Test partial array shrinking when less than half is used
+        // This specifically tests: currentLength > writeIndex * 2 && currentLength > 10
+
+        uint256 ttl = 30; // 30 seconds TTL
+        token.setTokenTTL(TOKEN_ID_1, ttl);
+
+        // Create exactly 12 records (need > 10 for shrinking to be considered)
+        uint256 startTime = block.timestamp;
+        for (uint256 i = 0; i < 12; i++) {
+            vm.warp(startTime + i);
+            token.mint(alice, TOKEN_ID_1, 10 + i); // Different amounts for tracking
+        }
+
+        // Verify initial array length
+        uint256 initialLength = token.getBalanceRecordsLength(alice, TOKEN_ID_1);
+        assertEq(initialLength, 12, "Should have 12 records initially");
+
+        // Now expire most records, keeping only 5 valid (less than half of 12)
+        // Records 0-6 will expire, records 7-11 will remain valid
+        vm.warp(startTime + 7 + ttl - 1);
+
+        // Trigger pruning - this should shrink the array
+        // After pruning: writeIndex = 5, currentLength = 12
+        // Condition: 12 > 5 * 2 (true) && 12 > 10 (true) => should shrink
+        token.mint(alice, TOKEN_ID_1, 100);
+
+        // The array should be shrunk to approximately the number of valid records
+        uint256 finalLength = token.getBalanceRecordsLength(alice, TOKEN_ID_1);
+        assertLe(finalLength, 6, "Array should be shrunk to approximately valid records + 1");
+        assertGe(finalLength, 5, "Array should have at least the valid records");
+
+        // Verify balance is correct (5 records of 17-21 + new 100)
+        uint256 expectedBalance = 17 + 18 + 19 + 20 + 21 + 100; // = 195
+        assertEq(token.balanceOf(alice, TOKEN_ID_1), expectedBalance, "Balance should be correct after pruning");
     }
 }

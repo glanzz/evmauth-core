@@ -70,7 +70,7 @@ contract ERC6909AccessControlTest is Test {
         tokenManager = makeAddr("tokenManager");
         minter = makeAddr("tokenMinter");
         burner = makeAddr("tokenBurner");
-        accessManager = makeAddr("operator");
+        accessManager = makeAddr("accessManager");
         treasurer = makeAddr("treasurer");
         treasury = payable(makeAddr("treasury"));
         alice = makeAddr("alice");
@@ -774,8 +774,6 @@ contract ERC6909AccessControlTest is Test {
     }
 
     function test_freezeAccount_multiple() public {
-        bytes32 ACCOUNT_FROZEN_STATUS = keccak256("ACCOUNT_FROZEN_STATUS");
-
         // Freeze multiple accounts
         vm.startPrank(accessManager);
         token.freezeAccount(alice);

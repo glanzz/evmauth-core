@@ -12,7 +12,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  */
 abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
     // Maximum per address, per token ID
-    uint256 public constant MAX_BALANCE_RECORDS = 30;
+    uint256 public constant DEFAULT_MAX_BALANCE_RECORDS = 30;
 
     // Balance record data structure that ties an amount to an expiration time
     struct BalanceRecord {
@@ -27,7 +27,7 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
     }
 
     // Owner => Token ID => Array of balance records
-    mapping(address owner => mapping(uint256 id => BalanceRecord[MAX_BALANCE_RECORDS])) private _balanceRecords;
+    mapping(address owner => mapping(uint256 id => BalanceRecord[])) private _balanceRecords;
 
     // Token ID => token configuration (cannot be changed after being set)
     mapping(uint256 id => TTLConfig) private _ttlConfigs;
@@ -58,16 +58,34 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
 
     /// @inheritdoc IERC6909
     function balanceOf(address owner, uint256 id) public view virtual override(ERC6909, IERC6909) returns (uint256) {
-        BalanceRecord[MAX_BALANCE_RECORDS] storage records = _balanceRecords[owner][id];
+        BalanceRecord[] storage records = _balanceRecords[owner][id];
         uint256 balance = 0;
+        uint256 currentLength = records.length;
 
-        for (uint256 i = 0; i < records.length; i++) {
+        for (uint256 i = 0; i < currentLength; i++) {
             if (records[i].expiresAt > block.timestamp) {
                 balance += records[i].amount;
             }
         }
 
         return balance;
+    }
+
+    /**
+     * @dev Returns the maximum number of balance records per address, per token ID.
+     * Each balance record is a tuple of (amount, expiresAt), and each address/token pair has an array of them.
+     * This is used to limit the number of balance records stored for each address and token ID, which helps
+     * prevent unbounded storage growth and denial-of-service attacks that could cause balance record maintenance
+     * operations to require excessive gas.
+     *
+     * When a token is minted or purchased, the expiration will be:
+     * - Minimum: TTL seconds
+     * - Maximum: TTL + (TTL / DEFAULT_MAX_BALANCE_RECORDS - 1) seconds
+     *
+     * This function can be overridden to change the maximum number of balance records.
+     */
+    function _maxBalanceRecords() internal view virtual returns (uint256) {
+        return DEFAULT_MAX_BALANCE_RECORDS;
     }
 
     /**
@@ -94,7 +112,7 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
             if (to == address(0)) {
                 revert ERC6909.ERC6909InvalidReceiver(address(0));
             }
-            uint256 expiresAt = _expirationFor(id);
+            uint256 expiresAt = _expiration(id);
             _addToBalanceRecord(to, id, uint256(amount), expiresAt);
         } else if (to == address(0)) {
             // Burn
@@ -130,11 +148,12 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
         // First, prune expired records to free up space
         _pruneBalanceRecords(account, id);
 
-        BalanceRecord[MAX_BALANCE_RECORDS] storage records = _balanceRecords[account][id];
+        BalanceRecord[] storage records = _balanceRecords[account][id];
+        uint256 currentLength = records.length;
+        uint256 insertIndex = currentLength;
 
         // Find the correct position to insert (sorted by expiration)
-        uint256 insertIndex = MAX_BALANCE_RECORDS;
-        for (uint256 i = 0; i < MAX_BALANCE_RECORDS; i++) {
+        for (uint256 i = 0; i < currentLength; i++) {
             // Empty slot found
             if (records[i].amount == 0 && records[i].expiresAt == 0) {
                 insertIndex = i;
@@ -152,17 +171,25 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
             }
         }
 
-        // If inserting in the middle, shift elements to the right
-        if (records[insertIndex].amount != 0 || records[insertIndex].expiresAt != 0) {
+        // If we need to insert at or beyond current length, push new element
+        if (insertIndex >= currentLength) {
+            // Append a new record to the array
+            records.push(BalanceRecord(amount, expiresAt));
+        } else if (records[insertIndex].amount == 0 && records[insertIndex].expiresAt == 0) {
+            // Insert into empty slot
+            records[insertIndex] = BalanceRecord(amount, expiresAt);
+        } else {
+            // Append a new empty record to the array
+            records.push(BalanceRecord(0, 0));
+
             // Shift elements right from the last position
-            // After pruning, all empty slots are at the end, so we can start from MAX_BALANCE_RECORDS - 1
-            for (uint256 i = MAX_BALANCE_RECORDS - 1; i > insertIndex; i--) {
+            for (uint256 i = records.length - 1; i > insertIndex; i--) {
                 records[i] = records[i - 1];
             }
-        }
 
-        // Insert the new record
-        records[insertIndex] = BalanceRecord(amount, expiresAt);
+            // Insert the new record
+            records[insertIndex] = BalanceRecord(amount, expiresAt);
+        }
     }
 
     /**
@@ -176,11 +203,12 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
      * @param amount The amount to deduct from the balance records.
      */
     function _deductFromBalanceRecords(address account, uint256 id, uint256 amount) internal {
-        BalanceRecord[MAX_BALANCE_RECORDS] storage records = _balanceRecords[account][id];
+        BalanceRecord[] storage records = _balanceRecords[account][id];
         uint256 debt = amount;
         uint256 currentTime = block.timestamp;
+        uint256 currentLength = records.length;
 
-        for (uint256 i = 0; i < MAX_BALANCE_RECORDS && debt > 0; i++) {
+        for (uint256 i = 0; i < currentLength && debt > 0; i++) {
             // Skip expired or empty records
             if (records[i].expiresAt <= currentTime || records[i].amount == 0) {
                 continue;
@@ -221,11 +249,12 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
     function _transferBalanceRecords(address from, address to, uint256 id, uint256 amount) internal {
         if (from == to || amount == 0) return;
 
-        BalanceRecord[MAX_BALANCE_RECORDS] storage fromRecords = _balanceRecords[from][id];
+        BalanceRecord[] storage fromRecords = _balanceRecords[from][id];
         uint256 debt = amount;
         uint256 currentTime = block.timestamp;
+        uint256 currentLength = fromRecords.length;
 
-        for (uint256 i = 0; i < MAX_BALANCE_RECORDS && debt > 0; i++) {
+        for (uint256 i = 0; i < currentLength && debt > 0; i++) {
             // Skip expired or empty records
             if (fromRecords[i].expiresAt <= currentTime || fromRecords[i].amount == 0) {
                 continue;
@@ -259,12 +288,13 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
      * @param id The identifier of the token type to prune.
      */
     function _pruneBalanceRecords(address account, uint256 id) internal {
-        BalanceRecord[MAX_BALANCE_RECORDS] storage records = _balanceRecords[account][id];
+        BalanceRecord[] storage records = _balanceRecords[account][id];
         uint256 currentTime = block.timestamp;
         uint256 writeIndex = 0;
+        uint256 currentLength = records.length;
 
         // Compact valid records to the front
-        for (uint256 i = 0; i < MAX_BALANCE_RECORDS; i++) {
+        for (uint256 i = 0; i < currentLength; i++) {
             bool isValid = records[i].amount > 0 && records[i].expiresAt > currentTime;
             if (isValid) {
                 if (i != writeIndex) {
@@ -275,8 +305,22 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
         }
 
         // Clear remaining slots
-        for (uint256 i = writeIndex; i < MAX_BALANCE_RECORDS; i++) {
+        for (uint256 i = writeIndex; i < currentLength; i++) {
             records[i] = BalanceRecord(0, 0);
+        }
+
+        // Optionally shrink the array if many slots are empty
+        // This helps keep storage costs down
+        if (writeIndex == 0 && currentLength > 0) {
+            // All records are invalid, clear the array
+            while (records.length > 0) {
+                records.pop();
+            }
+        } else if (currentLength > writeIndex * 2 && currentLength > 10) {
+            // If less than half the array is used and array is large, shrink it
+            while (records.length > writeIndex) {
+                records.pop();
+            }
         }
     }
 
@@ -320,7 +364,7 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
      * @param id The identifier of the token type to get the expiration time for.
      * @return The expiration timestamp for the token `id`.
      */
-    function _expirationFor(uint256 id) internal view returns (uint256) {
+    function _expiration(uint256 id) internal view returns (uint256) {
         if (!_ttlConfigs[id].isSet) {
             revert ERC6909TTLTokenTLLNotSet(id);
         }
@@ -332,11 +376,24 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
         }
 
         uint256 exactExpiration = block.timestamp + ttl;
-        uint256 bucketSize = ttl / MAX_BALANCE_RECORDS;
+        uint256 arraySize = _maxBalanceRecords();
+        uint256 bucketSize = ttl / arraySize;
         if (bucketSize == 0) {
             bucketSize = 1;
         }
 
         return ((exactExpiration + bucketSize - 1) / bucketSize) * bucketSize;
+    }
+
+    /**
+     * @dev Returns the length of the balance records array for a given account and token ID.
+     * This is an internal helper function primarily used for testing purposes.
+     *
+     * @param account The address of the account.
+     * @param id The identifier of the token type.
+     * @return The length of the balance records array.
+     */
+    function _getBalanceRecordsLength(address account, uint256 id) internal view returns (uint256) {
+        return _balanceRecords[account][id].length;
     }
 }
