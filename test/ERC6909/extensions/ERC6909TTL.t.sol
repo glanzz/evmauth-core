@@ -1194,6 +1194,8 @@ contract ERC6909TTLTest is Test {
         // Now expire most records, keeping only 5 valid (less than half of 12)
         // Records 0-6 will expire, records 7-11 will remain valid
         vm.warp(startTime + 7 + ttl - 1);
+        uint256 halfExpiredLength = token.getBalanceRecordsLength(alice, TOKEN_ID_1);
+        assertEq(halfExpiredLength, 12, "Array length should still be 12 before pruning");
 
         // Trigger pruning - this should shrink the array
         // After pruning: writeIndex = 5, currentLength = 12
