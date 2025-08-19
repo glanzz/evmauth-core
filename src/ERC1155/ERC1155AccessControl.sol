@@ -129,7 +129,13 @@ contract ERC1155AccessControl is
     }
 
     /// @inheritdoc IERC1155MetadataURI
-    function uri(uint256 tokenId) public view virtual override(ERC1155, ERC1155Base, IERC1155MetadataURI) returns (string memory) {
+    function uri(uint256 tokenId)
+        public
+        view
+        virtual
+        override(ERC1155, ERC1155Base, IERC1155MetadataURI)
+        returns (string memory)
+    {
         return ERC1155Base.uri(tokenId);
     }
 
@@ -253,7 +259,12 @@ contract ERC1155AccessControl is
     /**
      * @inheritdoc IERC1155AccessControl
      */
-    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts) external virtual onlyRole(MINTER_ROLE) returns (bool) {
+    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts)
+        external
+        virtual
+        onlyRole(MINTER_ROLE)
+        returns (bool)
+    {
         _mintBatch(to, ids, amounts, "");
         return true;
     }
@@ -269,7 +280,12 @@ contract ERC1155AccessControl is
     /**
      * @inheritdoc IERC1155AccessControl
      */
-    function burnBatch(address from, uint256[] memory ids, uint256[] memory amounts) external virtual onlyRole(BURNER_ROLE) returns (bool) {
+    function burnBatch(address from, uint256[] memory ids, uint256[] memory amounts)
+        external
+        virtual
+        onlyRole(BURNER_ROLE)
+        returns (bool)
+    {
         _burnBatch(from, ids, amounts);
         return true;
     }

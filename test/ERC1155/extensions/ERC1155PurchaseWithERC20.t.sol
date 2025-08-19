@@ -89,16 +89,8 @@ contract ERC1155PurchaseWithERC20Test is Test {
     }
 
     function test_supportsInterface() public view {
-        // Test the ERC1155 interface
         assertTrue(token.supportsInterface(type(IERC1155).interfaceId));
-
-        // Test the IERC1155PurchaseWithERC20 interface
         assertTrue(token.supportsInterface(type(IERC1155PurchaseWithERC20).interfaceId));
-
-        // Test that supportsInterface is actually being called (coverage test)
-        bytes4 interfaceId = type(IERC1155PurchaseWithERC20).interfaceId;
-        bool supported = token.supportsInterface(interfaceId);
-        assertTrue(supported);
 
         // Test an unsupported interface
         assertFalse(token.supportsInterface(0xffffffff));
@@ -202,7 +194,7 @@ contract ERC1155PurchaseWithERC20Test is Test {
         // Test with USDC-like token (6 decimals)
         uint256 amount = 1;
         uint256 usdcPrice = 100 * 10 ** 6; // 100 USDC
-        
+
         // Set a different price for testing USDC
         token.setTokenPrice(TOKEN_ID_1, usdcPrice);
 

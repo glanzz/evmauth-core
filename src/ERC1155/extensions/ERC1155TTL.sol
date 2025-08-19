@@ -89,8 +89,8 @@ abstract contract ERC1155TTL is ERC1155, IERC1155TTL {
     }
 
     /**
-     * @dev Transfers `values` amounts of tokens of types `ids` from `from` to `to`, or alternatively mints (or burns) 
-     * if `from` (or `to`) is the zero address. All customizations to transfers, mints, and burns should be done by 
+     * @dev Transfers `values` amounts of tokens of types `ids` from `from` to `to`, or alternatively mints (or burns)
+     * if `from` (or `to`) is the zero address. All customizations to transfers, mints, and burns should be done by
      * overriding this function.
      *
      * Emits either {TransferSingle} or {TransferBatch} events, depending on the lengths of the arrays.
@@ -107,13 +107,11 @@ abstract contract ERC1155TTL is ERC1155, IERC1155TTL {
      * @param ids The identifiers of the token types to transfer.
      * @param values The numbers of tokens to transfer.
      */
-    function _update(address from, address to, uint256[] memory ids, uint256[] memory values) internal virtual override {
-        if (from == to) {
-            // Call the parent update function for consistency (may emit events)
-            super._update(from, to, ids, values);
-            return;
-        }
-
+    function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
+        internal
+        virtual
+        override
+    {
         for (uint256 i = 0; i < ids.length; i++) {
             uint256 id = ids[i];
             uint256 value = values[i];

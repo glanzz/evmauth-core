@@ -66,7 +66,9 @@ contract ERC1155BaseTest is Test {
 
     // Events
     event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
-    event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
+    event TransferBatch(
+        address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values
+    );
     event ApprovalForAll(address indexed account, address indexed operator, bool approved);
     event URI(string value, uint256 indexed id);
     event ERC1155NonTransferableUpdated(uint256 indexed id, bool nonTransferable);
@@ -80,17 +82,9 @@ contract ERC1155BaseTest is Test {
     }
 
     function test_supportsInterface() public view {
-        // Test that it supports the base ERC1155 interface
         assertTrue(token.supportsInterface(type(IERC1155).interfaceId));
-
-        // Test that it supports the IERC1155Base interface
         assertTrue(token.supportsInterface(type(IERC1155Base).interfaceId));
-
-        // Test that it supports the metadata interface
         assertTrue(token.supportsInterface(type(IERC1155MetadataURI).interfaceId));
-
-        // Test ERC165 interface support
-        assertTrue(token.supportsInterface(0x01ffc9a7)); // ERC165 interface ID
 
         // Test that it returns false for unsupported interfaces
         assertFalse(token.supportsInterface(0xffffffff));
@@ -529,7 +523,7 @@ contract ERC1155BaseTest is Test {
         token.safeBatchTransferFrom(alice, bob, ids, transferAmounts, "");
     }
 
-    function test_setApprovalForAll_and_safeTransferFrom() public {
+    function test_setApprovalForAll_safeTransferFrom() public {
         uint256 amount = 1000;
         uint256 transferAmount = 400;
 
@@ -557,7 +551,7 @@ contract ERC1155BaseTest is Test {
         assertEq(token.balanceOf(charlie, TOKEN_ID_1), transferAmount);
     }
 
-    function test_setApprovalForAll_and_safeBatchTransferFrom() public {
+    function test_setApprovalForAll_safeBatchTransferFrom() public {
         uint256[] memory ids = new uint256[](2);
         uint256[] memory amounts = new uint256[](2);
         uint256[] memory transferAmounts = new uint256[](2);

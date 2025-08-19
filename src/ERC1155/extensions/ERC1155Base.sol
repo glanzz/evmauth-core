@@ -54,7 +54,13 @@ abstract contract ERC1155Base is IERC1155Base, ERC1155Supply, ERC1155URIStorage,
     }
 
     /// @inheritdoc ERC1155URIStorage
-    function uri(uint256 tokenId) public view virtual override(ERC1155, ERC1155URIStorage, IERC1155MetadataURI) returns (string memory) {
+    function uri(uint256 tokenId)
+        public
+        view
+        virtual
+        override(ERC1155, ERC1155URIStorage, IERC1155MetadataURI)
+        returns (string memory)
+    {
         return ERC1155URIStorage.uri(tokenId);
     }
 

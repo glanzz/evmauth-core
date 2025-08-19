@@ -67,9 +67,17 @@ contract ERC1155PriceTest is Test {
         assertEq(token.treasury(), treasury);
     }
 
-    function test_constructorWithZeroTreasury() public {
+    function test_constructor_zeroAddressForTreasury() public {
         vm.expectRevert(abi.encodeWithSelector(ERC1155Price.ERC1155PriceInvalidTreasury.selector, address(0)));
         new MockERC1155Price(payable(address(0)));
+    }
+
+    function test_supportsInterface() public view {
+        assertTrue(token.supportsInterface(type(IERC1155).interfaceId));
+        assertTrue(token.supportsInterface(type(IERC1155Price).interfaceId));
+
+        // Test an unsupported interface
+        assertFalse(token.supportsInterface(0xffffffff));
     }
 
     function test_setTokenPrice() public {
@@ -82,7 +90,7 @@ contract ERC1155PriceTest is Test {
         assertEq(token.priceOf(TOKEN_ID_1), PRICE_1);
     }
 
-    function test_setTokenPriceToZero() public {
+    function test_setTokenPrice_zeroPrice() public {
         token.setTokenPrice(TOKEN_ID_1, 0);
 
         assertTrue(token.priceIsSet(TOKEN_ID_1));
@@ -122,7 +130,7 @@ contract ERC1155PriceTest is Test {
         assertEq(token.treasury(), newTreasury);
     }
 
-    function test_setTreasuryToZeroAddress() public {
+    function test_setTreasury_zeroAddress() public {
         vm.expectRevert(abi.encodeWithSelector(ERC1155Price.ERC1155PriceInvalidTreasury.selector, address(0)));
         token.setTreasury(payable(address(0)));
     }
@@ -141,7 +149,7 @@ contract ERC1155PriceTest is Test {
         assertEq(token.priceOf(TOKEN_ID_1), PRICE_1);
     }
 
-    function test_priceOfNotSet() public {
+    function test_priceOf_priceNotSet() public {
         vm.expectRevert(abi.encodeWithSelector(ERC1155Price.ERC1155PriceTokenPriceNotSet.selector, TOKEN_ID_1));
         token.priceOf(TOKEN_ID_1);
     }
@@ -157,21 +165,21 @@ contract ERC1155PriceTest is Test {
         assertEq(totalPrice, expectedTotalPrice);
     }
 
-    function test_validatePurchaseZeroAmount() public {
+    function test_validatePurchase_zeroAmount() public {
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1155Price.ERC1155PriceInvalidAmount.selector, 0));
         token.testValidatePurchase(alice, TOKEN_ID_1, 0);
     }
 
-    function test_validatePurchaseZeroAddress() public {
+    function test_validatePurchase_zeroAddress() public {
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1155Price.ERC1155PriceInvalidReceiver.selector, address(0)));
         token.testValidatePurchase(address(0), TOKEN_ID_1, 1);
     }
 
-    function test_validatePurchasePriceNotSet() public {
+    function test_validatePurchase_priceNotSet() public {
         vm.expectRevert(abi.encodeWithSelector(ERC1155Price.ERC1155PriceTokenPriceNotSet.selector, TOKEN_ID_1));
         token.testValidatePurchase(alice, TOKEN_ID_1, 1);
     }
@@ -192,11 +200,6 @@ contract ERC1155PriceTest is Test {
 
     function test_getTreasury() public view {
         assertEq(token.testGetTreasury(), treasury);
-    }
-
-    function test_supportsInterface() public view {
-        assertTrue(token.supportsInterface(type(IERC1155).interfaceId));
-        assertTrue(token.supportsInterface(type(IERC1155Price).interfaceId));
     }
 
     function test_updatePriceMultipleTimes() public {
@@ -231,28 +234,28 @@ contract ERC1155PriceTest is Test {
     function test_reentrancyGuardProtection() public {
         // Set up a malicious contract that attempts to reenter
         MaliciousReceiver maliciousReceiver = new MaliciousReceiver(address(token));
-        
+
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
-        
+
         // This should not trigger reentrancy since _completePurchase doesn't make external calls
         // but we test to ensure the ReentrancyGuard is properly inherited
         uint256 amount = 1;
         uint256 totalPrice = PRICE_1 * amount;
-        
+
         token.testCompletePurchase(address(maliciousReceiver), TOKEN_ID_1, amount, totalPrice);
-        
+
         assertEq(token.balanceOf(address(maliciousReceiver), TOKEN_ID_1), amount);
     }
 
     function test_mintWithDataParameter() public {
         bytes memory data = "test data";
         uint256 amount = 10;
-        
+
         vm.expectEmit(true, true, true, true);
         emit TransferSingle(address(this), address(0), alice, TOKEN_ID_1, amount);
-        
+
         token.mint(alice, TOKEN_ID_1, amount, data);
-        
+
         assertEq(token.balanceOf(alice, TOKEN_ID_1), amount);
     }
 
@@ -260,12 +263,12 @@ contract ERC1155PriceTest is Test {
         // Test that _completePurchase uses empty data parameter as expected
         uint256 amount = 3;
         uint256 totalPrice = PRICE_1 * amount;
-        
+
         // Set up a contract that checks the data parameter in onERC1155Received
         DataChecker dataChecker = new DataChecker();
-        
+
         token.testCompletePurchase(address(dataChecker), TOKEN_ID_1, amount, totalPrice);
-        
+
         assertEq(token.balanceOf(address(dataChecker), TOKEN_ID_1), amount);
         assertTrue(dataChecker.receivedEmptyData());
     }
@@ -273,9 +276,9 @@ contract ERC1155PriceTest is Test {
     function test_priceCalculationOverflow() public {
         uint256 maxPrice = type(uint256).max / 3;
         uint256 amount = 2;
-        
+
         token.setTokenPrice(TOKEN_ID_1, maxPrice);
-        
+
         // This should not overflow
         uint256 totalPrice = token.testValidatePurchase(alice, TOKEN_ID_1, amount);
         assertEq(totalPrice, maxPrice * amount);
@@ -320,18 +323,12 @@ contract ERC1155PriceTest is Test {
 // Helper contract for testing reentrancy protection
 contract MaliciousReceiver {
     address public tokenContract;
-    
+
     constructor(address _tokenContract) {
         tokenContract = _tokenContract;
     }
-    
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) external pure returns (bytes4) {
+
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure returns (bytes4) {
         // In a real attack, this would try to call back into the token contract
         // But since _completePurchase doesn't make external calls during minting,
         // reentrancy isn't possible here. This is just for testing the guard is present.
@@ -342,14 +339,8 @@ contract MaliciousReceiver {
 // Helper contract for testing data parameter
 contract DataChecker {
     bool public receivedEmptyData = false;
-    
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata data
-    ) external returns (bytes4) {
+
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata data) external returns (bytes4) {
         if (data.length == 0) {
             receivedEmptyData = true;
         }

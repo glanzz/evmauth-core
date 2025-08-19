@@ -78,7 +78,9 @@ contract ERC1155TTLTest is Test {
     uint256 public constant TOKEN_ID_3 = 3;
 
     event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
-    event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
+    event TransferBatch(
+        address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values
+    );
     event ApprovalForAll(address indexed account, address indexed operator, bool approved);
     event ERC1155TTLUpdated(address caller, uint256 indexed id, uint256 ttl);
 
@@ -91,8 +93,8 @@ contract ERC1155TTLTest is Test {
     }
 
     function test_supportsInterface() public view {
-        assertTrue(token.supportsInterface(type(IERC1155).interfaceId));
         assertTrue(token.supportsInterface(type(IERC1155TTL).interfaceId));
+        assertTrue(token.supportsInterface(type(IERC1155).interfaceId));
 
         // Test an unsupported interface
         assertFalse(token.supportsInterface(0xffffffff));
@@ -219,7 +221,7 @@ contract ERC1155TTLTest is Test {
     function test_safeBatchTransferFrom() public {
         token.setTokenTTL(TOKEN_ID_1, 3600);
         token.setTokenTTL(TOKEN_ID_2, 7200);
-        
+
         token.mint(alice, TOKEN_ID_1, 1000, "");
         token.mint(alice, TOKEN_ID_2, 2000, "");
 
@@ -246,12 +248,12 @@ contract ERC1155TTLTest is Test {
     function test_safeBatchTransferFrom_withExpiringTokens() public {
         uint256 ttl1 = 3600; // 1 hour
         uint256 ttl2 = 7200; // 2 hours
-        
+
         token.setTokenTTL(TOKEN_ID_1, ttl1);
         token.setTokenTTL(TOKEN_ID_2, ttl2);
 
         uint256 timestamp = block.timestamp;
-        
+
         token.mint(alice, TOKEN_ID_1, 1000, "");
         token.mint(alice, TOKEN_ID_2, 2000, "");
 
@@ -272,7 +274,7 @@ contract ERC1155TTLTest is Test {
 
         // Fast forward past first token's expiration
         vm.warp(actualExpiration1 + 1);
-        
+
         // TOKEN_ID_1 should be expired, TOKEN_ID_2 should still be valid
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 0);
         assertEq(token.balanceOf(alice, TOKEN_ID_2), 1000);
@@ -305,7 +307,7 @@ contract ERC1155TTLTest is Test {
     function test_burnBatch() public {
         token.setTokenTTL(TOKEN_ID_1, 3600);
         token.setTokenTTL(TOKEN_ID_2, 7200);
-        
+
         token.mint(alice, TOKEN_ID_1, 1000, "");
         token.mint(alice, TOKEN_ID_2, 2000, "");
 
@@ -588,7 +590,9 @@ contract ERC1155TTLTest is Test {
         vm.warp(actualExpiration + 1);
 
         // Try to burn the original amount (should fail since all expired)
-        vm.expectRevert(abi.encodeWithSelector(IERC1155Errors.ERC1155InsufficientBalance.selector, alice, 0, 100, TOKEN_ID_1));
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC1155Errors.ERC1155InsufficientBalance.selector, alice, 0, 100, TOKEN_ID_1)
+        );
         token.burn(alice, TOKEN_ID_1, 100);
     }
 
@@ -609,7 +613,9 @@ contract ERC1155TTLTest is Test {
 
         // Try to transfer expired tokens (should fail)
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(IERC1155Errors.ERC1155InsufficientBalance.selector, alice, 0, 50, TOKEN_ID_1));
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC1155Errors.ERC1155InsufficientBalance.selector, alice, 0, 50, TOKEN_ID_1)
+        );
         token.safeTransferFrom(alice, bob, TOKEN_ID_1, 50, "");
     }
 
@@ -815,20 +821,18 @@ contract ERC1155TTLTest is Test {
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 70); // 5*10 + 4*5
     }
 
-    function test_updateFromZeroAddressToZeroAddress() public {
-        // Test calling _update directly with both `from` and `to` as zero addresses
-        // When both from and to are zero, it returns early due to from == to check
-        // and calls super._update which should handle it appropriately (no revert expected)
+    function test_update_fromZeroAddress_toZeroAddress() public {
         uint256[] memory ids = new uint256[](1);
         ids[0] = TOKEN_ID_1;
         uint256[] memory values = new uint256[](1);
         values[0] = 100;
 
-        // This should not revert because from == to triggers early return
+        vm.expectRevert(abi.encodeWithSelector(IERC1155Errors.ERC1155InvalidReceiver.selector, address(0)));
+
         token.update(address(0), address(0), ids, values);
     }
 
-    function test_deductFromBalanceRecordsWithInsufficientBalance() public {
+    function test_deductFromBalanceRecords_insufficientBalance() public {
         // Test calling _deductFromBalanceRecords directly with insufficient balance
         uint256 ttl = 3600; // 1 hour
         token.setTokenTTL(TOKEN_ID_1, ttl);
@@ -842,7 +846,7 @@ contract ERC1155TTLTest is Test {
         token.deductFromBalanceRecords(alice, TOKEN_ID_1, 200);
     }
 
-    function test_transferBalanceRecordsWithInsufficientBalance() public {
+    function test_transferBalanceRecords_insufficientBalance() public {
         // Test calling _transferBalanceRecords directly with insufficient balance
         uint256 ttl = 3600; // 1 hour
         token.setTokenTTL(TOKEN_ID_1, ttl);
@@ -1295,12 +1299,12 @@ contract ERC1155TTLTest is Test {
     function test_safeBatchTransferFrom_withExpiration() public {
         uint256 ttl1 = 3600; // 1 hour
         uint256 ttl2 = 7200; // 2 hours
-        
+
         token.setTokenTTL(TOKEN_ID_1, ttl1);
         token.setTokenTTL(TOKEN_ID_2, ttl2);
 
         uint256 timestamp = block.timestamp;
-        
+
         // Mint tokens at the same time
         token.mint(alice, TOKEN_ID_1, 1000, "");
         token.mint(alice, TOKEN_ID_2, 2000, "");
@@ -1323,11 +1327,11 @@ contract ERC1155TTLTest is Test {
 
         // Fast forward past first token's expiration but before second
         vm.warp(actualExpiration1 + 1);
-        
+
         // TOKEN_ID_1 should be expired for both alice and bob
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 0);
         assertEq(token.balanceOf(bob, TOKEN_ID_1), 0);
-        
+
         // TOKEN_ID_2 should still be valid for both
         assertEq(token.balanceOf(alice, TOKEN_ID_2), 1000);
         assertEq(token.balanceOf(bob, TOKEN_ID_2), 1000);
@@ -1358,7 +1362,7 @@ contract ERC1155TTLTest is Test {
 
         assertEq(balances[0], 1000); // alice TOKEN_ID_1
         assertEq(balances[1], 2000); // alice TOKEN_ID_2
-        assertEq(balances[2], 500);  // bob TOKEN_ID_1
+        assertEq(balances[2], 500); // bob TOKEN_ID_1
         assertEq(balances[3], 1500); // bob TOKEN_ID_2
     }
 
@@ -1389,7 +1393,7 @@ contract ERC1155TTLTest is Test {
 
         uint256[] memory balances = token.balanceOfBatch(accounts, ids);
 
-        assertEq(balances[0], 0);    // alice TOKEN_ID_1 (expired)
+        assertEq(balances[0], 0); // alice TOKEN_ID_1 (expired)
         assertEq(balances[1], 2000); // alice TOKEN_ID_2 (non-expiring)
     }
 }

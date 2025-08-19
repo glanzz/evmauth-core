@@ -11,12 +11,7 @@ import {IAccessControlDefaultAdminRules} from
 /**
  * @dev Interface of an ERC-1155 compliant contract with extended features and access controls.
  */
-interface IERC1155AccessControl is
-    IAccessControlDefaultAdminRules,
-    IERC1155Base,
-    IERC1155TTL,
-    IERC1155Price
-{
+interface IERC1155AccessControl is IAccessControlDefaultAdminRules, IERC1155Base, IERC1155TTL, IERC1155Price {
     /**
      * @dev Emitted when an address is frozen, unfrozen, added to, or removed from the allowlist.
      */

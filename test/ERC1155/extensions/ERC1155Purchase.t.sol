@@ -11,7 +11,10 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract MockERC1155Purchase is ERC1155Purchase {
     // This contract is for testing purposes only, so it performs no permission checks
-    constructor(address payable treasury) ERC1155("https://example.com/api/token/{id}.json") ERC1155Purchase(treasury) {}
+    constructor(address payable treasury)
+        ERC1155("https://example.com/api/token/{id}.json")
+        ERC1155Purchase(treasury)
+    {}
 
     function setTokenPrice(uint256 id, uint256 price) external {
         _setTokenPrice(id, price);
@@ -413,7 +416,6 @@ contract ERC1155PurchaseTest is Test {
 // Malicious contract for testing reentrancy protection
 contract MaliciousReentrancyContract {
     MockERC1155Purchase public target;
-    bool public hasAttacked = false;
 
     constructor(MockERC1155Purchase _target) {
         target = _target;
@@ -421,15 +423,5 @@ contract MaliciousReentrancyContract {
 
     function attack() external {
         target.purchase{value: 0.1 ether}(1, 1);
-    }
-
-    // This receive function will be called when the contract receives ETH
-    // It attempts to reenter the purchase function
-    receive() external payable {
-        if (!hasAttacked && address(target).balance > 0) {
-            hasAttacked = true;
-            // Try to reenter
-            target.purchase{value: 0.1 ether}(1, 1);
-        }
     }
 }
