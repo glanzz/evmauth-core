@@ -10,12 +10,14 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 contract MockERC6909Base is ERC6909Base {
     // This contract is for testing purposes only, so it performs no permission checks
 
-    function mint(address to, uint256 id, uint256 amount) external {
+    function mint(address to, uint256 id, uint256 amount) external returns (bool) {
         _mint(to, id, amount);
+        return true;
     }
 
-    function burn(address from, uint256 id, uint256 amount) external {
+    function burn(address from, uint256 id, uint256 amount) external returns (bool) {
         _burn(from, id, amount);
+        return true;
     }
 
     function pause() external {
@@ -25,6 +27,10 @@ contract MockERC6909Base is ERC6909Base {
     function unpause() external {
         _unpause();
     }
+
+    function setNonTransferable(uint256 id, bool nonTransferable) external {
+        _setNonTransferable(id, nonTransferable);
+    }
 }
 
 contract ERC6909BaseTest is Test {
@@ -32,16 +38,19 @@ contract ERC6909BaseTest is Test {
 
     address public alice;
     address public bob;
+    address public charlie;
 
     uint256 public constant TOKEN_ID_1 = 1;
     uint256 public constant TOKEN_ID_2 = 2;
 
-    // ERC6909 Events
+    // Events
     event Transfer(address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount);
+    event ERC6909NonTransferableUpdated(uint256 indexed id, bool nonTransferable);
 
     function setUp() public {
         alice = makeAddr("alice");
         bob = makeAddr("bob");
+        charlie = makeAddr("charlie");
 
         token = new MockERC6909Base();
     }
@@ -59,6 +68,28 @@ contract ERC6909BaseTest is Test {
         // Note: The individual extension interfaces (IERC6909ContentURI, IERC6909Metadata, IERC6909TokenSupply)
         // don't explicitly register their interface IDs in the OpenZeppelin implementation,
         // they only override supportsInterface to call the parent implementation
+    }
+
+    function test_isTransferable_defaultState() public {
+        // Tokens should be transferable by default
+        assertTrue(token.isTransferable(TOKEN_ID_1));
+        assertTrue(token.isTransferable(TOKEN_ID_2));
+    }
+
+    function test_setNonTransferable() public {
+        // Set token as non-transferable
+        vm.expectEmit(true, false, false, true);
+        emit ERC6909NonTransferableUpdated(TOKEN_ID_1, true);
+
+        token.setNonTransferable(TOKEN_ID_1, true);
+        assertFalse(token.isTransferable(TOKEN_ID_1));
+
+        // Set back to transferable
+        vm.expectEmit(true, false, false, true);
+        emit ERC6909NonTransferableUpdated(TOKEN_ID_1, false);
+
+        token.setNonTransferable(TOKEN_ID_1, false);
+        assertTrue(token.isTransferable(TOKEN_ID_1));
     }
 
     function test_mint() public {
@@ -97,6 +128,19 @@ contract ERC6909BaseTest is Test {
         token.mint(alice, TOKEN_ID_1, amount);
 
         // Verify the balance was updated
+        assertEq(token.balanceOf(alice, TOKEN_ID_1), amount);
+    }
+
+    function test_mint_nonTransferableToken() public {
+        uint256 amount = 1000;
+
+        // Set token as non-transferable
+        token.setNonTransferable(TOKEN_ID_1, true);
+
+        // Minting should still work (minting is from address(0))
+        bool success = token.mint(alice, TOKEN_ID_1, amount);
+        assertTrue(success);
+
         assertEq(token.balanceOf(alice, TOKEN_ID_1), amount);
     }
 
@@ -149,6 +193,22 @@ contract ERC6909BaseTest is Test {
         assertEq(token.totalSupply(TOKEN_ID_1), mintAmount - burnAmount);
     }
 
+    function test_burn_nonTransferableToken() public {
+        uint256 amount = 1000;
+
+        // Mint tokens
+        token.mint(alice, TOKEN_ID_1, amount);
+
+        // Set token as non-transferable
+        token.setNonTransferable(TOKEN_ID_1, true);
+
+        // Burning should still work (burning is to address(0))
+        bool success = token.burn(alice, TOKEN_ID_1, 500);
+        assertTrue(success);
+
+        assertEq(token.balanceOf(alice, TOKEN_ID_1), 500);
+    }
+
     function test_transfer() public {
         uint256 amount = 1000;
         uint256 transferAmount = 300;
@@ -198,6 +258,21 @@ contract ERC6909BaseTest is Test {
         // Verify the transfer worked
         assertEq(token.balanceOf(alice, TOKEN_ID_1), amount - transferAmount);
         assertEq(token.balanceOf(bob, TOKEN_ID_1), transferAmount);
+    }
+
+    function test_transfer_nonTransferableToken() public {
+        uint256 amount = 1000;
+
+        // Mint tokens
+        token.mint(alice, TOKEN_ID_1, amount);
+
+        // Set token as non-transferable
+        token.setNonTransferable(TOKEN_ID_1, true);
+
+        // Try to transfer - should fail
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909NonTransferableToken.selector, TOKEN_ID_1));
+        vm.prank(alice);
+        token.transfer(bob, TOKEN_ID_1, 100);
     }
 
     function test_transferFrom_paused() public {
@@ -258,6 +333,25 @@ contract ERC6909BaseTest is Test {
         // Verify the transfer worked
         assertEq(token.balanceOf(alice, TOKEN_ID_1), amount - transferAmount);
         assertEq(token.balanceOf(bob, TOKEN_ID_1), transferAmount);
+    }
+
+    function test_transferFrom_nonTransferableToken() public {
+        uint256 amount = 1000;
+
+        // Mint tokens
+        token.mint(alice, TOKEN_ID_1, amount);
+
+        // Alice approves bob
+        vm.prank(alice);
+        token.approve(bob, TOKEN_ID_1, amount);
+
+        // Set token as non-transferable
+        token.setNonTransferable(TOKEN_ID_1, true);
+
+        // Try to transferFrom - should fail
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909NonTransferableToken.selector, TOKEN_ID_1));
+        vm.prank(bob);
+        token.transferFrom(alice, charlie, TOKEN_ID_1, 100);
     }
 
     function test_multipleTokenTypes() public {

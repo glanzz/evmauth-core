@@ -3,6 +3,7 @@
 pragma solidity ^0.8.20;
 
 import {IERC6909AccessControl} from "./IERC6909AccessControl.sol";
+import {IERC6909Base} from "./extensions/IERC6909Base.sol";
 import {ERC6909Base} from "./extensions/ERC6909Base.sol";
 import {ERC6909TTL} from "./extensions/ERC6909TTL.sol";
 import {ERC6909Price} from "./extensions/ERC6909Price.sol";
@@ -66,12 +67,9 @@ contract ERC6909AccessControl is
     // Array of frozen accounts (to track all frozen accounts)
     address[] private _frozenList;
 
-    // Token ID => is non-transferable mapping (tokens are transferable by default)
-    mapping(uint256 => bool) private _nonTransferableTokens;
-
     // Errors
     error ERC6909AccessControlAccountFrozen(address account);
-    error ERC6909AccessControlNonTransferableToken(uint256 id);
+    error ERC6909AccessControlInvalidAddress(address account);
 
     /**
      * @dev Sets the initial values for `defaultAdminDelay` and `defaultAdmin` address, as well as
@@ -107,9 +105,9 @@ contract ERC6909AccessControl is
         return super.balanceOf(account, id);
     }
 
-    /// @inheritdoc IERC6909AccessControl
-    function isTransferable(uint256 id) external view virtual returns (bool) {
-        return !_nonTransferableTokens[id];
+    /// @inheritdoc IERC6909Base
+    function isTransferable(uint256 id) public view virtual override(ERC6909Base) returns (bool) {
+        return super.isTransferable(id);
     }
 
     /**
@@ -131,7 +129,7 @@ contract ERC6909AccessControl is
      */
     function freezeAccount(address account) external virtual onlyRole(ACCESS_MANAGER_ROLE) {
         if (account == address(0)) {
-            revert("ERC6909AccessControl: Cannot freeze the zero address");
+            revert ERC6909AccessControlInvalidAddress(account);
         }
         if (!_frozenAccounts[account]) {
             _frozenAccounts[account] = true;
@@ -144,9 +142,6 @@ contract ERC6909AccessControl is
      * @inheritdoc IERC6909AccessControl
      */
     function unfreezeAccount(address account) external virtual onlyRole(ACCESS_MANAGER_ROLE) {
-        if (account == address(0)) {
-            revert("ERC6909AccessControl: Cannot unfreeze the zero address");
-        }
         if (_frozenAccounts[account]) {
             _frozenAccounts[account] = false;
             // Remove the account from the frozen list
@@ -228,8 +223,7 @@ contract ERC6909AccessControl is
      * @inheritdoc IERC6909AccessControl
      */
     function setNonTransferable(uint256 id, bool nonTransferable) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _nonTransferableTokens[id] = nonTransferable;
-        emit ERC6909NonTransferableUpdated(id, nonTransferable);
+        _setNonTransferable(id, nonTransferable);
     }
 
     /**
@@ -285,9 +279,6 @@ contract ERC6909AccessControl is
         }
         if (_frozenAccounts[to]) {
             revert ERC6909AccessControlAccountFrozen(to);
-        }
-        if (from != address(0) && to != address(0) && _nonTransferableTokens[id]) {
-            revert ERC6909AccessControlNonTransferableToken(id);
         }
         super._update(from, to, id, amount);
     }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Test} from "forge-std/Test.sol";
 import {IERC6909AccessControl} from "src/ERC6909/IERC6909AccessControl.sol";
 import {ERC6909AccessControl} from "src/ERC6909/ERC6909AccessControl.sol";
+import {ERC6909Base} from "src/ERC6909/extensions/ERC6909Base.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {IERC6909ContentURI} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {IERC6909Metadata} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
@@ -631,13 +632,6 @@ contract ERC6909AccessControlTest is Test {
         token.setTTL(TOKEN_ID_1, ttl);
     }
 
-    function test_isTransferable_defaultState() public {
-        // Tokens should be transferable by default
-        assertTrue(token.isTransferable(TOKEN_ID_1));
-        assertTrue(token.isTransferable(TOKEN_ID_2));
-        assertTrue(token.isTransferable(TOKEN_ID_3));
-    }
-
     function test_setNonTransferable() public {
         // Set token as non-transferable
         vm.expectEmit(true, false, false, true);
@@ -680,7 +674,7 @@ contract ERC6909AccessControlTest is Test {
 
         // Try to transfer - should fail
         vm.expectRevert(
-            abi.encodeWithSelector(ERC6909AccessControl.ERC6909AccessControlNonTransferableToken.selector, TOKEN_ID_1)
+            abi.encodeWithSelector(ERC6909Base.ERC6909NonTransferableToken.selector, TOKEN_ID_1)
         );
         vm.prank(alice);
         token.transfer(bob, TOKEN_ID_1, 100);
@@ -704,7 +698,7 @@ contract ERC6909AccessControlTest is Test {
 
         // Try to transferFrom - should fail
         vm.expectRevert(
-            abi.encodeWithSelector(ERC6909AccessControl.ERC6909AccessControlNonTransferableToken.selector, TOKEN_ID_1)
+            abi.encodeWithSelector(ERC6909Base.ERC6909NonTransferableToken.selector, TOKEN_ID_1)
         );
         vm.prank(bob);
         token.transferFrom(alice, charlie, TOKEN_ID_1, 100);
@@ -809,7 +803,9 @@ contract ERC6909AccessControlTest is Test {
     }
 
     function test_freezeAccount_zeroAddress() public {
-        vm.expectRevert("ERC6909AccessControl: Cannot freeze the zero address");
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC6909AccessControl.ERC6909AccessControlInvalidAddress.selector, address(0))
+        );
         vm.prank(accessManager);
         token.freezeAccount(address(0));
     }
@@ -878,9 +874,11 @@ contract ERC6909AccessControlTest is Test {
     }
 
     function test_unfreezeAccount_zeroAddress() public {
-        vm.expectRevert("ERC6909AccessControl: Cannot unfreeze the zero address");
         vm.prank(accessManager);
         token.unfreezeAccount(address(0));
+
+        // Should not revert, but also should not change anything
+        assertFalse(token.isFrozen(address(0)));
     }
 
     function test_unfreezeAccount_unauthorized() public {

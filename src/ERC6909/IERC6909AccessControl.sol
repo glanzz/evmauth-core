@@ -24,22 +24,9 @@ interface IERC6909AccessControl is
     IERC6909TokenSupply
 {
     /**
-     * @dev Emitted when the non-transferable status of a token `id` is updated.
-     */
-    event ERC6909NonTransferableUpdated(uint256 indexed id, bool nonTransferable);
-
-    /**
      * @dev Emitted when an address is frozen, unfrozen, added to, or removed from the allowlist.
      */
     event AccountStatusUpdate(address indexed account, bytes32 indexed status);
-
-    /**
-     * @dev Check if a token `id` can be transferred between accounts.
-     *
-     * @param id The identifier of the token type to check.
-     * @return bool indicating whether the token `id` is transferable.
-     */
-    function isTransferable(uint256 id) external view returns (bool);
 
     /**
      * @dev Check if an `account` address is frozen.
@@ -59,10 +46,12 @@ interface IERC6909AccessControl is
 
     /**
      * @dev Freezes an `account`, preventing it from purchasing, transferring, or receiving tokens.
+     * If the account is already frozen, this function does nothing.
      *
      * Emits a {AccountStatusUpdate} event with `ACCOUNT_FROZEN_STATUS`.
      *
      * Requirements:
+     * - The `account` cannot be the zero address.
      * - The caller must have the `ACCESS_MANAGER_ROLE`.
      *
      * @param account The address of the account to freeze.
@@ -71,6 +60,7 @@ interface IERC6909AccessControl is
 
     /**
      * @dev Unfreezes an `account`, allowing it to purchase, transfer, and receive tokens again.
+     * If the account is not frozen, this function does nothing.
      *
      * Emits a {AccountStatusUpdate} event with `ACCOUNT_UNFROZEN_STATUS`.
      *
