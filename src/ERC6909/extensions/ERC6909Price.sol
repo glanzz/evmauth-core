@@ -116,22 +116,6 @@ abstract contract ERC6909Price is ReentrancyGuard, ERC6909, IERC6909Price {
     }
 
     /**
-     * @dev Disables token purchases for a specific token `id` by resetting its PriceConfig.
-     * After calling this function, priceIsSet will return false for the token `id` and
-     * _validatePurchase will revert if called with this `id`, suspending purchases.
-     * Call _setTokenPrice to re-enable purchases for the token `id`.
-     *
-     * Emits a {ERC6909PriceSuspended} event.
-     *
-     * @param id The identifier of the token type for which to disable the sale.
-     */
-    function _suspendTokenPrice(uint256 id) internal {
-        // Disable the sale by resetting PriceConfig
-        _priceConfigs[id] = PriceConfig({isSet: false, price: 0});
-        emit ERC6909PriceSuspended(_msgSender(), id);
-    }
-
-    /**
      * @dev Sets the price for a specific token `id`.
      *
      * Emits a {ERC6909PriceUpdated} event.
@@ -143,6 +127,25 @@ abstract contract ERC6909Price is ReentrancyGuard, ERC6909, IERC6909Price {
         _priceConfigs[id] = PriceConfig({isSet: true, price: price});
 
         emit ERC6909PriceUpdated(_msgSender(), id, price);
+    }
+
+    /**
+     * @dev Disables token purchases for a specific token `id` by resetting its PriceConfig.
+     * After calling this function, priceIsSet will return false for the token `id` and
+     * _validatePurchase will revert if called with this `id`, suspending purchases.
+     * Call _setTokenPrice to re-enable purchases for the token `id`.
+     *
+     * This function does nothing if the price is not set.
+     *
+     * Emits a {ERC6909PriceSuspended} event.
+     *
+     * @param id The identifier of the token type for which to disable the sale.
+     */
+    function _suspendTokenPrice(uint256 id) internal {
+        if (_priceConfigs[id].isSet) {
+            _priceConfigs[id] = PriceConfig({isSet: false, price: 0});
+            emit ERC6909PriceSuspended(_msgSender(), id);
+        }
     }
 
     /**

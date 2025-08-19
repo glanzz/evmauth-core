@@ -103,6 +103,10 @@ contract ERC6909PriceTest is Test {
         vm.expectRevert(abi.encodeWithSelector(ERC6909Price.ERC6909PriceTokenPriceNotSet.selector, TOKEN_ID_1));
         token.testValidatePurchase(alice, TOKEN_ID_1, 1);
 
+        // Confirm suspending a non-set token price does noting
+        token.suspendTokenPrice(TOKEN_ID_2);
+        assertFalse(token.priceIsSet(TOKEN_ID_2));
+
         // Re-enable the token by setting the price again
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
         assertTrue(token.priceIsSet(TOKEN_ID_1));
