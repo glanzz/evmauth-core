@@ -19,6 +19,11 @@ interface IERC6909Price is IERC6909 {
     event ERC6909PriceUpdated(address caller, uint256 indexed id, uint256 price);
 
     /**
+     * @dev Emitted when purchase of a token `id` is disabled by `caller`.
+     */
+    event ERC6909PriceSuspended(address caller, uint256 indexed id);
+
+    /**
      * @dev Emitted when the treasury address is set by `caller`.
      */
     event TreasuryUpdated(address caller, address indexed account);

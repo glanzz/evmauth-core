@@ -14,6 +14,10 @@ contract MockERC6909Price is ERC6909Price {
         _setTokenPrice(id, price);
     }
 
+    function suspendTokenPrice(uint256 id) external {
+        _suspendTokenPrice(id);
+    }
+
     function setTreasury(address payable treasury) external {
         _setTreasury(treasury);
     }
@@ -50,6 +54,7 @@ contract ERC6909PriceTest is Test {
 
     event Purchase(address caller, address indexed receiver, uint256 indexed id, uint256 amount, uint256 price);
     event ERC6909PriceUpdated(address caller, uint256 indexed id, uint256 price);
+    event ERC6909PriceSuspended(address caller, uint256 indexed id);
     event TreasuryUpdated(address caller, address indexed account);
     event Transfer(address caller, address indexed from, address indexed to, uint256 indexed id, uint256 amount);
 
@@ -81,6 +86,26 @@ contract ERC6909PriceTest is Test {
 
         assertTrue(token.priceIsSet(TOKEN_ID_1));
         assertEq(token.priceOf(TOKEN_ID_1), 0);
+    }
+
+    function test_suspendTokenPrice() public {
+        token.setTokenPrice(TOKEN_ID_1, PRICE_1);
+        assertTrue(token.priceIsSet(TOKEN_ID_1));
+
+        // Suspend the token price
+        vm.expectEmit(true, true, true, true);
+        emit ERC6909PriceSuspended(address(this), TOKEN_ID_1);
+
+        token.suspendTokenPrice(TOKEN_ID_1);
+        assertFalse(token.priceIsSet(TOKEN_ID_1));
+
+        // Confirm _validatePurchase will revert for the suspended token
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Price.ERC6909PriceTokenPriceNotSet.selector, TOKEN_ID_1));
+        token.testValidatePurchase(alice, TOKEN_ID_1, 1);
+
+        // Re-enable the token by setting the price again
+        token.setTokenPrice(TOKEN_ID_1, PRICE_1);
+        assertTrue(token.priceIsSet(TOKEN_ID_1));
     }
 
     function test_setTreasury() public {

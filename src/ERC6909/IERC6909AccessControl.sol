@@ -162,6 +162,16 @@ interface IERC6909AccessControl is
     function setPrice(uint256 id, uint256 price) external;
 
     /**
+     * @dev Suspends the price for a specific token `id`, preventing purchases.
+     *
+     * Emits a {ERC6909PriceSuspended} event.
+     *
+     * Requirements:
+     * - The caller must have the `TOKEN_MANAGER_ROLE`.
+     */
+    function suspendPrice(uint256 id) external;
+
+    /**
      * @dev Sets the non-transferable status of a specific token `id`.
      *
      * Emits a {ERC6909NonTransferableUpdated} event.

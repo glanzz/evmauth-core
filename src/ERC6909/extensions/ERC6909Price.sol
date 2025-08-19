@@ -116,12 +116,19 @@ abstract contract ERC6909Price is ReentrancyGuard, ERC6909, IERC6909Price {
     }
 
     /**
-     * @dev Returns the treasury address for internal use.
+     * @dev Disables token purchases for a specific token `id` by resetting its PriceConfig.
+     * After calling this function, priceIsSet will return false for the token `id` and
+     * _validatePurchase will revert if called with this `id`, suspending purchases.
+     * Call _setTokenPrice to re-enable purchases for the token `id`.
      *
-     * @return The address of the treasury where purchase revenues will be sent.
+     * Emits a {ERC6909PriceSuspended} event.
+     *
+     * @param id The identifier of the token type for which to disable the sale.
      */
-    function _getTreasury() internal view returns (address payable) {
-        return _treasury;
+    function _suspendTokenPrice(uint256 id) internal {
+        // Disable the sale by resetting PriceConfig
+        _priceConfigs[id] = PriceConfig({isSet: false, price: 0});
+        emit ERC6909PriceSuspended(_msgSender(), id);
     }
 
     /**
@@ -136,6 +143,15 @@ abstract contract ERC6909Price is ReentrancyGuard, ERC6909, IERC6909Price {
         _priceConfigs[id] = PriceConfig({isSet: true, price: price});
 
         emit ERC6909PriceUpdated(_msgSender(), id, price);
+    }
+
+    /**
+     * @dev Returns the treasury address for internal use.
+     *
+     * @return The address of the treasury where purchase revenues will be sent.
+     */
+    function _getTreasury() internal view returns (address payable) {
+        return _treasury;
     }
 
     /**

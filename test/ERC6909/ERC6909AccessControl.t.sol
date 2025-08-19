@@ -55,6 +55,7 @@ contract ERC6909AccessControlTest is Test {
     event DefaultAdminDelayChangeCanceled();
     event Purchase(address caller, address indexed receiver, uint256 indexed id, uint256 amount, uint256 totalPrice);
     event ERC6909PriceUpdated(address caller, uint256 indexed id, uint256 price);
+    event ERC6909PriceSuspended(address caller, uint256 indexed id);
     event ERC6909NonTransferableUpdated(uint256 indexed id, bool nonTransferable);
     event AccountStatusUpdate(address indexed account, bytes32 indexed status);
     event Paused(address account);
@@ -673,9 +674,7 @@ contract ERC6909AccessControlTest is Test {
         token.setNonTransferable(TOKEN_ID_1, true);
 
         // Try to transfer - should fail
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909Base.ERC6909NonTransferableToken.selector, TOKEN_ID_1)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909NonTransferableToken.selector, TOKEN_ID_1));
         vm.prank(alice);
         token.transfer(bob, TOKEN_ID_1, 100);
     }
@@ -697,9 +696,7 @@ contract ERC6909AccessControlTest is Test {
         token.setNonTransferable(TOKEN_ID_1, true);
 
         // Try to transferFrom - should fail
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC6909Base.ERC6909NonTransferableToken.selector, TOKEN_ID_1)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909NonTransferableToken.selector, TOKEN_ID_1));
         vm.prank(bob);
         token.transferFrom(alice, charlie, TOKEN_ID_1, 100);
     }
@@ -955,6 +952,30 @@ contract ERC6909AccessControlTest is Test {
         vm.expectRevert(abi.encodeWithSelector(ERC6909AccessControl.ERC6909AccessControlAccountFrozen.selector, alice));
         vm.prank(burner);
         token.burn(alice, TOKEN_ID_1, 500);
+    }
+
+    function test_suspendPrice() public {
+        // Set initial price
+        uint256 price = 1 ether;
+        vm.prank(tokenManager);
+        token.setPrice(TOKEN_ID_1, price);
+
+        // Suspend the price
+        vm.expectEmit(true, false, false, true);
+        emit ERC6909PriceSuspended(tokenManager, TOKEN_ID_1);
+
+        vm.prank(tokenManager);
+        token.suspendPrice(TOKEN_ID_1);
+
+        assertFalse(token.priceIsSet(TOKEN_ID_1));
+    }
+
+    function test_suspendPrice_unauthorized() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, TOKEN_MANAGER_ROLE)
+        );
+        vm.prank(alice);
+        token.suspendPrice(TOKEN_ID_1);
     }
 
     function test_pause() public {

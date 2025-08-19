@@ -222,6 +222,13 @@ contract ERC6909AccessControl is
     /**
      * @inheritdoc IERC6909AccessControl
      */
+    function suspendPrice(uint256 id) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
+        _suspendTokenPrice(id);
+    }
+
+    /**
+     * @inheritdoc IERC6909AccessControl
+     */
     function setNonTransferable(uint256 id, bool nonTransferable) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setNonTransferable(id, nonTransferable);
     }
