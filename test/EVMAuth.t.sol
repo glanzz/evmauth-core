@@ -25,10 +25,10 @@ contract EVMAuthTest is Test {
     // Role identifiers
     bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
     bytes32 public constant BLACKLIST_MANAGER_ROLE = keccak256("BLACKLIST_MANAGER_ROLE");
-    bytes32 public constant FINANCE_MANAGER_ROLE = keccak256("FINANCE_MANAGER_ROLE");
+    bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
     bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
-    bytes32 public constant TOKEN_MINTER_ROLE = keccak256("TOKEN_MINTER_ROLE");
-    bytes32 public constant TOKEN_BURNER_ROLE = keccak256("TOKEN_BURNER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
     // Token IDs for testing
     uint256 public constant TOKEN_ID_0 = 0;
@@ -56,10 +56,10 @@ contract EVMAuthTest is Test {
 
         // Set up roles
         token.grantRole(BLACKLIST_MANAGER_ROLE, blacklistManager);
-        token.grantRole(FINANCE_MANAGER_ROLE, financeManager);
+        token.grantRole(TREASURER_ROLE, financeManager);
         token.grantRole(TOKEN_MANAGER_ROLE, tokenManager);
-        token.grantRole(TOKEN_MINTER_ROLE, tokenMinter);
-        token.grantRole(TOKEN_BURNER_ROLE, tokenBurner);
+        token.grantRole(MINTER_ROLE, tokenMinter);
+        token.grantRole(BURNER_ROLE, tokenBurner);
         vm.stopPrank();
     }
 
@@ -75,22 +75,22 @@ contract EVMAuthTest is Test {
     function test_RoleAssignments() public view {
         assertTrue(token.hasRole(BLACKLIST_MANAGER_ROLE, owner));
         assertTrue(token.hasRole(BLACKLIST_MANAGER_ROLE, blacklistManager));
-        assertTrue(token.hasRole(FINANCE_MANAGER_ROLE, owner));
-        assertTrue(token.hasRole(FINANCE_MANAGER_ROLE, financeManager));
+        assertTrue(token.hasRole(TREASURER_ROLE, owner));
+        assertTrue(token.hasRole(TREASURER_ROLE, financeManager));
         assertTrue(token.hasRole(TOKEN_MANAGER_ROLE, owner));
         assertTrue(token.hasRole(TOKEN_MANAGER_ROLE, tokenManager));
-        assertTrue(token.hasRole(TOKEN_MINTER_ROLE, owner));
-        assertTrue(token.hasRole(TOKEN_MINTER_ROLE, tokenMinter));
-        assertTrue(token.hasRole(TOKEN_BURNER_ROLE, owner));
-        assertTrue(token.hasRole(TOKEN_BURNER_ROLE, tokenBurner));
+        assertTrue(token.hasRole(MINTER_ROLE, owner));
+        assertTrue(token.hasRole(MINTER_ROLE, tokenMinter));
+        assertTrue(token.hasRole(BURNER_ROLE, owner));
+        assertTrue(token.hasRole(BURNER_ROLE, tokenBurner));
     }
 
     // Test granting multiple roles at once
     function test_GrantRoles() public {
         // Create array of roles to grant
         bytes32[] memory rolesToGrant = new bytes32[](3);
-        rolesToGrant[0] = TOKEN_MINTER_ROLE;
-        rolesToGrant[1] = TOKEN_BURNER_ROLE;
+        rolesToGrant[0] = MINTER_ROLE;
+        rolesToGrant[1] = BURNER_ROLE;
         rolesToGrant[2] = TOKEN_MANAGER_ROLE;
 
         // Grant multiple roles to user1
@@ -98,8 +98,8 @@ contract EVMAuthTest is Test {
         token.grantRoles(rolesToGrant, user1);
 
         // Verify all roles were granted
-        assertTrue(token.hasRole(TOKEN_MINTER_ROLE, user1));
-        assertTrue(token.hasRole(TOKEN_BURNER_ROLE, user1));
+        assertTrue(token.hasRole(MINTER_ROLE, user1));
+        assertTrue(token.hasRole(BURNER_ROLE, user1));
         assertTrue(token.hasRole(TOKEN_MANAGER_ROLE, user1));
 
         // Verify DEFAULT_ADMIN_ROLE was not granted (should be skipped)
@@ -110,20 +110,20 @@ contract EVMAuthTest is Test {
     function test_RevokeRoles() public {
         // First grant multiple roles to user1
         vm.startPrank(owner);
-        token.grantRole(TOKEN_MINTER_ROLE, user1);
-        token.grantRole(TOKEN_BURNER_ROLE, user1);
+        token.grantRole(MINTER_ROLE, user1);
+        token.grantRole(BURNER_ROLE, user1);
         token.grantRole(TOKEN_MANAGER_ROLE, user1);
         vm.stopPrank();
 
         // Verify roles were granted
-        assertTrue(token.hasRole(TOKEN_MINTER_ROLE, user1));
-        assertTrue(token.hasRole(TOKEN_BURNER_ROLE, user1));
+        assertTrue(token.hasRole(MINTER_ROLE, user1));
+        assertTrue(token.hasRole(BURNER_ROLE, user1));
         assertTrue(token.hasRole(TOKEN_MANAGER_ROLE, user1));
 
         // Create array of roles to revoke
         bytes32[] memory rolesToRevoke = new bytes32[](3);
-        rolesToRevoke[0] = TOKEN_MINTER_ROLE;
-        rolesToRevoke[1] = TOKEN_BURNER_ROLE;
+        rolesToRevoke[0] = MINTER_ROLE;
+        rolesToRevoke[1] = BURNER_ROLE;
         rolesToRevoke[2] = TOKEN_MANAGER_ROLE;
 
         // Revoke all roles at once
@@ -131,8 +131,8 @@ contract EVMAuthTest is Test {
         token.revokeRoles(rolesToRevoke, user1);
 
         // Verify all roles were revoked
-        assertFalse(token.hasRole(TOKEN_MINTER_ROLE, user1));
-        assertFalse(token.hasRole(TOKEN_BURNER_ROLE, user1));
+        assertFalse(token.hasRole(MINTER_ROLE, user1));
+        assertFalse(token.hasRole(BURNER_ROLE, user1));
         assertFalse(token.hasRole(TOKEN_MANAGER_ROLE, user1));
     }
 
@@ -144,8 +144,8 @@ contract EVMAuthTest is Test {
 
         // Create array of roles to grant
         bytes32[] memory rolesToGrant = new bytes32[](2);
-        rolesToGrant[0] = TOKEN_MINTER_ROLE;
-        rolesToGrant[1] = TOKEN_BURNER_ROLE;
+        rolesToGrant[0] = MINTER_ROLE;
+        rolesToGrant[1] = BURNER_ROLE;
 
         // Attempt to grant roles to blacklisted user (should fail)
         vm.expectRevert("Account is blacklisted");
@@ -153,16 +153,16 @@ contract EVMAuthTest is Test {
         token.grantRoles(rolesToGrant, user1);
 
         // Verify no roles were granted
-        assertFalse(token.hasRole(TOKEN_MINTER_ROLE, user1));
-        assertFalse(token.hasRole(TOKEN_BURNER_ROLE, user1));
+        assertFalse(token.hasRole(MINTER_ROLE, user1));
+        assertFalse(token.hasRole(BURNER_ROLE, user1));
     }
 
     // Test that only DEFAULT_ADMIN_ROLE can grant/revoke multiple roles
     function test_UnauthorizedRolesAccess() public {
         // Create arrays for roles
         bytes32[] memory roles = new bytes32[](2);
-        roles[0] = TOKEN_MINTER_ROLE;
-        roles[1] = TOKEN_BURNER_ROLE;
+        roles[0] = MINTER_ROLE;
+        roles[1] = BURNER_ROLE;
 
         // Attempt to grant roles as non-admin (should fail)
         vm.expectRevert();
@@ -194,7 +194,7 @@ contract EVMAuthTest is Test {
         // Set metadata as token manager
         vm.startPrank(tokenManager);
 
-        // For TOKEN_ID_0, set all properties (note: no FINANCE_MANAGER_ROLE, so price won't be set)
+        // For TOKEN_ID_0, set all properties (note: no TREASURER_ROLE, so price won't be set)
         token.setMetadata(TOKEN_ID_0, true, true, true, 100, 3600);
         vm.stopPrank();
 
@@ -202,12 +202,12 @@ contract EVMAuthTest is Test {
         assertTrue(token.active(TOKEN_ID_0));
         assertTrue(token.burnable(TOKEN_ID_0));
         assertTrue(token.transferable(TOKEN_ID_0));
-        assertEq(token.priceOf(TOKEN_ID_0), 0); // Should still be 0 (tokenManager is not FINANCE_MANAGER_ROLE)
+        assertEq(token.priceOf(TOKEN_ID_0), 0); // Should still be 0 (tokenManager is not TREASURER_ROLE)
         assertEq(token.ttlOf(TOKEN_ID_0), 3600); // TTL should be set as token is burnable
 
-        // Now set metadata with both TOKEN_MANAGER_ROLE and FINANCE_MANAGER_ROLE
+        // Now set metadata with both TOKEN_MANAGER_ROLE and TREASURER_ROLE
         vm.startPrank(owner);
-        token.grantRole(FINANCE_MANAGER_ROLE, tokenManager);
+        token.grantRole(TREASURER_ROLE, tokenManager);
         vm.stopPrank();
 
         vm.prank(tokenManager);
@@ -220,9 +220,9 @@ contract EVMAuthTest is Test {
 
     // Test getting metadata
     function test_GetMetadata() public {
-        // Grant tokenManager the FINANCE_MANAGER_ROLE role
+        // Grant tokenManager the TREASURER_ROLE role
         vm.startPrank(owner);
-        token.grantRole(FINANCE_MANAGER_ROLE, tokenManager);
+        token.grantRole(TREASURER_ROLE, tokenManager);
         vm.stopPrank();
 
         // Set metadata as token manager
@@ -374,9 +374,9 @@ contract EVMAuthTest is Test {
 
     // Test token purchase
     function test_TokenPurchase() public {
-        // Grant FINANCE_MANAGER_ROLE to tokenManager, to allow price setting via setMetadata
+        // Grant TREASURER_ROLE to tokenManager, to allow price setting via setMetadata
         vm.startPrank(owner);
-        token.grantRole(FINANCE_MANAGER_ROLE, tokenManager);
+        token.grantRole(TREASURER_ROLE, tokenManager);
         vm.stopPrank();
 
         // Set up token metadata with price
@@ -395,9 +395,9 @@ contract EVMAuthTest is Test {
 
     // Test token purchase with insufficient funds
     function test_TokenPurchaseInsufficientFunds() public {
-        // Grant FINANCE_MANAGER_ROLE to tokenManager, to allow price setting via setMetadata
+        // Grant TREASURER_ROLE to tokenManager, to allow price setting via setMetadata
         vm.startPrank(owner);
-        token.grantRole(FINANCE_MANAGER_ROLE, tokenManager);
+        token.grantRole(TREASURER_ROLE, tokenManager);
         vm.stopPrank();
 
         // Set up token metadata with price
@@ -414,9 +414,9 @@ contract EVMAuthTest is Test {
 
     // Test token purchase for a different account
     function test_TokenPurchaseDifferentAccount() public {
-        // Grant FINANCE_MANAGER_ROLE to tokenManager, to allow price setting via setMetadata
+        // Grant TREASURER_ROLE to tokenManager, to allow price setting via setMetadata
         vm.startPrank(owner);
-        token.grantRole(FINANCE_MANAGER_ROLE, tokenManager);
+        token.grantRole(TREASURER_ROLE, tokenManager);
         vm.stopPrank();
 
         // Set up token metadata with price
@@ -435,9 +435,9 @@ contract EVMAuthTest is Test {
 
     // Test token purchase for a different account with overpayment (sender should get refund)
     function test_TokenPurchaseDifferentAccountOverpayment() public {
-        // Grant FINANCE_MANAGER_ROLE to tokenManager, to allow price setting via setMetadata
+        // Grant TREASURER_ROLE to tokenManager, to allow price setting via setMetadata
         vm.startPrank(owner);
-        token.grantRole(FINANCE_MANAGER_ROLE, tokenManager);
+        token.grantRole(TREASURER_ROLE, tokenManager);
         vm.stopPrank();
 
         // Set up token metadata with price

@@ -58,7 +58,7 @@
   },
   {
     "type": "function",
-    "name": "FINANCE_MANAGER_ROLE",
+    "name": "TREASURER_ROLE",
     "inputs": [],
     "outputs": [
       {
@@ -110,7 +110,7 @@
   },
   {
     "type": "function",
-    "name": "TOKEN_MINTER_ROLE",
+    "name": "MINTER_ROLE",
     "inputs": [],
     "outputs": [
       {

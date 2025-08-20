@@ -16,7 +16,7 @@ abstract contract EVMAuthBaseERC1155 is ERC1155, EVMAuthAccessControl, Reentranc
 
     // Roles
     bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
-    bytes32 public constant TOKEN_MINTER_ROLE = keccak256("TOKEN_MINTER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant TOKEN_BURNER_ROLE = keccak256("TOKEN_BURNER_ROLE");
 
     // Data structure for token metadata
@@ -50,7 +50,7 @@ abstract contract EVMAuthBaseERC1155 is ERC1155, EVMAuthAccessControl, Reentranc
 
         // Grant all roles to the contract owner
         _grantRole(TOKEN_MANAGER_ROLE, _owner);
-        _grantRole(TOKEN_MINTER_ROLE, _owner);
+        _grantRole(MINTER_ROLE, _owner);
         _grantRole(TOKEN_BURNER_ROLE, _owner);
     }
 
@@ -146,7 +146,7 @@ abstract contract EVMAuthBaseERC1155 is ERC1155, EVMAuthAccessControl, Reentranc
      * @param data Additional data
      */
     function issue(address to, uint256 id, uint256 amount, bytes memory data) external {
-        require(hasRole(TOKEN_MINTER_ROLE, _msgSender()), "Unauthorized minter");
+        require(hasRole(MINTER_ROLE, _msgSender()), "Unauthorized minter");
         _mint(to, id, amount, data);
     }
 
@@ -158,7 +158,7 @@ abstract contract EVMAuthBaseERC1155 is ERC1155, EVMAuthAccessControl, Reentranc
      * @param data Additional data
      */
     function issueBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) external {
-        require(hasRole(TOKEN_MINTER_ROLE, _msgSender()), "Unauthorized minter");
+        require(hasRole(MINTER_ROLE, _msgSender()), "Unauthorized minter");
         _mintBatch(to, ids, amounts, data);
     }
 

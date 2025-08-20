@@ -12,7 +12,7 @@ abstract contract EVMAuthPurchasableERC1155 is EVMAuthBaseERC1155 {
     address public wallet;
 
     // Roles
-    bytes32 public constant FINANCE_MANAGER_ROLE = keccak256("FINANCE_MANAGER_ROLE");
+    bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
 
     // Mapping from token ID to price
     mapping(uint256 => uint256) private _prices;
@@ -52,7 +52,7 @@ abstract contract EVMAuthPurchasableERC1155 is EVMAuthBaseERC1155 {
         EVMAuthBaseERC1155(_name, _version, _uri, _delay, _owner)
     {
         // Grant all roles to the contract owner
-        _grantRole(FINANCE_MANAGER_ROLE, _owner);
+        _grantRole(TREASURER_ROLE, _owner);
 
         // Set the initial wallet address to this contract address
         wallet = _owner;
@@ -145,7 +145,7 @@ abstract contract EVMAuthPurchasableERC1155 is EVMAuthBaseERC1155 {
      * @param price The price of the token
      */
     function setPriceOf(uint256 id, uint256 price) public denyBlacklistedSender {
-        require(hasRole(FINANCE_MANAGER_ROLE, _msgSender()), "Unauthorized finance manager");
+        require(hasRole(TREASURER_ROLE, _msgSender()), "Unauthorized finance manager");
         _prices[id] = price;
     }
 
@@ -155,7 +155,7 @@ abstract contract EVMAuthPurchasableERC1155 is EVMAuthBaseERC1155 {
      * @param prices The prices of the tokens
      */
     function setPriceOfBatch(uint256[] memory ids, uint256[] memory prices) external denyBlacklistedSender {
-        require(hasRole(FINANCE_MANAGER_ROLE, _msgSender()), "Unauthorized finance manager");
+        require(hasRole(TREASURER_ROLE, _msgSender()), "Unauthorized finance manager");
         require(ids.length == prices.length, "Array lengths do not match");
         for (uint256 i = 0; i < ids.length; i++) {
             _prices[ids[i]] = prices[i];
@@ -167,7 +167,7 @@ abstract contract EVMAuthPurchasableERC1155 is EVMAuthBaseERC1155 {
      * @param value The new wallet address
      */
     function setWallet(address value) external requireValidWallet(value) {
-        require(hasRole(FINANCE_MANAGER_ROLE, _msgSender()), "Unauthorized finance manager");
+        require(hasRole(TREASURER_ROLE, _msgSender()), "Unauthorized finance manager");
         address oldWallet = wallet;
         wallet = value;
         emit WalletChanged(oldWallet, value);
@@ -177,7 +177,7 @@ abstract contract EVMAuthPurchasableERC1155 is EVMAuthBaseERC1155 {
      * @dev Move balance from this contract to wallet address
      */
     function withdraw() external payable nonReentrant requireValidWallet(wallet) {
-        require(hasRole(FINANCE_MANAGER_ROLE, _msgSender()), "Unauthorized finance manager");
+        require(hasRole(TREASURER_ROLE, _msgSender()), "Unauthorized finance manager");
 
         uint256 balance = address(this).balance;
         require(balance > 0, "No funds to withdraw");

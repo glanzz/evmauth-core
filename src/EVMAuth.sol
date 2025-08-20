@@ -135,8 +135,8 @@ contract EVMAuth is EVMAuthExpiringERC1155 {
         // Set base token metadata
         setBaseMetadata(id, _active, _burnable, _transferable);
 
-        // Set token price (requires FINANCE_MANAGER_ROLE)
-        if (hasRole(FINANCE_MANAGER_ROLE, _msgSender())) {
+        // Set token price (requires TREASURER_ROLE)
+        if (hasRole(TREASURER_ROLE, _msgSender())) {
             setPriceOf(id, _price);
         }
 
