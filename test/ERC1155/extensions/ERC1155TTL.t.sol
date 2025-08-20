@@ -108,7 +108,7 @@ contract ERC1155TTLTest is Test {
 
         token.setTokenTTL(TOKEN_ID_1, ttl);
 
-        assertTrue(token.ttlIsSet(TOKEN_ID_1));
+        assertTrue(token.isTTLSet(TOKEN_ID_1));
         assertEq(token.ttlOf(TOKEN_ID_1), ttl);
     }
 

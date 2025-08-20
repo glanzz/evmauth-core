@@ -151,13 +151,13 @@ contract ERC1155PurchaseTest is Test {
     function test_purchase_priceSuspended() public {
         // Set price first
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
-        assertTrue(token.priceIsSet(TOKEN_ID_1));
+        assertTrue(token.isPriceSet(TOKEN_ID_1));
 
         // Suspend the price
         vm.expectEmit(true, true, true, true);
         emit ERC1155PriceSuspended(address(this), TOKEN_ID_1);
         token.suspendTokenPrice(TOKEN_ID_1);
-        assertFalse(token.priceIsSet(TOKEN_ID_1));
+        assertFalse(token.isPriceSet(TOKEN_ID_1));
 
         // Purchase should now fail
         vm.prank(alice);

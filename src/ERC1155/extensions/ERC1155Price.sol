@@ -49,7 +49,7 @@ abstract contract ERC1155Price is ReentrancyGuard, ERC1155, IERC1155Price {
     }
 
     /// @inheritdoc IERC1155Price
-    function priceIsSet(uint256 id) external view returns (bool) {
+    function isPriceSet(uint256 id) external view returns (bool) {
         return _priceConfigs[id].isSet;
     }
 
@@ -131,7 +131,7 @@ abstract contract ERC1155Price is ReentrancyGuard, ERC1155, IERC1155Price {
 
     /**
      * @dev Disables token purchases for a specific token `id` by resetting its PriceConfig.
-     * After calling this function, priceIsSet will return false for the token `id` and
+     * After calling this function, isPriceSet will return false for the token `id` and
      * _validatePurchase will revert if called with this `id`, suspending purchases.
      * Call _setTokenPrice to re-enable purchases for the token `id`.
      *

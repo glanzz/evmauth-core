@@ -967,7 +967,7 @@ contract ERC6909AccessControlTest is Test {
         vm.prank(tokenManager);
         token.suspendPrice(TOKEN_ID_1);
 
-        assertFalse(token.priceIsSet(TOKEN_ID_1));
+        assertFalse(token.isPriceSet(TOKEN_ID_1));
     }
 
     function test_suspendPrice_unauthorized() public {

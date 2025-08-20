@@ -21,7 +21,7 @@ interface IERC6909TTL is IERC6909 {
      *
      * If the TTL is set to 0, it will still return true, as it indicates that the TTL was intentionally set to 0.
      */
-    function ttlIsSet(uint256 id) external view returns (bool);
+    function isTTLSet(uint256 id) external view returns (bool);
 
     /**
      * @dev Returns the TTL (time-to-live) of a token `id` (in seconds).

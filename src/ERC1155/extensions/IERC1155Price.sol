@@ -37,7 +37,7 @@ interface IERC1155Price is IERC1155 {
      * @param id The identifier of the token type to check.
      * @return bool indicating whether the price is set for the token `id`.
      */
-    function priceIsSet(uint256 id) external view returns (bool);
+    function isPriceSet(uint256 id) external view returns (bool);
 
     /**
      * @dev Returns the price of a specific token `id`.

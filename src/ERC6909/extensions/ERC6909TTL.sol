@@ -42,7 +42,7 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
     }
 
     /// @inheritdoc IERC6909TTL
-    function ttlIsSet(uint256 id) external view returns (bool) {
+    function isTTLSet(uint256 id) external view returns (bool) {
         return _ttlConfigs[id].isSet;
     }
 

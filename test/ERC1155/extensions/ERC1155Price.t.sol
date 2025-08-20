@@ -86,27 +86,27 @@ contract ERC1155PriceTest is Test {
 
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
 
-        assertTrue(token.priceIsSet(TOKEN_ID_1));
+        assertTrue(token.isPriceSet(TOKEN_ID_1));
         assertEq(token.priceOf(TOKEN_ID_1), PRICE_1);
     }
 
     function test_setTokenPrice_zeroPrice() public {
         token.setTokenPrice(TOKEN_ID_1, 0);
 
-        assertTrue(token.priceIsSet(TOKEN_ID_1));
+        assertTrue(token.isPriceSet(TOKEN_ID_1));
         assertEq(token.priceOf(TOKEN_ID_1), 0);
     }
 
     function test_suspendTokenPrice() public {
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
-        assertTrue(token.priceIsSet(TOKEN_ID_1));
+        assertTrue(token.isPriceSet(TOKEN_ID_1));
 
         // Suspend the token price
         vm.expectEmit(true, true, true, true);
         emit ERC1155PriceSuspended(address(this), TOKEN_ID_1);
 
         token.suspendTokenPrice(TOKEN_ID_1);
-        assertFalse(token.priceIsSet(TOKEN_ID_1));
+        assertFalse(token.isPriceSet(TOKEN_ID_1));
 
         // Confirm _validatePurchase will revert for the suspended token
         vm.expectRevert(abi.encodeWithSelector(ERC1155Price.ERC1155PriceTokenPriceNotSet.selector, TOKEN_ID_1));
@@ -114,11 +114,11 @@ contract ERC1155PriceTest is Test {
 
         // Confirm suspending a non-set token price does nothing
         token.suspendTokenPrice(TOKEN_ID_2);
-        assertFalse(token.priceIsSet(TOKEN_ID_2));
+        assertFalse(token.isPriceSet(TOKEN_ID_2));
 
         // Re-enable the token by setting the price again
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
-        assertTrue(token.priceIsSet(TOKEN_ID_1));
+        assertTrue(token.isPriceSet(TOKEN_ID_1));
     }
 
     function test_setTreasury() public {
@@ -135,12 +135,12 @@ contract ERC1155PriceTest is Test {
         token.setTreasury(payable(address(0)));
     }
 
-    function test_priceIsSet() public {
-        assertFalse(token.priceIsSet(TOKEN_ID_1));
+    function test_isPriceSet() public {
+        assertFalse(token.isPriceSet(TOKEN_ID_1));
 
         token.setTokenPrice(TOKEN_ID_1, PRICE_1);
 
-        assertTrue(token.priceIsSet(TOKEN_ID_1));
+        assertTrue(token.isPriceSet(TOKEN_ID_1));
     }
 
     function test_priceOf() public {
@@ -287,7 +287,7 @@ contract ERC1155PriceTest is Test {
     function testFuzz_setTokenPrice(uint256 id, uint256 price) public {
         token.setTokenPrice(id, price);
 
-        assertTrue(token.priceIsSet(id));
+        assertTrue(token.isPriceSet(id));
         assertEq(token.priceOf(id), price);
     }
 
@@ -306,16 +306,16 @@ contract ERC1155PriceTest is Test {
     function testFuzz_suspendAndResetPrice(uint256 id, uint256 initialPrice, uint256 newPrice) public {
         // Set initial price
         token.setTokenPrice(id, initialPrice);
-        assertTrue(token.priceIsSet(id));
+        assertTrue(token.isPriceSet(id));
         assertEq(token.priceOf(id), initialPrice);
 
         // Suspend price
         token.suspendTokenPrice(id);
-        assertFalse(token.priceIsSet(id));
+        assertFalse(token.isPriceSet(id));
 
         // Reset with new price
         token.setTokenPrice(id, newPrice);
-        assertTrue(token.priceIsSet(id));
+        assertTrue(token.isPriceSet(id));
         assertEq(token.priceOf(id), newPrice);
     }
 }

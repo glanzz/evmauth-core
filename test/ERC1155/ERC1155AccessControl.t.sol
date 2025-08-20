@@ -579,7 +579,7 @@ contract ERC1155AccessControlTest is Test {
         token.setPrice(TOKEN_ID_1, price);
 
         assertEq(token.priceOf(TOKEN_ID_1), price);
-        assertTrue(token.priceIsSet(TOKEN_ID_1));
+        assertTrue(token.isPriceSet(TOKEN_ID_1));
     }
 
     function test_setTokenPrice_unauthorized() public {
@@ -1042,7 +1042,7 @@ contract ERC1155AccessControlTest is Test {
         vm.prank(tokenManager);
         token.suspendPrice(TOKEN_ID_1);
 
-        assertFalse(token.priceIsSet(TOKEN_ID_1));
+        assertFalse(token.isPriceSet(TOKEN_ID_1));
     }
 
     function test_suspendPrice_unauthorized() public {
