@@ -100,6 +100,7 @@ abstract contract ERC1155TTL is ERC1155, IERC1155TTL {
      * - if `to` is the zero address, `from` must not be the zero address (burning).
      * - if both `from` and `to` are non-zero, `from` must have enough balance to cover all `values`.
      * - if `from` and `to` are the same, it does nothing.
+     * - if a value in `values` is zero, it skips that token type.
      * - `ids` and `values` must have the same length.
      *
      * @param from The address to transfer tokens from. If zero, it mints tokens to `to`.
@@ -112,11 +113,17 @@ abstract contract ERC1155TTL is ERC1155, IERC1155TTL {
         virtual
         override
     {
+        if (from == to) {
+            return;
+        }
+
         for (uint256 i = 0; i < ids.length; i++) {
             uint256 id = ids[i];
             uint256 value = values[i];
 
-            if (value == 0) continue;
+            if (value == 0) {
+                continue;
+            }
 
             if (from == address(0)) {
                 // Mint

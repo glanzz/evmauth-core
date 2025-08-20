@@ -14,3 +14,6 @@ docs/
 
 # JetBrains IDEs
 .idea/
+
+# Coverage reports
+lcov.info

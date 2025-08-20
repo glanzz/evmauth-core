@@ -787,10 +787,19 @@ contract ERC6909TTLTest is Test {
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 70); // 5*10 + 4*5
     }
 
-    function test_updateFromZeroAddressToZeroAddress() public {
-        // Test calling _update directly with both `from` and `to` as zero addresses
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.ERC6909InvalidReceiver.selector, address(0)));
+    function test_update_fromZeroAddress_toZeroAddress() public {
+        // This does nothing, but should not revert
         token.update(address(0), address(0), TOKEN_ID_1, 100);
+    }
+
+    function test_update_toFromAddress() public {
+        // This does nothing, but should not revert
+        token.update(alice, alice, TOKEN_ID_1, 100);
+    }
+
+    function test_update_zeroValue() public {
+        // This does nothing, but should not revert
+        token.update(alice, bob, TOKEN_ID_1, 0);
     }
 
     function test_deductFromBalanceRecordsWithInsufficientBalance() public {

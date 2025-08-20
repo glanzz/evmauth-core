@@ -651,18 +651,6 @@ contract ERC1155TTLTest is Test {
         token.expirationFor(TOKEN_ID_3);
     }
 
-    function test_mintToZeroAddressFromZeroAddress() public {
-        // Edge case: both from and to are zero in _update
-        // This is a theoretical edge case that shouldn't happen in practice
-        // but we test it for completeness
-        token.setTokenTTL(TOKEN_ID_1, 3600);
-
-        // Direct call to _update with both addresses as zero isn't possible through public interface
-        // The contract correctly reverts with ERC1155InvalidReceiver
-        vm.expectRevert(abi.encodeWithSelector(IERC1155Errors.ERC1155InvalidReceiver.selector, address(0)));
-        token.mint(address(0), TOKEN_ID_1, 100, "");
-    }
-
     function test_maxBalanceRecordsHandling() public {
         // Test that the contract gracefully handles many distinct expiration times
         // With automatic pruning, MAX_BALANCE_RECORDS errors should not occur
@@ -827,9 +815,28 @@ contract ERC1155TTLTest is Test {
         uint256[] memory values = new uint256[](1);
         values[0] = 100;
 
-        vm.expectRevert(abi.encodeWithSelector(IERC1155Errors.ERC1155InvalidReceiver.selector, address(0)));
-
+        // This does nothing, but should not revert
         token.update(address(0), address(0), ids, values);
+    }
+
+    function test_update_toFromAddress() public {
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = TOKEN_ID_1;
+        uint256[] memory values = new uint256[](1);
+        values[0] = 100;
+
+        // This does nothing, but should not revert
+        token.update(alice, alice, ids, values);
+    }
+
+    function test_update_zeroValue() public {
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = TOKEN_ID_1;
+        uint256[] memory values = new uint256[](1);
+        values[0] = 0;
+
+        // This does nothing, but should not revert
+        token.update(alice, bob, ids, values);
     }
 
     function test_deductFromBalanceRecords_insufficientBalance() public {

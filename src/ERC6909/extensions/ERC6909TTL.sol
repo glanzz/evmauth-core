@@ -100,6 +100,7 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
      * - if `to` is the zero address, `from` must not be the zero address (burning).
      * - if both `from` and `to` are non-zero, `from` must have enough balance to cover `amount`.
      * - if `from` and `to` are the same, it does nothing.
+     * - if `amount` is zero, it does nothing.
      *
      * @param from The address to transfer tokens from. If zero, it mints tokens to `to`.
      * @param to The address to transfer tokens to. If zero, it burns tokens from `from`.
@@ -107,6 +108,10 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
      * @param amount The number of tokens to transfer.
      */
     function _update(address from, address to, uint256 id, uint256 amount) internal virtual override {
+        if (from == to || amount == 0) {
+            return;
+        }
+
         if (from == address(0)) {
             // Mint
             if (to == address(0)) {
