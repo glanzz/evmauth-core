@@ -108,15 +108,15 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
      * @param amount The number of tokens to transfer.
      */
     function _update(address from, address to, uint256 id, uint256 amount) internal virtual override {
-        if (from == to || amount == 0) {
+        if (from == to) {
+            revert ERC6909.ERC6909InvalidReceiver(to);
+        }
+        if (amount == 0) {
             return;
         }
 
         if (from == address(0)) {
             // Mint
-            if (to == address(0)) {
-                revert ERC6909.ERC6909InvalidReceiver(address(0));
-            }
             uint256 expiresAt = _expiration(id);
             _addToBalanceRecord(to, id, uint256(amount), expiresAt);
         } else if (to == address(0)) {

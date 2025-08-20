@@ -480,17 +480,6 @@ contract ERC1155TTLTest is Test {
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 450);
     }
 
-    function test_transferToSelf() public {
-        token.setTokenTTL(TOKEN_ID_1, 3600);
-        token.mint(alice, TOKEN_ID_1, 1000, "");
-
-        vm.prank(alice);
-        token.safeTransferFrom(alice, alice, TOKEN_ID_1, 500, "");
-
-        // Balance should remain the same
-        assertEq(token.balanceOf(alice, TOKEN_ID_1), 1000);
-    }
-
     function test_combineRecordsWithSameExpiration() public {
         uint256 ttl = 300; // 5 minutes (small bucket size)
         token.setTokenTTL(TOKEN_ID_1, ttl);
@@ -815,7 +804,7 @@ contract ERC1155TTLTest is Test {
         uint256[] memory values = new uint256[](1);
         values[0] = 100;
 
-        // This does nothing, but should not revert
+        vm.expectRevert(abi.encodeWithSelector(IERC1155Errors.ERC1155InvalidReceiver.selector, address(0)));
         token.update(address(0), address(0), ids, values);
     }
 
@@ -825,7 +814,7 @@ contract ERC1155TTLTest is Test {
         uint256[] memory values = new uint256[](1);
         values[0] = 100;
 
-        // This does nothing, but should not revert
+        vm.expectRevert(abi.encodeWithSelector(IERC1155Errors.ERC1155InvalidReceiver.selector, alice));
         token.update(alice, alice, ids, values);
     }
 

@@ -114,7 +114,7 @@ abstract contract ERC1155TTL is ERC1155, IERC1155TTL {
         override
     {
         if (from == to) {
-            return;
+            revert ERC1155InvalidReceiver(to);
         }
 
         for (uint256 i = 0; i < ids.length; i++) {
@@ -127,9 +127,6 @@ abstract contract ERC1155TTL is ERC1155, IERC1155TTL {
 
             if (from == address(0)) {
                 // Mint
-                if (to == address(0)) {
-                    revert ERC1155InvalidReceiver(address(0));
-                }
                 uint256 expiresAt = _expiration(id);
                 _addToBalanceRecord(to, id, value, expiresAt);
             } else if (to == address(0)) {
