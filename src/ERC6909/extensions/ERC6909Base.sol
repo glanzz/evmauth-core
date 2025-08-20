@@ -27,6 +27,8 @@ abstract contract ERC6909Base is IERC6909Base, ERC6909ContentURI, ERC6909Metadat
 
     // Errors
     error ERC6909NonTransferableToken(uint256 id);
+    error ERC6909InvalidSelfTransfer(address sender);
+    error ERC6909InvalidZeroValueTransfer();
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC6909, IERC165) returns (bool) {
@@ -59,11 +61,9 @@ abstract contract ERC6909Base is IERC6909Base, ERC6909ContentURI, ERC6909Metadat
      * Emits a {Transfer} event.
      *
      * Requirements:
-     * - if `from` is the zero address, `to` must not be the zero address (minting).
-     * - if `to` is the zero address, `from` must not be the zero address (burning).
+     * - the `from` and `to` addresses must not be the same.
      * - if both `from` and `to` are non-zero, token `id` must be transferable.
      * - if both `from` and `to` are non-zero, `from` must have enough balance to cover `amount`.
-     * - if `from` and `to` are the same, it does nothing.
      *
      * @param from The address to transfer tokens from. If zero, it mints tokens to `to`.
      * @param to The address to transfer tokens to. If zero, it burns tokens from `from`.
@@ -76,9 +76,21 @@ abstract contract ERC6909Base is IERC6909Base, ERC6909ContentURI, ERC6909Metadat
         override(ERC6909, ERC6909TokenSupply)
         whenNotPaused
     {
+        // Check if the sender and receiver are the same
+        if (from == to) {
+            revert ERC6909InvalidSelfTransfer(from);
+        }
+
+        // Check if this is a transfer and the token is non-transferable
         if (from != address(0) && to != address(0) && _nonTransferableTokens[id]) {
             revert ERC6909NonTransferableToken(id);
         }
+
+        // Check if the amount is zero
+        if (amount == 0) {
+            revert ERC6909InvalidZeroValueTransfer();
+        }
+
         super._update(from, to, id, amount);
     }
 }

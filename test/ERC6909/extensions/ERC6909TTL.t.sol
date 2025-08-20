@@ -30,10 +30,6 @@ contract MockERC6909TTL is ERC6909TTL {
         return _maxBalanceRecords();
     }
 
-    function update(address from, address to, uint256 id, uint256 amount) external {
-        _update(from, to, id, amount);
-    }
-
     function deductFromBalanceRecords(address from, uint256 id, uint256 amount) external {
         _deductFromBalanceRecords(from, id, amount);
     }
@@ -773,21 +769,6 @@ contract ERC6909TTLTest is Test {
         }
 
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 70); // 5*10 + 4*5
-    }
-
-    function test_update_fromZeroAddress_toZeroAddress() public {
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.ERC6909InvalidReceiver.selector, address(0)));
-        token.update(address(0), address(0), TOKEN_ID_1, 100);
-    }
-
-    function test_update_toFromAddress() public {
-        vm.expectRevert(abi.encodeWithSelector(ERC6909.ERC6909InvalidReceiver.selector, alice));
-        token.update(alice, alice, TOKEN_ID_1, 100);
-    }
-
-    function test_update_zeroValue() public {
-        // This does nothing, but should not revert
-        token.update(alice, bob, TOKEN_ID_1, 0);
     }
 
     function test_deductFromBalanceRecordsWithInsufficientBalance() public {

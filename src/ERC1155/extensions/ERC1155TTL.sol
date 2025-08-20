@@ -89,41 +89,17 @@ abstract contract ERC1155TTL is ERC1155, IERC1155TTL {
     }
 
     /**
-     * @dev Transfers `values` amounts of tokens of types `ids` from `from` to `to`, or alternatively mints (or burns)
-     * if `from` (or `to`) is the zero address. All customizations to transfers, mints, and burns should be done by
-     * overriding this function.
-     *
-     * Emits either {TransferSingle} or {TransferBatch} events, depending on the lengths of the arrays.
-     *
-     * Requirements:
-     * - if `from` is the zero address, `to` must not be the zero address (minting).
-     * - if `to` is the zero address, `from` must not be the zero address (burning).
-     * - if both `from` and `to` are non-zero, `from` must have enough balance to cover all `values`.
-     * - if `from` and `to` are the same, it does nothing.
-     * - if a value in `values` is zero, it skips that token type.
-     * - `ids` and `values` must have the same length.
-     *
-     * @param from The address to transfer tokens from. If zero, it mints tokens to `to`.
-     * @param to The address to transfer tokens to. If zero, it burns tokens from `from`.
-     * @param ids The identifiers of the token types to transfer.
-     * @param values The numbers of tokens to transfer.
+     * @dev Overrides the `_update` function from ERC1155 to handle balance records with expiration.
+     * This function is called whenever tokens are transferred, minted, or burned.
      */
     function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
         internal
         virtual
         override
     {
-        if (from == to) {
-            revert ERC1155InvalidReceiver(to);
-        }
-
         for (uint256 i = 0; i < ids.length; i++) {
             uint256 id = ids[i];
             uint256 value = values[i];
-
-            if (value == 0) {
-                continue;
-            }
 
             if (from == address(0)) {
                 // Mint

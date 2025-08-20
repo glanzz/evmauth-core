@@ -21,6 +21,8 @@ abstract contract ERC1155Base is IERC1155Base, ERC1155Supply, ERC1155URIStorage,
 
     // Errors
     error ERC1155NonTransferableToken(uint256 id);
+    error ERC1155InvalidSelfTransfer(address sender);
+    error ERC1155InvalidZeroValueTransfer();
 
     /**
      * @dev Constructor that sets the base URI for all tokens.
@@ -86,8 +88,9 @@ abstract contract ERC1155Base is IERC1155Base, ERC1155Supply, ERC1155URIStorage,
      * Requirements:
      * - if `to` refers to a smart contract, it must implement {IERC1155Receiver-onERC1155Received} and return the
      *   acceptance magic value.
-     * - `ids` and `values` must have the same length.
-     * - If `from` and `to` are both non-zero, the non-transferable tokens cannot be transferred.
+     * - the `from` and `to` addresses must not be the same.
+     * - if both `from` and `to` are non-zero, token `id` must be transferable.
+     * - if both `from` and `to` are non-zero, `from` must have enough balance to cover `amount`.
      *
      * @param from The address to transfer tokens from. If zero, it mints tokens to `to`.
      * @param to The address to transfer tokens to. If zero, it burns tokens from `from`.
@@ -100,7 +103,12 @@ abstract contract ERC1155Base is IERC1155Base, ERC1155Supply, ERC1155URIStorage,
         override(ERC1155, ERC1155Supply)
         whenNotPaused
     {
-        // Check non-transferable tokens if this is a transfer (not mint/burn)
+        // Check if the sender and receiver are the same
+        if (from == to) {
+            revert ERC1155InvalidSelfTransfer(from);
+        }
+
+        // Check if this is a transfer and the token is non-transferable
         if (from != address(0) && to != address(0)) {
             for (uint256 i = 0; i < ids.length; ++i) {
                 if (_nonTransferableTokens[ids[i]]) {
@@ -108,6 +116,14 @@ abstract contract ERC1155Base is IERC1155Base, ERC1155Supply, ERC1155URIStorage,
                 }
             }
         }
+
+        // Check if any values are zero
+        for (uint256 i = 0; i < values.length; ++i) {
+            if (values[i] == 0) {
+                revert ERC1155InvalidZeroValueTransfer();
+            }
+        }
+
         super._update(from, to, ids, values);
     }
 }

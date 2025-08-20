@@ -89,32 +89,10 @@ abstract contract ERC6909TTL is ERC6909, IERC6909TTL {
     }
 
     /**
-     * @dev Transfers `amount` of token `id` from `from` to `to`, or alternatively mints (or burns) if `from`
-     * (or `to`) is the zero address. All customizations to transfers, mints, and burns should be done by overriding
-     * this function.
-     *
-     * Emits a {Transfer} event.
-     *
-     * Requirements:
-     * - if `from` is the zero address, `to` must not be the zero address (minting).
-     * - if `to` is the zero address, `from` must not be the zero address (burning).
-     * - if both `from` and `to` are non-zero, `from` must have enough balance to cover `amount`.
-     * - if `from` and `to` are the same, it does nothing.
-     * - if `amount` is zero, it does nothing.
-     *
-     * @param from The address to transfer tokens from. If zero, it mints tokens to `to`.
-     * @param to The address to transfer tokens to. If zero, it burns tokens from `from`.
-     * @param id The identifier of the token type to transfer.
-     * @param amount The number of tokens to transfer.
+     * @dev Overrides the `_update` function from ERC6909 to handle balance records with expiration.
+     * This function is called whenever tokens are transferred, minted, or burned.
      */
     function _update(address from, address to, uint256 id, uint256 amount) internal virtual override {
-        if (from == to) {
-            revert ERC6909.ERC6909InvalidReceiver(to);
-        }
-        if (amount == 0) {
-            return;
-        }
-
         if (from == address(0)) {
             // Mint
             uint256 expiresAt = _expiration(id);

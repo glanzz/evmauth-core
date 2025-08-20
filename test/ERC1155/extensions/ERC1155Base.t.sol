@@ -447,6 +447,21 @@ contract ERC1155BaseTest is Test {
         assertEq(token.balanceOf(bob, TOKEN_ID_1), transferAmount);
     }
 
+    function test_safeTransferFrom_nonTransferableToken() public {
+        uint256 amount = 1000;
+
+        // Mint tokens
+        token.mint(alice, TOKEN_ID_1, amount);
+
+        // Set token as non-transferable
+        token.setNonTransferable(TOKEN_ID_1, true);
+
+        // Try to transfer - should fail
+        vm.expectRevert(abi.encodeWithSelector(ERC1155Base.ERC1155NonTransferableToken.selector, TOKEN_ID_1));
+        vm.prank(alice);
+        token.safeTransferFrom(alice, bob, TOKEN_ID_1, 100, "");
+    }
+
     function test_safeBatchTransferFrom_paused() public {
         uint256[] memory ids = new uint256[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -485,21 +500,6 @@ contract ERC1155BaseTest is Test {
         assertEq(token.balanceOf(bob, TOKEN_ID_2), transferAmounts[1]);
     }
 
-    function test_safeTransferFrom_nonTransferableToken() public {
-        uint256 amount = 1000;
-
-        // Mint tokens
-        token.mint(alice, TOKEN_ID_1, amount);
-
-        // Set token as non-transferable
-        token.setNonTransferable(TOKEN_ID_1, true);
-
-        // Try to transfer - should fail
-        vm.expectRevert(abi.encodeWithSelector(ERC1155Base.ERC1155NonTransferableToken.selector, TOKEN_ID_1));
-        vm.prank(alice);
-        token.safeTransferFrom(alice, bob, TOKEN_ID_1, 100, "");
-    }
-
     function test_safeBatchTransferFrom_nonTransferableToken() public {
         uint256[] memory ids = new uint256[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -521,6 +521,40 @@ contract ERC1155BaseTest is Test {
         vm.expectRevert(abi.encodeWithSelector(ERC1155Base.ERC1155NonTransferableToken.selector, TOKEN_ID_1));
         vm.prank(alice);
         token.safeBatchTransferFrom(alice, bob, ids, transferAmounts, "");
+    }
+
+    function test_safeTransferFrom_withOperator_nonTransferableToken() public {
+        uint256 amount = 1000;
+
+        // Mint tokens
+        token.mint(alice, TOKEN_ID_1, amount);
+
+        // Alice approves bob as operator
+        vm.prank(alice);
+        token.setApprovalForAll(bob, true);
+
+        // Set token as non-transferable
+        token.setNonTransferable(TOKEN_ID_1, true);
+
+        // Try to transfer as operator - should fail
+        vm.expectRevert(abi.encodeWithSelector(ERC1155Base.ERC1155NonTransferableToken.selector, TOKEN_ID_1));
+        vm.prank(bob);
+        token.safeTransferFrom(alice, charlie, TOKEN_ID_1, 100, "");
+    }
+
+    function test_safeTransferFrom_toSelf() public {
+        vm.prank(alice);
+        token.setApprovalForAll(bob, true);
+
+        vm.expectRevert(abi.encodeWithSelector(ERC1155Base.ERC1155InvalidSelfTransfer.selector, alice));
+        vm.prank(bob);
+        token.safeTransferFrom(alice, alice, TOKEN_ID_1, 100, "");
+    }
+
+    function test_safeTransferFrom_zeroValue() public {
+        vm.expectRevert(abi.encodeWithSelector(ERC1155Base.ERC1155InvalidZeroValueTransfer.selector));
+        vm.prank(alice);
+        token.safeTransferFrom(alice, bob, TOKEN_ID_1, 0, "");
     }
 
     function test_setApprovalForAll_safeTransferFrom() public {
@@ -583,25 +617,6 @@ contract ERC1155BaseTest is Test {
         assertEq(token.balanceOf(alice, TOKEN_ID_2), amounts[1] - transferAmounts[1]);
         assertEq(token.balanceOf(charlie, TOKEN_ID_1), transferAmounts[0]);
         assertEq(token.balanceOf(charlie, TOKEN_ID_2), transferAmounts[1]);
-    }
-
-    function test_operatorTransfer_nonTransferableToken() public {
-        uint256 amount = 1000;
-
-        // Mint tokens
-        token.mint(alice, TOKEN_ID_1, amount);
-
-        // Alice approves bob as operator
-        vm.prank(alice);
-        token.setApprovalForAll(bob, true);
-
-        // Set token as non-transferable
-        token.setNonTransferable(TOKEN_ID_1, true);
-
-        // Try to transfer as operator - should fail
-        vm.expectRevert(abi.encodeWithSelector(ERC1155Base.ERC1155NonTransferableToken.selector, TOKEN_ID_1));
-        vm.prank(bob);
-        token.safeTransferFrom(alice, charlie, TOKEN_ID_1, 100, "");
     }
 
     function test_multipleTokenTypes() public {

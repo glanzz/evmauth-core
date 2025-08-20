@@ -41,10 +41,6 @@ contract MockERC1155TTL is ERC1155TTL {
         return _maxBalanceRecords();
     }
 
-    function update(address from, address to, uint256[] memory ids, uint256[] memory values) external {
-        _update(from, to, ids, values);
-    }
-
     function deductFromBalanceRecords(address from, uint256 id, uint256 amount) external {
         _deductFromBalanceRecords(from, id, amount);
     }
@@ -796,36 +792,6 @@ contract ERC1155TTLTest is Test {
         }
 
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 70); // 5*10 + 4*5
-    }
-
-    function test_update_fromZeroAddress_toZeroAddress() public {
-        uint256[] memory ids = new uint256[](1);
-        ids[0] = TOKEN_ID_1;
-        uint256[] memory values = new uint256[](1);
-        values[0] = 100;
-
-        vm.expectRevert(abi.encodeWithSelector(IERC1155Errors.ERC1155InvalidReceiver.selector, address(0)));
-        token.update(address(0), address(0), ids, values);
-    }
-
-    function test_update_toFromAddress() public {
-        uint256[] memory ids = new uint256[](1);
-        ids[0] = TOKEN_ID_1;
-        uint256[] memory values = new uint256[](1);
-        values[0] = 100;
-
-        vm.expectRevert(abi.encodeWithSelector(IERC1155Errors.ERC1155InvalidReceiver.selector, alice));
-        token.update(alice, alice, ids, values);
-    }
-
-    function test_update_zeroValue() public {
-        uint256[] memory ids = new uint256[](1);
-        ids[0] = TOKEN_ID_1;
-        uint256[] memory values = new uint256[](1);
-        values[0] = 0;
-
-        // This does nothing, but should not revert
-        token.update(alice, bob, ids, values);
     }
 
     function test_deductFromBalanceRecords_insufficientBalance() public {

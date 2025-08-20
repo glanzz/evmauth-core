@@ -144,6 +144,11 @@ contract ERC6909BaseTest is Test {
         assertEq(token.balanceOf(alice, TOKEN_ID_1), amount);
     }
 
+    function mint_zeroAmount() public {
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909InvalidZeroValueTransfer.selector));
+        token.mint(alice, TOKEN_ID_1, 0);
+    }
+
     function test_burn() public {
         uint256 mintAmount = 1000;
         uint256 burnAmount = 400;
@@ -207,6 +212,11 @@ contract ERC6909BaseTest is Test {
         assertTrue(success);
 
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 500);
+    }
+
+    function burn_zeroAmount() public {
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909InvalidZeroValueTransfer.selector));
+        token.burn(alice, TOKEN_ID_1, 0);
     }
 
     function test_transfer() public {
@@ -275,6 +285,18 @@ contract ERC6909BaseTest is Test {
         token.transfer(bob, TOKEN_ID_1, 100);
     }
 
+    function transfer_toSelf() public {
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909InvalidSelfTransfer.selector, alice));
+        vm.prank(alice);
+        token.transfer(alice, TOKEN_ID_1, 100);
+    }
+
+    function transfer_zeroAmount() public {
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909InvalidZeroValueTransfer.selector));
+        vm.prank(alice);
+        token.transfer(bob, TOKEN_ID_1, 0);
+    }
+
     function test_transferFrom_paused() public {
         uint256 amount = 1000;
         uint256 transferAmount = 300;
@@ -306,7 +328,7 @@ contract ERC6909BaseTest is Test {
         assertEq(token.balanceOf(bob, TOKEN_ID_1), transferAmount);
     }
 
-    function test_transferFromWithOperator_paused() public {
+    function test_transferFrom_withOperator_paused() public {
         uint256 amount = 1000;
         uint256 transferAmount = 300;
 
@@ -352,6 +374,21 @@ contract ERC6909BaseTest is Test {
         vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909NonTransferableToken.selector, TOKEN_ID_1));
         vm.prank(bob);
         token.transferFrom(alice, charlie, TOKEN_ID_1, 100);
+    }
+
+    function test_transferFrom_toSelf() public {
+        vm.prank(alice);
+        token.setOperator(bob, true);
+
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909InvalidSelfTransfer.selector, alice));
+        vm.prank(bob);
+        token.transferFrom(alice, alice, TOKEN_ID_1, 100);
+    }
+
+    function test_transferFrom_zeroAmount() public {
+        vm.expectRevert(abi.encodeWithSelector(ERC6909Base.ERC6909InvalidZeroValueTransfer.selector));
+        vm.prank(bob);
+        token.transferFrom(alice, charlie, TOKEN_ID_1, 0);
     }
 
     function test_multipleTokenTypes() public {
