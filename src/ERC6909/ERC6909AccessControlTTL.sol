@@ -15,7 +15,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  * It inherits from ERC6909AccessControl to manage access control with default admin rules.
  * It supports expiring tokens, content URIs, token metadata, and token supply, and account freezing.
  */
-contract ERC6909AccessControlTTL is ERC6909AccessControl, ERC6909TTL, IERC6909AccessControlTTL {
+abstract contract ERC6909AccessControlTTL is ERC6909AccessControl, ERC6909TTL, IERC6909AccessControlTTL {
     /**
      * @dev Sets the initial values for `defaultAdminDelay` and `defaultAdmin` address.
      */

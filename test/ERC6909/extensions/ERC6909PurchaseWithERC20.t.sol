@@ -82,7 +82,7 @@ contract ERC6909PurchaseWithERC20Test is Test {
         assertEq(token.treasury(), treasury);
     }
 
-    function test_supportsInterface() public {
+    function test_supportsInterface() public view {
         // Test the ERC6909 interface
         assertTrue(token.supportsInterface(type(IERC6909).interfaceId));
 

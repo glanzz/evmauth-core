@@ -70,7 +70,7 @@ contract ERC6909BaseTest is Test {
         // they only override supportsInterface to call the parent implementation
     }
 
-    function test_isTransferable_defaultState() public {
+    function test_isTransferable_defaultState() public view {
         // Tokens should be transferable by default
         assertTrue(token.isTransferable(TOKEN_ID_1));
         assertTrue(token.isTransferable(TOKEN_ID_2));

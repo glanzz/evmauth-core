@@ -13,6 +13,13 @@ import {IERC1155AccessControl} from "src/ERC1155/IERC1155AccessControl.sol";
 import {IERC1155AccessControlTTL} from "src/ERC1155/IERC1155AccessControlTTL.sol";
 import {ERC1155AccessControlTTL} from "src/ERC1155/ERC1155AccessControlTTL.sol";
 
+// Mock concrete implementation for testing
+contract MockERC1155AccessControlTTL is ERC1155AccessControlTTL {
+    constructor(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        ERC1155AccessControlTTL(initialDelay, initialDefaultAdmin, uri_)
+    {}
+}
+
 contract ERC1155AccessControlTTLTest is Test {
     ERC1155AccessControlTTL public token;
 
@@ -44,7 +51,7 @@ contract ERC1155AccessControlTTLTest is Test {
 
         vm.prank(owner);
         // Deploy with 2 hour delay for admin changes
-        token = new ERC1155AccessControlTTL(2 hours, defaultAdmin, "https://example.com/api/token/");
+        token = new MockERC1155AccessControlTTL(2 hours, defaultAdmin, "https://example.com/api/token/");
 
         // Grant roles
         vm.startPrank(defaultAdmin);
@@ -55,7 +62,7 @@ contract ERC1155AccessControlTTLTest is Test {
         vm.stopPrank();
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(token.defaultAdmin(), defaultAdmin);
         assertEq(token.defaultAdminDelay(), 2 hours);
     }

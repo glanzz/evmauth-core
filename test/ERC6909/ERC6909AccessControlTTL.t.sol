@@ -8,6 +8,13 @@ import {ERC6909AccessControlTTL} from "src/ERC6909/ERC6909AccessControlTTL.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 
+// Mock concrete implementation for testing
+contract MockERC6909AccessControlTTL is ERC6909AccessControlTTL {
+    constructor(uint48 initialDelay, address initialDefaultAdmin)
+        ERC6909AccessControlTTL(initialDelay, initialDefaultAdmin)
+    {}
+}
+
 contract ERC6909AccessControlTTLTest is Test {
     ERC6909AccessControlTTL public token;
 
@@ -76,7 +83,7 @@ contract ERC6909AccessControlTTLTest is Test {
         vm.deal(treasurer, 100 ether);
 
         vm.prank(defaultAdmin);
-        token = new ERC6909AccessControlTTL(INITIAL_DELAY, defaultAdmin);
+        token = new MockERC6909AccessControlTTL(INITIAL_DELAY, defaultAdmin);
 
         // Grant roles
         vm.startPrank(defaultAdmin);
@@ -87,7 +94,7 @@ contract ERC6909AccessControlTTLTest is Test {
         vm.stopPrank();
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(token.defaultAdmin(), defaultAdmin);
         assertEq(token.defaultAdminDelay(), INITIAL_DELAY);
         assertTrue(token.hasRole(DEFAULT_ADMIN_ROLE, defaultAdmin));

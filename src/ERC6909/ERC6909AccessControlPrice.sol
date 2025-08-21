@@ -16,7 +16,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
  * It supports purchasable tokens, content URIs, token metadata, and token supply, and account freezing.
  * Extend this contract and either ERC6909Purchase or ERC6909PurchaseWithERC20 to add purchase functionality.
  */
-contract ERC6909AccessControlPrice is ERC6909Price, ERC6909AccessControl, IERC6909AccessControlPrice {
+abstract contract ERC6909AccessControlPrice is ERC6909Price, ERC6909AccessControl, IERC6909AccessControlPrice {
     /**
      * @dev Role required to modify the treasury address.
      */

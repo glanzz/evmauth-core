@@ -16,7 +16,7 @@ import {AccessControlDefaultAdminRules} from
  * It inherits from AccessControlDefaultAdminRules to manage access control with default admin rules.
  * It supports content URIs, token metadata, token supply, and account freezing.
  */
-contract ERC6909AccessControl is AccessControlDefaultAdminRules, ERC6909Base, IERC6909AccessControl {
+abstract contract ERC6909AccessControl is AccessControlDefaultAdminRules, ERC6909Base, IERC6909AccessControl {
     /**
      * @dev Role required to pause/un-pause the contract, freeze accounts, and  manage the allowlist.
      */

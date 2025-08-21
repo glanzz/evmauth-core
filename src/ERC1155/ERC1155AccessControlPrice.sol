@@ -17,7 +17,7 @@ import {AccessControlDefaultAdminRules} from
  * @dev Extension of ERC1155AccessControl that adds price management functionality.
  * Extend this contract and either ERC1155Purchase or ERC1155PurchaseWithERC20 to add purchase functionality.
  */
-contract ERC1155AccessControlPrice is ERC1155AccessControl, ERC1155Price, IERC1155AccessControlPrice {
+abstract contract ERC1155AccessControlPrice is ERC1155AccessControl, ERC1155Price, IERC1155AccessControlPrice {
     /**
      * @dev Role required to modify the treasury address.
      */

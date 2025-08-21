@@ -14,6 +14,13 @@ import {IAccessControlDefaultAdminRules} from
     "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
+// Mock concrete implementation for testing
+contract MockERC6909AccessControl is ERC6909AccessControl {
+    constructor(uint48 initialDelay, address initialDefaultAdmin)
+        ERC6909AccessControl(initialDelay, initialDefaultAdmin)
+    {}
+}
+
 contract ERC6909AccessControlTest is Test {
     ERC6909AccessControl public token;
 
@@ -69,7 +76,7 @@ contract ERC6909AccessControlTest is Test {
         vm.deal(bob, 100 ether);
 
         vm.prank(defaultAdmin);
-        token = new ERC6909AccessControl(INITIAL_DELAY, defaultAdmin);
+        token = new MockERC6909AccessControl(INITIAL_DELAY, defaultAdmin);
 
         // Grant roles
         vm.startPrank(defaultAdmin);
@@ -80,7 +87,7 @@ contract ERC6909AccessControlTest is Test {
         vm.stopPrank();
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(token.defaultAdmin(), defaultAdmin);
         assertEq(token.defaultAdminDelay(), INITIAL_DELAY);
         assertTrue(token.hasRole(DEFAULT_ADMIN_ROLE, defaultAdmin));
@@ -616,7 +623,7 @@ contract ERC6909AccessControlTest is Test {
         assertEq(token.balanceOf(alice, TOKEN_ID_1), 500);
     }
 
-    function test_isFrozen_defaultState() public {
+    function test_isFrozen_defaultState() public view {
         // Accounts should not be frozen by default
         assertFalse(token.isFrozen(alice));
         assertFalse(token.isFrozen(bob));
@@ -693,7 +700,6 @@ contract ERC6909AccessControlTest is Test {
     }
 
     function test_unfreezeAccount() public {
-        bytes32 ACCOUNT_FROZEN_STATUS = keccak256("ACCOUNT_FROZEN_STATUS");
         bytes32 ACCOUNT_UNFROZEN_STATUS = keccak256("ACCOUNT_UNFROZEN_STATUS");
 
         // First freeze alice

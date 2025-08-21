@@ -14,10 +14,10 @@ import {AccessControlDefaultAdminRules} from
 
 /**
  * @dev Implementation of an ERC-1155 compliant contract with extended features and access controls.
- * It supports URIs, token supply tracking, and account freezing.
  * It inherits from AccessControlDefaultAdminRules to manage access control with default admin rules.
+ * It supports URIs, token supply tracking, and account freezing.
  */
-contract ERC1155AccessControl is AccessControlDefaultAdminRules, ERC1155Base, IERC1155AccessControl {
+abstract contract ERC1155AccessControl is AccessControlDefaultAdminRules, ERC1155Base, IERC1155AccessControl {
     /**
      * @dev Role required to pause/un-pause the contract, freeze accounts, and manage the allowlist.
      */

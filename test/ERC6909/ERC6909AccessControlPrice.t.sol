@@ -8,6 +8,13 @@ import {ERC6909AccessControlPrice} from "src/ERC6909/ERC6909AccessControlPrice.s
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 
+// Mock concrete implementation for testing
+contract MockERC6909AccessControlPrice is ERC6909AccessControlPrice {
+    constructor(uint48 initialDelay, address initialDefaultAdmin, address payable treasuryAccount)
+        ERC6909AccessControlPrice(initialDelay, initialDefaultAdmin, treasuryAccount)
+    {}
+}
+
 contract ERC6909AccessControlPriceTest is Test {
     ERC6909AccessControlPrice public token;
 
@@ -56,7 +63,7 @@ contract ERC6909AccessControlPriceTest is Test {
         vm.deal(treasurer, 100 ether);
 
         vm.prank(defaultAdmin);
-        token = new ERC6909AccessControlPrice(INITIAL_DELAY, defaultAdmin, treasury);
+        token = new MockERC6909AccessControlPrice(INITIAL_DELAY, defaultAdmin, treasury);
 
         // Grant roles
         vm.startPrank(defaultAdmin);
@@ -68,7 +75,7 @@ contract ERC6909AccessControlPriceTest is Test {
         vm.stopPrank();
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(token.defaultAdmin(), defaultAdmin);
         assertEq(token.defaultAdminDelay(), INITIAL_DELAY);
         assertTrue(token.hasRole(DEFAULT_ADMIN_ROLE, defaultAdmin));

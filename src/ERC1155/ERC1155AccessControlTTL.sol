@@ -16,7 +16,7 @@ import {AccessControlDefaultAdminRules} from
 /**
  * @dev Extension of ERC1155AccessControl that adds time-to-live (TTL) functionality for expiring tokens.
  */
-contract ERC1155AccessControlTTL is ERC1155AccessControl, ERC1155TTL, IERC1155AccessControlTTL {
+abstract contract ERC1155AccessControlTTL is ERC1155AccessControl, ERC1155TTL, IERC1155AccessControlTTL {
     /**
      * @dev Sets the initial values for `defaultAdminDelay` and `defaultAdmin` address.
      */
