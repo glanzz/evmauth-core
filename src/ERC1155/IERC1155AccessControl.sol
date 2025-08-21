@@ -3,15 +3,13 @@
 pragma solidity ^0.8.20;
 
 import {IERC1155Base} from "./extensions/IERC1155Base.sol";
-import {IERC1155TTL} from "./extensions/IERC1155TTL.sol";
-import {IERC1155Price} from "./extensions/IERC1155Price.sol";
 import {IAccessControlDefaultAdminRules} from
     "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
 
 /**
  * @dev Interface of an ERC-1155 compliant contract with extended features and access controls.
  */
-interface IERC1155AccessControl is IAccessControlDefaultAdminRules, IERC1155Base, IERC1155TTL, IERC1155Price {
+interface IERC1155AccessControl is IAccessControlDefaultAdminRules, IERC1155Base {
     /**
      * @dev Emitted when an address is frozen, unfrozen, added to, or removed from the allowlist.
      */
@@ -101,36 +99,6 @@ interface IERC1155AccessControl is IAccessControlDefaultAdminRules, IERC1155Base
     function setTokenURI(uint256 id, string memory tokenURI) external;
 
     /**
-     * @dev Sets the TTL for a specific token `id`.
-     *
-     * Emits a {ERC1155TTLUpdated} event.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     */
-    function setTTL(uint256 id, uint256 ttl) external;
-
-    /**
-     * @dev Sets the price for a specific token `id`.
-     *
-     * Emits a {ERC1155PriceUpdated} event.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     */
-    function setPrice(uint256 id, uint256 price) external;
-
-    /**
-     * @dev Suspends the price for a specific token `id`, preventing purchases.
-     *
-     * Emits a {ERC1155PriceSuspended} event.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     */
-    function suspendPrice(uint256 id) external;
-
-    /**
      * @dev Sets the non-transferable status of a specific token `id`.
      *
      * Emits a {ERC1155NonTransferableUpdated} event.
@@ -139,16 +107,6 @@ interface IERC1155AccessControl is IAccessControlDefaultAdminRules, IERC1155Base
      * - The caller must have the `TOKEN_MANAGER_ROLE`.
      */
     function setNonTransferable(uint256 id, bool nonTransferable) external;
-
-    /**
-     * @dev Sets the treasury address that will receive token purchase revenues.
-     *
-     * Emits a {TreasuryUpdated} event.
-     *
-     * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
-     */
-    function setTreasury(address payable treasuryAccount) external;
 
     /**
      * @dev Mints `amount` of token type `id` to `to`.

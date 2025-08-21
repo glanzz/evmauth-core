@@ -20,8 +20,6 @@ contract ERC1155AccessControlTest is Test {
     address public tokenManager;
     address public minter;
     address public burner;
-    address public treasurer;
-    address payable public treasury;
     address public alice;
     address public bob;
     address public charlie;
@@ -38,7 +36,6 @@ contract ERC1155AccessControlTest is Test {
     bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
-    bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
 
     // Events
     event URI(string value, uint256 indexed id);
@@ -53,20 +50,10 @@ contract ERC1155AccessControlTest is Test {
     event DefaultAdminTransferCanceled();
     event DefaultAdminDelayChangeScheduled(uint48 newDelay, uint48 effectSchedule);
     event DefaultAdminDelayChangeCanceled();
-    event ERC1155PriceUpdated(address caller, uint256 indexed id, uint256 price);
-    event ERC1155PriceSuspended(address caller, uint256 indexed id);
     event ERC1155NonTransferableUpdated(uint256 indexed id, bool nonTransferable);
-    event ERC1155TTLUpdated(address caller, uint256 indexed id, uint256 ttl);
-    event TreasuryUpdated(address caller, address indexed account);
     event AccountStatusUpdate(address indexed account, bytes32 indexed status);
     event Paused(address account);
     event Unpaused(address account);
-
-    // Helper function to set TTL for a token (required before minting with ERC1155TTL)
-    function _setTokenTTL(uint256 tokenId, uint256 ttl) internal {
-        vm.prank(tokenManager);
-        token.setTTL(tokenId, ttl);
-    }
 
     function setUp() public {
         defaultAdmin = makeAddr("defaultAdmin");
@@ -74,25 +61,21 @@ contract ERC1155AccessControlTest is Test {
         minter = makeAddr("tokenMinter");
         burner = makeAddr("tokenBurner");
         accessManager = makeAddr("accessManager");
-        treasurer = makeAddr("treasurer");
-        treasury = payable(makeAddr("treasury"));
         alice = makeAddr("alice");
         bob = makeAddr("bob");
         charlie = makeAddr("charlie");
 
         vm.deal(alice, 100 ether);
         vm.deal(bob, 100 ether);
-        vm.deal(treasurer, 100 ether);
 
         vm.prank(defaultAdmin);
-        token = new ERC1155AccessControl(INITIAL_DELAY, defaultAdmin, treasury, INITIAL_URI);
+        token = new ERC1155AccessControl(INITIAL_DELAY, defaultAdmin, INITIAL_URI);
 
         // Grant roles
         vm.startPrank(defaultAdmin);
         token.grantRole(TOKEN_MANAGER_ROLE, tokenManager);
         token.grantRole(MINTER_ROLE, minter);
         token.grantRole(BURNER_ROLE, burner);
-        token.grantRole(TREASURER_ROLE, treasurer);
         token.grantRole(ACCESS_MANAGER_ROLE, accessManager);
         vm.stopPrank();
     }
@@ -101,7 +84,6 @@ contract ERC1155AccessControlTest is Test {
         assertEq(token.defaultAdmin(), defaultAdmin);
         assertEq(token.defaultAdminDelay(), INITIAL_DELAY);
         assertTrue(token.hasRole(DEFAULT_ADMIN_ROLE, defaultAdmin));
-        assertEq(token.treasury(), treasury);
         assertEq(token.uri(0), INITIAL_URI);
     }
 
@@ -119,14 +101,12 @@ contract ERC1155AccessControlTest is Test {
         assertTrue(token.hasRole(TOKEN_MANAGER_ROLE, tokenManager));
         assertTrue(token.hasRole(MINTER_ROLE, minter));
         assertTrue(token.hasRole(BURNER_ROLE, burner));
-        assertTrue(token.hasRole(TREASURER_ROLE, treasurer));
 
         assertFalse(token.hasRole(DEFAULT_ADMIN_ROLE, alice));
         assertFalse(token.hasRole(ACCESS_MANAGER_ROLE, alice));
         assertFalse(token.hasRole(TOKEN_MANAGER_ROLE, alice));
         assertFalse(token.hasRole(MINTER_ROLE, alice));
         assertFalse(token.hasRole(BURNER_ROLE, alice));
-        assertFalse(token.hasRole(TREASURER_ROLE, alice));
     }
 
     function test_setURI() public {
@@ -174,10 +154,6 @@ contract ERC1155AccessControlTest is Test {
     function test_mint() public {
         uint256 amount = 1000;
 
-        // Set TTL first (required by ERC1155TTL)
-        vm.prank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
-
         vm.expectEmit(true, true, true, true);
         emit TransferSingle(minter, address(0), alice, TOKEN_ID_1, amount);
 
@@ -198,10 +174,7 @@ contract ERC1155AccessControlTest is Test {
         amounts[0] = 1000;
         amounts[1] = 2000;
 
-        // Set TTL for all tokens first
         vm.startPrank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
-        token.setTTL(TOKEN_ID_2, 60 days);
         vm.stopPrank();
 
         vm.expectEmit(true, true, true, true);
@@ -224,11 +197,7 @@ contract ERC1155AccessControlTest is Test {
         uint256 amount2 = 2000;
         uint256 amount3 = 3000;
 
-        // Set TTL for all tokens first
         vm.startPrank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
-        token.setTTL(TOKEN_ID_2, 60 days);
-        token.setTTL(TOKEN_ID_3, 0); // Non-expiring
         vm.stopPrank();
 
         vm.startPrank(minter);
@@ -273,9 +242,6 @@ contract ERC1155AccessControlTest is Test {
         uint256 mintAmount = 1000;
         uint256 burnAmount = 400;
 
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
-
         // First mint some tokens
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, mintAmount);
@@ -303,10 +269,7 @@ contract ERC1155AccessControlTest is Test {
         burnAmounts[0] = 400;
         burnAmounts[1] = 800;
 
-        // Set TTL for all tokens first
         vm.startPrank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
-        token.setTTL(TOKEN_ID_2, 60 days);
         vm.stopPrank();
 
         // First mint some tokens
@@ -330,9 +293,6 @@ contract ERC1155AccessControlTest is Test {
     function test_burn_entireBalance() public {
         uint256 amount = 1000;
 
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
-
         // First mint some tokens
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, amount);
@@ -349,9 +309,6 @@ contract ERC1155AccessControlTest is Test {
 
     function test_burn_unauthorized() public {
         uint256 amount = 1000;
-
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
 
         // First mint some tokens
         vm.prank(minter);
@@ -382,9 +339,6 @@ contract ERC1155AccessControlTest is Test {
         uint256 amount = 1000;
         uint256 transferAmount = 300;
 
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
-
         // Mint tokens to alice
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, amount);
@@ -412,10 +366,7 @@ contract ERC1155AccessControlTest is Test {
         transferAmounts[0] = 300;
         transferAmounts[1] = 500;
 
-        // Set TTL for all tokens first
         vm.startPrank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
-        token.setTTL(TOKEN_ID_2, 60 days);
         vm.stopPrank();
 
         // Mint tokens to alice
@@ -438,9 +389,6 @@ contract ERC1155AccessControlTest is Test {
     function test_setApprovalForAll_and_transferFrom() public {
         uint256 amount = 1000;
         uint256 transferAmount = 400;
-
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
 
         // Mint tokens to alice
         vm.prank(minter);
@@ -472,9 +420,6 @@ contract ERC1155AccessControlTest is Test {
         token.grantRole(MINTER_ROLE, alice);
         token.grantRole(BURNER_ROLE, alice);
         vm.stopPrank();
-
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
 
         // Alice can mint
         vm.prank(alice);
@@ -569,73 +514,6 @@ contract ERC1155AccessControlTest is Test {
         token.mint(alice, TOKEN_ID_1, 1000);
     }
 
-    function test_setTokenPrice() public {
-        uint256 price = 1 ether;
-
-        vm.expectEmit(true, true, false, true);
-        emit ERC1155PriceUpdated(tokenManager, TOKEN_ID_1, price);
-
-        vm.prank(tokenManager);
-        token.setPrice(TOKEN_ID_1, price);
-
-        assertEq(token.priceOf(TOKEN_ID_1), price);
-        assertTrue(token.isPriceSet(TOKEN_ID_1));
-    }
-
-    function test_setTokenPrice_unauthorized() public {
-        uint256 price = 1 ether;
-
-        vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, TOKEN_MANAGER_ROLE)
-        );
-        vm.prank(alice);
-        token.setPrice(TOKEN_ID_1, price);
-    }
-
-    function test_setTreasury() public {
-        address payable newTreasury = payable(makeAddr("newTreasury"));
-
-        vm.expectEmit(true, true, false, true);
-        emit TreasuryUpdated(treasurer, newTreasury);
-
-        vm.prank(treasurer);
-        token.setTreasury(newTreasury);
-
-        assertEq(token.treasury(), newTreasury);
-    }
-
-    function test_setTreasury_unauthorized() public {
-        address payable newTreasury = payable(makeAddr("newTreasury"));
-
-        vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, TREASURER_ROLE)
-        );
-        vm.prank(alice);
-        token.setTreasury(newTreasury);
-    }
-
-    function test_setTTL() public {
-        uint256 ttl = 30 days;
-
-        vm.expectEmit(true, true, false, true);
-        emit ERC1155TTLUpdated(tokenManager, TOKEN_ID_1, ttl);
-
-        vm.prank(tokenManager);
-        token.setTTL(TOKEN_ID_1, ttl);
-
-        assertEq(token.ttlOf(TOKEN_ID_1), ttl);
-    }
-
-    function test_setTTL_unauthorized() public {
-        uint256 ttl = 30 days;
-
-        vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, TOKEN_MANAGER_ROLE)
-        );
-        vm.prank(alice);
-        token.setTTL(TOKEN_ID_1, ttl);
-    }
-
     function test_setNonTransferable() public {
         // Set token as non-transferable
         vm.expectEmit(true, false, false, true);
@@ -667,8 +545,6 @@ contract ERC1155AccessControlTest is Test {
     function test_transfer_nonTransferableToken() public {
         uint256 amount = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, amount);
 
@@ -690,10 +566,7 @@ contract ERC1155AccessControlTest is Test {
         amounts[0] = 1000;
         amounts[1] = 2000;
 
-        // Set TTL and mint tokens
         vm.startPrank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
-        token.setTTL(TOKEN_ID_2, 60 days);
         vm.stopPrank();
 
         vm.prank(minter);
@@ -716,9 +589,6 @@ contract ERC1155AccessControlTest is Test {
     function test_mint_nonTransferableToken() public {
         uint256 amount = 1000;
 
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
-
         // Set token as non-transferable
         vm.prank(tokenManager);
         token.setNonTransferable(TOKEN_ID_1, true);
@@ -734,8 +604,6 @@ contract ERC1155AccessControlTest is Test {
     function test_burn_nonTransferableToken() public {
         uint256 amount = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, amount);
 
@@ -900,8 +768,6 @@ contract ERC1155AccessControlTest is Test {
     function test_transfer_frozenSender() public {
         uint256 amount = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, amount);
 
@@ -918,8 +784,6 @@ contract ERC1155AccessControlTest is Test {
     function test_transfer_frozenReceiver() public {
         uint256 amount = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, amount);
 
@@ -939,8 +803,6 @@ contract ERC1155AccessControlTest is Test {
         ids[0] = TOKEN_ID_1;
         amounts[0] = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mintBatch(alice, ids, amounts);
 
@@ -958,9 +820,6 @@ contract ERC1155AccessControlTest is Test {
     }
 
     function test_mint_frozenReceiver() public {
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
-
         // Freeze alice
         vm.prank(accessManager);
         token.freezeAccount(alice);
@@ -977,9 +836,6 @@ contract ERC1155AccessControlTest is Test {
         ids[0] = TOKEN_ID_1;
         amounts[0] = 1000;
 
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
-
         // Freeze alice
         vm.prank(accessManager);
         token.freezeAccount(alice);
@@ -993,8 +849,6 @@ contract ERC1155AccessControlTest is Test {
     function test_burn_frozenAccount() public {
         uint256 amount = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, amount);
 
@@ -1014,8 +868,6 @@ contract ERC1155AccessControlTest is Test {
         ids[0] = TOKEN_ID_1;
         amounts[0] = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mintBatch(alice, ids, amounts);
 
@@ -1027,30 +879,6 @@ contract ERC1155AccessControlTest is Test {
         vm.expectRevert(abi.encodeWithSelector(ERC1155AccessControl.ERC1155AccessControlAccountFrozen.selector, alice));
         vm.prank(burner);
         token.burnBatch(alice, ids, amounts);
-    }
-
-    function test_suspendPrice() public {
-        // Set initial price
-        uint256 price = 1 ether;
-        vm.prank(tokenManager);
-        token.setPrice(TOKEN_ID_1, price);
-
-        // Suspend the price
-        vm.expectEmit(true, false, false, true);
-        emit ERC1155PriceSuspended(tokenManager, TOKEN_ID_1);
-
-        vm.prank(tokenManager);
-        token.suspendPrice(TOKEN_ID_1);
-
-        assertFalse(token.isPriceSet(TOKEN_ID_1));
-    }
-
-    function test_suspendPrice_unauthorized() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, TOKEN_MANAGER_ROLE)
-        );
-        vm.prank(alice);
-        token.suspendPrice(TOKEN_ID_1);
     }
 
     function test_pause() public {
@@ -1120,8 +948,6 @@ contract ERC1155AccessControlTest is Test {
     function test_transfer_whenPaused() public {
         uint256 amount = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, amount);
 
@@ -1141,8 +967,6 @@ contract ERC1155AccessControlTest is Test {
         ids[0] = TOKEN_ID_1;
         amounts[0] = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mintBatch(alice, ids, amounts);
 
@@ -1160,9 +984,6 @@ contract ERC1155AccessControlTest is Test {
     }
 
     function test_mint_whenPaused() public {
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
-
         // Pause the contract
         vm.prank(accessManager);
         token.pause();
@@ -1179,9 +1000,6 @@ contract ERC1155AccessControlTest is Test {
         ids[0] = TOKEN_ID_1;
         amounts[0] = 1000;
 
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
-
         // Pause the contract
         vm.prank(accessManager);
         token.pause();
@@ -1195,8 +1013,6 @@ contract ERC1155AccessControlTest is Test {
     function test_burn_whenPaused() public {
         uint256 amount = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, amount);
 
@@ -1216,8 +1032,6 @@ contract ERC1155AccessControlTest is Test {
         ids[0] = TOKEN_ID_1;
         amounts[0] = 1000;
 
-        // Set TTL and mint tokens
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mintBatch(alice, ids, amounts);
 
@@ -1241,11 +1055,7 @@ contract ERC1155AccessControlTest is Test {
         amounts[1] = 2000;
         amounts[2] = 3000;
 
-        // Set TTL for all tokens first
         vm.startPrank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
-        token.setTTL(TOKEN_ID_2, 60 days);
-        token.setTTL(TOKEN_ID_3, 0); // Non-expiring
         vm.stopPrank();
 
         // Mint tokens to different accounts
@@ -1273,9 +1083,6 @@ contract ERC1155AccessControlTest is Test {
         uint256 amount2 = 2000;
         uint256 burnAmount = 500;
 
-        // Set TTL first
-        _setTokenTTL(TOKEN_ID_1, 30 days);
-
         // Mint to multiple users
         vm.startPrank(minter);
         token.mint(alice, TOKEN_ID_1, amount1);
@@ -1291,7 +1098,6 @@ contract ERC1155AccessControlTest is Test {
         assertEq(token.totalSupply(TOKEN_ID_1), amount1 + amount2 - burnAmount);
 
         // Test total supply across all tokens
-        _setTokenTTL(TOKEN_ID_2, 60 days);
         vm.prank(minter);
         token.mint(charlie, TOKEN_ID_2, 500);
 
@@ -1299,11 +1105,7 @@ contract ERC1155AccessControlTest is Test {
     }
 
     function test_complexScenario() public {
-        // Set TTL for all tokens
         vm.startPrank(tokenManager);
-        token.setTTL(TOKEN_ID_1, 30 days);
-        token.setTTL(TOKEN_ID_2, 60 days);
-        token.setTTL(TOKEN_ID_3, 0); // Non-expiring
         vm.stopPrank();
 
         // Prepare batch data
@@ -1392,8 +1194,6 @@ contract ERC1155AccessControlTest is Test {
         // Token should not exist initially
         assertFalse(token.exists(TOKEN_ID_1));
 
-        // Set TTL and mint
-        _setTokenTTL(TOKEN_ID_1, 30 days);
         vm.prank(minter);
         token.mint(alice, TOKEN_ID_1, 1000);
 
