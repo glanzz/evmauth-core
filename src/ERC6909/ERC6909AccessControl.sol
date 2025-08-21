@@ -5,8 +5,6 @@ pragma solidity ^0.8.20;
 import {IERC6909AccessControl} from "./IERC6909AccessControl.sol";
 import {IERC6909Base} from "./extensions/IERC6909Base.sol";
 import {ERC6909Base} from "./extensions/ERC6909Base.sol";
-import {ERC6909TTL} from "./extensions/ERC6909TTL.sol";
-import {ERC6909Price} from "./extensions/ERC6909Price.sol";
 import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 import {ERC6909} from "@openzeppelin/contracts/token/ERC6909/draft-ERC6909.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -15,17 +13,10 @@ import {AccessControlDefaultAdminRules} from
 
 /**
  * @dev Implementation of an ERC-6909 compliant contract with extended features and access controls.
- * It supports expiring tokens, purchasable tokens, content URIs, token metadata, and token supply.
  * It inherits from AccessControlDefaultAdminRules to manage access control with default admin rules.
- * Extend this contract and either ERC6909Purchase or ERC6909PurchaseWithERC20 to add purchase functionality.
+ * It supports content URIs, token metadata, token supply, and account freezing.
  */
-contract ERC6909AccessControl is
-    AccessControlDefaultAdminRules,
-    ERC6909Base,
-    ERC6909TTL,
-    ERC6909Price,
-    IERC6909AccessControl
-{
+contract ERC6909AccessControl is AccessControlDefaultAdminRules, ERC6909Base, IERC6909AccessControl {
     /**
      * @dev Role required to pause/un-pause the contract, freeze accounts, and  manage the allowlist.
      */
@@ -45,11 +36,6 @@ contract ERC6909AccessControl is
      * @dev Role required to burn tokens.
      */
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
-
-    /**
-     * @dev Role required to modify the treasury address.
-     */
-    bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
 
     /**
      * @dev Status indicating an account should not be allowed to purchase, transfer, or receive tokens.
@@ -72,36 +58,25 @@ contract ERC6909AccessControl is
     error ERC6909AccessControlInvalidAddress(address account);
 
     /**
-     * @dev Sets the initial values for `defaultAdminDelay` and `defaultAdmin` address, as well as
-     * the `_treasury` address that will receive token purchase revenues.
+     * @dev Sets the initial values for `defaultAdminDelay` and `defaultAdmin` address.
      */
-    constructor(uint48 initialDelay, address initialDefaultAdmin, address payable treasuryAccount)
+    constructor(uint48 initialDelay, address initialDefaultAdmin)
         AccessControlDefaultAdminRules(initialDelay, initialDefaultAdmin)
-        ERC6909Price(treasuryAccount)
-    {
-        // Initialize the contract with the provided admin and default admin addresses.
-        // The treasury address is set for handling purchase revenues.
-    }
+    {}
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
         view
         virtual
-        override(IERC165, ERC6909Base, ERC6909TTL, ERC6909Price, AccessControlDefaultAdminRules)
+        override(ERC6909Base, AccessControlDefaultAdminRules)
         returns (bool)
     {
         return interfaceId == type(IERC6909AccessControl).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc IERC6909
-    function balanceOf(address account, uint256 id)
-        public
-        view
-        virtual
-        override(ERC6909, IERC6909, ERC6909TTL)
-        returns (uint256)
-    {
+    function balanceOf(address account, uint256 id) public view virtual override(ERC6909, IERC6909) returns (uint256) {
         return super.balanceOf(account, id);
     }
 
@@ -208,36 +183,8 @@ contract ERC6909AccessControl is
     /**
      * @inheritdoc IERC6909AccessControl
      */
-    function setTTL(uint256 id, uint256 ttl) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _setTokenTTL(id, ttl);
-    }
-
-    /**
-     * @inheritdoc IERC6909AccessControl
-     */
-    function setPrice(uint256 id, uint256 price) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _setTokenPrice(id, price);
-    }
-
-    /**
-     * @inheritdoc IERC6909AccessControl
-     */
-    function suspendPrice(uint256 id) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _suspendTokenPrice(id);
-    }
-
-    /**
-     * @inheritdoc IERC6909AccessControl
-     */
     function setNonTransferable(uint256 id, bool nonTransferable) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setNonTransferable(id, nonTransferable);
-    }
-
-    /**
-     * @inheritdoc IERC6909AccessControl
-     */
-    function setTreasury(address payable treasuryAccount) external virtual onlyRole(TREASURER_ROLE) {
-        _setTreasury(treasuryAccount);
     }
 
     /**
@@ -276,11 +223,7 @@ contract ERC6909AccessControl is
      * @param id The identifier of the token type to transfer.
      * @param amount The number of tokens to transfer.
      */
-    function _update(address from, address to, uint256 id, uint256 amount)
-        internal
-        virtual
-        override(ERC6909, ERC6909Base, ERC6909TTL)
-    {
+    function _update(address from, address to, uint256 id, uint256 amount) internal virtual override(ERC6909Base) {
         if (_frozenAccounts[from]) {
             revert ERC6909AccessControlAccountFrozen(from);
         }

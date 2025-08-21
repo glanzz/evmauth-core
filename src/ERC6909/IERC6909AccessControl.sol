@@ -2,27 +2,10 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC6909TTL} from "./extensions/IERC6909TTL.sol";
-import {IERC6909Price} from "./extensions/IERC6909Price.sol";
-import {
-    IERC6909ContentURI,
-    IERC6909Metadata,
-    IERC6909TokenSupply
-} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
-import {IAccessControlDefaultAdminRules} from
-    "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
-
 /**
  * @dev Interface of an ERC-6909 compliant contract with extended features and access controls.
  */
-interface IERC6909AccessControl is
-    IAccessControlDefaultAdminRules,
-    IERC6909TTL,
-    IERC6909Price,
-    IERC6909ContentURI,
-    IERC6909Metadata,
-    IERC6909TokenSupply
-{
+interface IERC6909AccessControl {
     /**
      * @dev Emitted when an address is frozen, unfrozen, added to, or removed from the allowlist.
      */
@@ -142,36 +125,6 @@ interface IERC6909AccessControl is
     function setTokenDecimals(uint256 id, uint8 decimals) external;
 
     /**
-     * @dev Sets the TTL for a specific token `id`.
-     *
-     * Emits a {ERC6909TTLUpdated} event.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     */
-    function setTTL(uint256 id, uint256 ttl) external;
-
-    /**
-     * @dev Sets the price for a specific token `id`.
-     *
-     * Emits a {ERC6909PriceUpdated} event.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     */
-    function setPrice(uint256 id, uint256 price) external;
-
-    /**
-     * @dev Suspends the price for a specific token `id`, preventing purchases.
-     *
-     * Emits a {ERC6909PriceSuspended} event.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     */
-    function suspendPrice(uint256 id) external;
-
-    /**
      * @dev Sets the non-transferable status of a specific token `id`.
      *
      * Emits a {ERC6909NonTransferableUpdated} event.
@@ -180,16 +133,6 @@ interface IERC6909AccessControl is
      * - The caller must have the `TOKEN_MANAGER_ROLE`.
      */
     function setNonTransferable(uint256 id, bool nonTransferable) external;
-
-    /**
-     * @dev Sets the treasury address that will receive token purchase revenues.
-     *
-     * Emits a {TreasuryUpdated} event.
-     *
-     * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
-     */
-    function setTreasury(address payable treasuryAccount) external;
 
     /**
      * @dev Mints `amount` of token type `id` to `to`.
