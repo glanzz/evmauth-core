@@ -1,24 +1,84 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import { TokenPrice } from "./TokenPrice.sol";
+import { PausableUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/PausableUpgradeable.sol";
 
 /**
- * @dev Implementation of an ERC-6909 compliant contract that supports the direct purchase of tokens
- * using native currency (i.e. ETH).
- *
- * This is a mixin contract that expects the following functions to be available:
- * - _validatePurchase(address, uint256, uint256) returns (uint256)
- * - _completePurchase(address, uint256, uint256, uint256)
- * - _getTreasury() returns (address payable)
- * - supportsInterface(bytes4) returns (bool)
+ * @dev Mixin for token contracts that adds support for direct purchase using
+ * native currency (e.g., ETH, MATIC).
  */
-abstract contract TokenPurchase is Pausable {
+abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {
     /**
      * @dev Error thrown when the payment made for a purchase is insufficient.
      */
     error TokenPurchaseInsufficientPayment(uint256 id, uint256 amount, uint256 price, uint256 paid);
+
+    /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     *
+     * @param initialTreasury The address where purchase revenues will be sent.
+     */
+    function __TokenPurchase_init(address payable initialTreasury) public onlyInitializing {
+        __TokenPrice_init(initialTreasury);
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __TokenPurchase_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
+
+    /**
+     * @dev Allows the caller to purchase a specific `amount` of tokens of type `id`
+     * using native currency. The caller must send sufficient payment with the transaction.
+     *
+     * Emits a {Transfer} event with `from` set to the zero address and `to` set to the caller's address.
+     * Emits a {Purchase} event where the `caller` and `receiver` are the same.
+     *
+     * Requirements:
+     * - The contract must not be paused.
+     * - The amount must be greater than zero.
+     * - The token `id` must have a set price.
+     * - The payment sent with the transaction must be sufficient to cover the total price for the `amount` of tokens.
+     *
+     * @param id The identifier of the token type to purchase.
+     * @param amount The number of tokens to purchase.
+     */
+    function purchase(uint256 id, uint256 amount) external payable virtual whenNotPaused nonReentrant {
+        _purchaseFor(_msgSender(), id, amount);
+    }
+
+    /**
+     * @dev Allows the caller to purchase a specific `amount` of tokens of type `id`
+     * for a designated `receiver` using native currency. The caller must send sufficient
+     * payment with the transaction.
+     *
+     * Emits a {Transfer} event with `from` set to the zero address and `to` set to the receiver's address.
+     * Emits a {Purchase} event where the `caller` may be different than the `receiver`.
+     *
+     * Requirements:
+     * - The contract must not be paused.
+     * - The receiver address must not be zero.
+     * - The amount must be greater than zero.
+     * - The token `id` must have a set price.
+     * - The payment sent with the transaction must be sufficient to cover the total price for the `amount` of tokens.
+     *
+     * @param receiver The address of the receiver who will receive the purchased tokens.
+     * @param id The identifier of the token type to purchase.
+     * @param amount The number of tokens to purchase.
+     */
+    function purchaseFor(address receiver, uint256 id, uint256 amount)
+        external
+        payable
+        virtual
+        whenNotPaused
+        nonReentrant
+    {
+        _purchaseFor(receiver, id, amount);
+    }
 
     /**
      * @dev Internal function to handle the purchase logic with native currency.
@@ -56,8 +116,4 @@ abstract contract TokenPurchase is Pausable {
         // Complete the purchase
         _completePurchase(receiver, id, amount, totalPrice);
     }
-
-    function _validatePurchase(address receiver, uint256 id, uint256 amount) internal virtual returns (uint256);
-    function _completePurchase(address receiver, uint256 id, uint256 amount, uint256 totalPrice) internal virtual;
-    function _getTreasury() internal view virtual returns (address payable);
 }

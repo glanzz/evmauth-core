@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {BaseTest} from "test/BaseTest.sol";
-import {TokenAccessControl} from "src/common/TokenAccessControl.sol";
+import { BaseTest } from "test/BaseTest.sol";
+import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
 
 contract MockTokenAccessControl is TokenAccessControl {
-    constructor(uint48 initialDelay, address initialDefaultAdmin)
-        TokenAccessControl(initialDelay, initialDefaultAdmin)
-    {}
+    function initialize(uint48 initialDelay, address initialDefaultAdmin) public initializer {
+        __TokenAccessControl_init(initialDelay, initialDefaultAdmin);
+    }
 }
 
 contract TokenAccessControl_Test is BaseTest {
@@ -15,7 +15,7 @@ contract TokenAccessControl_Test is BaseTest {
 
     function setUp() public virtual override {
         vm.startPrank(owner);
-        token = new MockTokenAccessControl(2 days, owner);
+        token = new MockTokenAccessControl();
         token.grantRole(token.ACCESS_MANAGER_ROLE(), accessManager);
         token.grantRole(token.TOKEN_MANAGER_ROLE(), tokenManager);
         token.grantRole(token.MINTER_ROLE(), minter);

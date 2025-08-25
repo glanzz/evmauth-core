@@ -1,28 +1,19 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {AccessControlDefaultAdminRules} from
-    "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
+import { PausableUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/PausableUpgradeable.sol";
+import { AccessControlDefaultAdminRulesUpgradeable } from
+    "@openzeppelin-upgradeable/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
- * @dev Abstract contract that implements access control for token management.
- * This contract defines roles for managing access, freezing accounts, and pausing the contract.
- * It is designed to be used as a base contract for token contracts that require access control.
+ * @dev Mixin providing role-based access control and pausability for token contracts.
+ * This contract extends OpenZeppelin's AccessControlDefaultAdminRulesUpgradeable to manage roles with a
+ * time-delayed admin role transfer mechanism. It also integrates pausability features to allow
+ * authorized accounts to pause and unpause contract operations.
  */
-abstract contract TokenAccessControl is AccessControlDefaultAdminRules, Pausable {
-    constructor(uint48 initialDelay, address initialDefaultAdmin)
-        AccessControlDefaultAdminRules(initialDelay, initialDefaultAdmin)
-    {}
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-
+abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeable, PausableUpgradeable {
     /**
      * @dev Role required to pause/un-pause the contract and freeze/un-freeze accounts.
      */
@@ -88,6 +79,34 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRules, Pausable
             revert ERC6909AccessControlAccountFrozen(account);
         }
         _;
+    }
+
+    /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     *
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     */
+    function __TokenAccessControl_init(uint48 initialDelay, address initialDefaultAdmin) public onlyInitializing {
+        __AccessControlDefaultAdminRules_init(initialDelay, initialDefaultAdmin);
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __TokenAccessControl_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
+
+    // @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(AccessControlDefaultAdminRulesUpgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 
     /**

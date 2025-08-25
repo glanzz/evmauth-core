@@ -1,31 +1,58 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {ERC1155X} from "src/ERC1155/ERC1155X.sol";
-import {TokenTTL} from "src/common/TokenTTL.sol";
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {IERC1155Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
+import { ERC1155X } from "src/ERC1155/ERC1155X.sol";
+import { TokenTTL } from "src/common/TokenTTL.sol";
+import { ERC1155Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
+import { IERC1155Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import { Arrays } from "@openzeppelin/contracts/utils/Arrays.sol";
 
 /**
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
- * This contract combines ERC1155X with the TokenTTL extension.
+ * This contract combines {ERC1155X} with the {TokenTTL} mixin, which adds automatic token expiry
+ * for any token type that has a time-to-live (TTL) set.
  */
 contract ERC1155XT is ERC1155X, TokenTTL {
     using Arrays for uint256[];
     using Arrays for address[];
 
     /**
-     * @dev Initializes the contract with an initial delay, default admin address, and URI.
+     * @dev Initializer used when deployed directly as an upgradeable contract.
      *
-     * @param initialDelay The initial delay for transfer of the default admin role.
-     * @param initialDefaultAdmin The address of the initial default admin.
-     * @param uri_ The base URI for token metadata.
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      */
-    constructor(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
-        ERC1155X(initialDelay, initialDefaultAdmin, uri_)
-    {}
+    function initialize(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        virtual
+        override
+        initializer
+    {
+        __ERC1155XT_init(initialDelay, initialDefaultAdmin, uri_);
+    }
+
+    /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     *
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
+     */
+    function __ERC1155XT_init(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        onlyInitializing
+    {
+        __ERC1155X_init(initialDelay, initialDefaultAdmin, uri_);
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __ERC1155XT_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
 
     /**
      * @dev Returns the balance of specific token `id` for the given `account`, excluding expired tokens.
@@ -34,7 +61,13 @@ contract ERC1155XT is ERC1155X, TokenTTL {
      * @param id The identifier of the token type to check the balance for.
      * @return The balance of the token `id` for the specified `account`, excluding expired tokens.
      */
-    function balanceOf(address account, uint256 id) public view virtual override(ERC1155, TokenTTL) returns (uint256) {
+    function balanceOf(address account, uint256 id)
+        public
+        view
+        virtual
+        override(ERC1155Upgradeable, TokenTTL)
+        returns (uint256)
+    {
         return TokenTTL.balanceOf(account, id);
     }
 

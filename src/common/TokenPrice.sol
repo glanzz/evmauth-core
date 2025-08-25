@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC6909 } from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
+import { ContextUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/ContextUpgradeable.sol";
+import { ReentrancyGuardTransientUpgradeable } from
+    "@openzeppelin-upgradeable/contracts/utils/ReentrancyGuardTransientUpgradeable.sol";
 
 /**
- * @dev Base extension for token contracts that offer pricing and direct purchase functionality.
- * This contract provides the basic structure for managing token prices, a treasury address,
- * and purchase validation. It does not implement external purchase methods; those should be
- * defined in derived contracts.
+ * @dev Base mixin for token contracts that adds token pricing and direct purchase functionality.
+ * Use this to implement your own purchase logic, or use TokenPurchase or TokenPurchaseERC20 for
+ * native currency or ERC-20 token purchases, respectively.
  */
-abstract contract TokenPrice is Context, ReentrancyGuard {
+abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgradeable {
     /**
      * @dev Data structure that holds the price for a token and whether it has been set.
      * This structure allows us to differentiate between a token that has a price intentionally set to 0
@@ -75,11 +75,20 @@ abstract contract TokenPrice is Context, ReentrancyGuard {
     error TokenPriceNotSet(uint256 id);
 
     /**
-     * @dev Initializes the contract by setting the initial treasury address.
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
      *
      * @param initialTreasury The address where purchase revenues will be sent.
      */
-    constructor(address payable initialTreasury) {
+    function __TokenPrice_init(address payable initialTreasury) public onlyInitializing {
+        __TokenPrice_init_unchained(initialTreasury);
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     *
+     * @param initialTreasury The address where purchase revenues will be sent.
+     */
+    function __TokenPrice_init_unchained(address payable initialTreasury) public onlyInitializing {
         _setTreasury(initialTreasury);
     }
 
@@ -198,7 +207,7 @@ abstract contract TokenPrice is Context, ReentrancyGuard {
      * @param price The price to set for the token type.
      */
     function _setPrice(uint256 id, uint256 price) internal {
-        _priceConfigs[id] = PriceConfig({isSet: true, price: price});
+        _priceConfigs[id] = PriceConfig({ isSet: true, price: price });
 
         emit PriceUpdated(_msgSender(), id, price);
     }
@@ -217,7 +226,7 @@ abstract contract TokenPrice is Context, ReentrancyGuard {
      */
     function _suspendPrice(uint256 id) internal {
         if (_priceConfigs[id].isSet) {
-            _priceConfigs[id] = PriceConfig({isSet: false, price: 0});
+            _priceConfigs[id] = PriceConfig({ isSet: false, price: 0 });
             emit PriceSuspended(_msgSender(), id);
         }
     }

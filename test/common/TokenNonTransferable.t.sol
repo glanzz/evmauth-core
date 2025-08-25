@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {Test} from "forge-std/Test.sol";
-import {TokenNonTransferable} from "src/common/TokenNonTransferable.sol";
+import { Test } from "forge-std/Test.sol";
+import { TokenNonTransferable } from "src/common/TokenNonTransferable.sol";
 
 contract MockTokenNonTransferable is TokenNonTransferable {
-    constructor() TokenNonTransferable() {}
+    function initialize() public initializer {
+        __TokenNonTransferable_init();
+    }
 }
 
 contract TokenNonTransferable_Test is Test {

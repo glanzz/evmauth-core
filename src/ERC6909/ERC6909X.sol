@@ -1,25 +1,28 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {TokenAccessControl} from "src/common/TokenAccessControl.sol";
-import {TokenNonTransferable} from "src/common/TokenNonTransferable.sol";
-import {ERC6909} from "@openzeppelin/contracts/token/ERC6909/draft-ERC6909.sol";
-import {ERC6909ContentURI} from "@openzeppelin/contracts/token/ERC6909/extensions/draft-ERC6909ContentURI.sol";
-import {ERC6909Metadata} from "@openzeppelin/contracts/token/ERC6909/extensions/draft-ERC6909Metadata.sol";
-import {ERC6909TokenSupply} from "@openzeppelin/contracts/token/ERC6909/extensions/draft-ERC6909TokenSupply.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
+import { TokenNonTransferable } from "src/common/TokenNonTransferable.sol";
+import { ERC6909Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC6909/draft-ERC6909Upgradeable.sol";
+import { ERC6909ContentURIUpgradeable } from
+    "@openzeppelin-upgradeable/contracts/token/ERC6909/extensions/draft-ERC6909ContentURIUpgradeable.sol";
+import { ERC6909MetadataUpgradeable } from
+    "@openzeppelin-upgradeable/contracts/token/ERC6909/extensions/draft-ERC6909MetadataUpgradeable.sol";
+import { ERC6909TokenSupplyUpgradeable } from
+    "@openzeppelin-upgradeable/contracts/token/ERC6909/extensions/draft-ERC6909TokenSupplyUpgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @dev Implementation of an ERC-6909 compliant contract with extended features.
- * This contract consolidates ERC6909 with the ContentURI, Metadata, and TokenSupply extensions.
- * It also integrates role-based access control and non-transferable token features.
+ * This contract combines {ERC6909Upgradeable} with the {ERC6909ContentURIUpgradeable},
+ * {ERC6909MetadataUpgradeable}, and {ERC6909TokenSupplyUpgradeable} extensions, as well as
+ * the {TokenAccessControl} and {TokenNonTransferable} mixins.
  */
 contract ERC6909X is
-    ERC6909ContentURI,
-    ERC6909Metadata,
-    ERC6909TokenSupply,
+    ERC6909ContentURIUpgradeable,
+    ERC6909MetadataUpgradeable,
+    ERC6909TokenSupplyUpgradeable,
     TokenNonTransferable,
     TokenAccessControl
 {
@@ -34,26 +37,48 @@ contract ERC6909X is
     error ERC6909InvalidZeroValueTransfer();
 
     /**
-     * @dev Initializes the contract with an initial delay, default admin address, and contract URI.
+     * @dev Initializer used when deployed directly as an upgradeable contract.
      *
-     * @param initialDelay The initial delay for transfer of the default admin role.
-     * @param initialDefaultAdmin The address of the initial default admin.
-     * @param uri_ The contract URI.
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
      */
-    constructor(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
-        TokenAccessControl(initialDelay, initialDefaultAdmin)
+    function initialize(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        virtual
+        initializer
     {
+        __ERC6909X_init(initialDelay, initialDefaultAdmin, uri_);
+    }
+
+    /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     *
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+     */
+    function __ERC6909X_init(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        onlyInitializing
+    {
+        __TokenAccessControl_init(initialDelay, initialDefaultAdmin);
         _setContractURI(uri_);
     }
 
     /**
-     * @dev See {IERC165-supportsInterface}.
+     * @dev Unchained initializer that only initializes THIS contract's storage.
      */
+    function __ERC6909X_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
+
+    // @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
         view
         virtual
-        override(ERC6909, IERC165, TokenAccessControl)
+        override(ERC6909Upgradeable, IERC165, TokenAccessControl)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
@@ -165,7 +190,7 @@ contract ERC6909X is
     function _update(address from, address to, uint256 id, uint256 amount)
         internal
         virtual
-        override(ERC6909, ERC6909TokenSupply)
+        override(ERC6909Upgradeable, ERC6909TokenSupplyUpgradeable)
         whenNotPaused
         denyTransferIfNonTransferable(from, to, id)
     {

@@ -1,21 +1,28 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {TokenAccessControl} from "src/common/TokenAccessControl.sol";
-import {TokenNonTransferable} from "src/common/TokenNonTransferable.sol";
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {ERC1155Supply} from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
-import {ERC1155URIStorage} from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
-import {IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
+import { TokenNonTransferable } from "src/common/TokenNonTransferable.sol";
+import { ERC1155Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
+import { ERC1155SupplyUpgradeable } from
+    "@openzeppelin-upgradeable/contracts/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
+import { ERC1155URIStorageUpgradeable } from
+    "@openzeppelin-upgradeable/contracts/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
- * This contract consolidates ERC1155 with the Supply and URIStorage extensions.
- * It also integrates role-based access control and non-transferable token features.
+ * This contract combines {ERC1155Upgradeable} with the {ERC1155SupplyUpgradeable} and
+ * {ERC1155URIStorageUpgradeable} extensions, as well as the {TokenAccessControl} and
+ * {TokenNonTransferable} mixins.
  */
-contract ERC1155X is ERC1155Supply, ERC1155URIStorage, TokenNonTransferable, TokenAccessControl {
+contract ERC1155X is
+    ERC1155SupplyUpgradeable,
+    ERC1155URIStorageUpgradeable,
+    TokenNonTransferable,
+    TokenAccessControl
+{
     /**
      * @dev Error thrown when a transfer is attempted with the same sender and recipient addresses.
      */
@@ -27,33 +34,62 @@ contract ERC1155X is ERC1155Supply, ERC1155URIStorage, TokenNonTransferable, Tok
     error ERC1155InvalidZeroValueTransfer();
 
     /**
-     * @dev Initializes the contract with an initial delay, default admin address, and URI.
+     * @dev Initializer used when deployed directly as an upgradeable contract.
      *
-     * @param initialDelay The initial delay for transfer of the default admin role.
-     * @param initialDefaultAdmin The address of the initial default admin.
-     * @param uri_ The base URI for token metadata.
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      */
-    constructor(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
-        TokenAccessControl(initialDelay, initialDefaultAdmin)
-        ERC1155(uri_)
-    {}
+    function initialize(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        virtual
+        initializer
+    {
+        __ERC1155X_init(initialDelay, initialDefaultAdmin, uri_);
+    }
 
     /**
-     * @dev See {IERC165-supportsInterface}.
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     *
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      */
+    function __ERC1155X_init(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        onlyInitializing
+    {
+        __TokenAccessControl_init(initialDelay, initialDefaultAdmin);
+        __ERC1155_init(uri_);
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __ERC1155X_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
+
+    // @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
         view
         virtual
-        override(ERC1155, TokenAccessControl)
+        override(ERC1155Upgradeable, TokenAccessControl)
         returns (bool)
     {
-        return ERC1155.supportsInterface(interfaceId) || TokenAccessControl.supportsInterface(interfaceId);
+        return ERC1155Upgradeable.supportsInterface(interfaceId) || TokenAccessControl.supportsInterface(interfaceId);
     }
 
-    /// @inheritdoc ERC1155URIStorage
-    function uri(uint256 tokenId) public view virtual override(ERC1155, ERC1155URIStorage) returns (string memory) {
-        return ERC1155URIStorage.uri(tokenId);
+    /// @inheritdoc ERC1155URIStorageUpgradeable
+    function uri(uint256 tokenId)
+        public
+        view
+        virtual
+        override(ERC1155Upgradeable, ERC1155URIStorageUpgradeable)
+        returns (string memory)
+    {
+        return ERC1155URIStorageUpgradeable.uri(tokenId);
     }
 
     /**
@@ -176,7 +212,7 @@ contract ERC1155X is ERC1155Supply, ERC1155URIStorage, TokenNonTransferable, Tok
     function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
         internal
         virtual
-        override(ERC1155, ERC1155Supply)
+        override(ERC1155Upgradeable, ERC1155SupplyUpgradeable)
         whenNotPaused
         denyBatchTransferIfAnyNonTransferable(from, to, ids)
     {

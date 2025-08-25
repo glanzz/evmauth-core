@@ -3,14 +3,14 @@
 pragma solidity ^0.8.24;
 
 import { ERC6909X } from "src/ERC6909/ERC6909X.sol";
-import { TokenPurchase } from "src/common/TokenPurchase.sol";
+import { TokenPurchaseERC20 } from "src/common/TokenPurchaseERC20.sol";
 
 /**
  * @dev Implementation of an ERC-6909 compliant contract with extended features.
- * This contract combines {ERC6909X} with the {TokenPurchase} mixin, allowing tokens to be purchased
- * using the native currency (e.g., ETH, MATIC).
+ * This contract combines {ERC6909X} with the {TokenPurchaseERC20} mixin, allowing tokens to
+ * be purchased using the native currency (e.g., ETH, MATIC).
  */
-contract ERC6909XP is ERC6909X, TokenPurchase {
+contract ERC6909XP20 is ERC6909X, TokenPurchaseERC20 {
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
@@ -25,7 +25,7 @@ contract ERC6909XP is ERC6909X, TokenPurchase {
         string memory uri_,
         address payable initialTreasury
     ) public virtual initializer {
-        __ERC6909XP_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+        __ERC6909XP20_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
     }
 
     /**
@@ -36,20 +36,20 @@ contract ERC6909XP is ERC6909X, TokenPurchase {
      * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
      * @param initialTreasury The address where purchase revenues will be sent.
      */
-    function __ERC6909XP_init(
+    function __ERC6909XP20_init(
         uint48 initialDelay,
         address initialDefaultAdmin,
         string memory uri_,
         address payable initialTreasury
     ) public onlyInitializing {
         __ERC6909X_init(initialDelay, initialDefaultAdmin, uri_);
-        __TokenPurchase_init(initialTreasury);
+        __TokenPurchaseERC20_init(initialTreasury);
     }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __ERC6909XP_init_unchained() public onlyInitializing {
+    function __ERC6909XP20_init_unchained() public onlyInitializing {
         // Nothing to initialize
     }
 

@@ -2,10 +2,10 @@
 pragma solidity ^0.8.24;
 
 import { BaseTest } from "test/BaseTest.sol";
-import { ERC6909XTP } from "src/ERC6909/ERC6909XTP.sol";
+import { ERC1155XTP20 } from "src/ERC1155/ERC1155XTP20.sol";
 
-contract ERC6909XTP_Test is BaseTest {
-    ERC6909XTP internal token;
+contract ERC1155XTP20_Test is BaseTest {
+    ERC1155XTP20 internal token;
 
     function setUp() public virtual override {
         super.setUp();
@@ -13,16 +13,16 @@ contract ERC6909XTP_Test is BaseTest {
         vm.startPrank(owner);
 
         // Deploy implementation contract
-        ERC6909XTP implementation = new ERC6909XTP();
+        ERC1155XTP20 implementation = new ERC1155XTP20();
 
         // Prepare initialization data
         bytes memory initData = abi.encodeWithSelector(
-            ERC6909XTP.initialize.selector, 2 days, owner, "https://token-cdn-domain/{id}.json", treasury
+            ERC1155XTP20.initialize.selector, 2 days, owner, "https://token-cdn-domain/{id}.json", treasury
         );
 
         // Deploy proxy and initialize
         address proxyAddress = deployProxy(address(implementation), initData);
-        token = ERC6909XTP(proxyAddress);
+        token = ERC1155XTP20(proxyAddress);
 
         // Grant roles
         token.grantRole(token.ACCESS_MANAGER_ROLE(), accessManager);

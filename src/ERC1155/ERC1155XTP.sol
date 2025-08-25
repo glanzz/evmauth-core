@@ -1,36 +1,63 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {ERC1155X} from "src/ERC1155/ERC1155X.sol";
-import {TokenPrice} from "src/common/TokenPrice.sol";
-import {TokenTTL} from "src/common/TokenTTL.sol";
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {IERC1155Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import {Arrays} from "@openzeppelin/contracts/utils/Arrays.sol";
+import { ERC1155XP } from "src/ERC1155/ERC1155XP.sol";
+import { TokenPrice } from "src/common/TokenPrice.sol";
+import { TokenTTL } from "src/common/TokenTTL.sol";
+import { ERC1155Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
+import { IERC1155Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import { Arrays } from "@openzeppelin/contracts/utils/Arrays.sol";
 
 /**
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
- * This contract combines ERC1155X with the TokenTTL and TokenPrice extensions. It should be combined
- * with TokenPurchase, TokenPurchaseERC20, or a custom contract with external purchase methods.
+ * This contract combines {ERC1155XP} with the {TokenTTL} mixin, which adds automatic token expiry
+ * for any token type that has a time-to-live (TTL) set.
  */
-contract ERC1155XTP is ERC1155X, TokenTTL, TokenPrice {
+contract ERC1155XTP is ERC1155XP, TokenTTL {
     using Arrays for uint256[];
     using Arrays for address[];
 
     /**
-     * @dev Initializes the contract with an initial delay, default admin address, URI, and initial
-     * treasury address for payment collection.
+     * @dev Initializer used when deployed directly as an upgradeable contract.
      *
-     * @param initialDelay The initial delay for transfer of the default admin role.
-     * @param initialDefaultAdmin The address of the initial default admin.
-     * @param uri_ The base URI for token metadata.
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      * @param initialTreasury The address where purchase revenues will be sent.
      */
-    constructor(uint48 initialDelay, address initialDefaultAdmin, string memory uri_, address payable initialTreasury)
-        ERC1155X(initialDelay, initialDefaultAdmin, uri_)
-        TokenPrice(initialTreasury)
-    {}
+    function initialize(
+        uint48 initialDelay,
+        address initialDefaultAdmin,
+        string memory uri_,
+        address payable initialTreasury
+    ) public virtual override initializer {
+        __ERC1155XTP_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+    }
+
+    /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     *
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
+     * @param initialTreasury The address where purchase revenues will be sent.
+     */
+    function __ERC1155XTP_init(
+        uint48 initialDelay,
+        address initialDefaultAdmin,
+        string memory uri_,
+        address payable initialTreasury
+    ) public onlyInitializing {
+        __ERC1155XP_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __ERC1155XTP_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
 
     /**
      * @dev Returns the balance of specific token `id` for the given `account`, excluding expired tokens.
@@ -39,7 +66,13 @@ contract ERC1155XTP is ERC1155X, TokenTTL, TokenPrice {
      * @param id The identifier of the token type to check the balance for.
      * @return The balance of the token `id` for the specified `account`, excluding expired tokens.
      */
-    function balanceOf(address account, uint256 id) public view virtual override(ERC1155, TokenTTL) returns (uint256) {
+    function balanceOf(address account, uint256 id)
+        public
+        view
+        virtual
+        override(ERC1155Upgradeable, TokenTTL)
+        returns (uint256)
+    {
         return TokenTTL.balanceOf(account, id);
     }
 
@@ -75,7 +108,7 @@ contract ERC1155XTP is ERC1155X, TokenTTL, TokenPrice {
      *
      * @return The address of the treasury account.
      */
-    function treasury() public view virtual returns (address) {
+    function treasury() public view virtual override returns (address) {
         return _getTreasury();
     }
 
@@ -89,7 +122,7 @@ contract ERC1155XTP is ERC1155X, TokenTTL, TokenPrice {
      *
      * @param account The address of the new treasury account.
      */
-    function setTreasury(address payable account) public virtual onlyRole(TREASURER_ROLE) {
+    function setTreasury(address payable account) public virtual override onlyRole(TREASURER_ROLE) {
         _setTreasury(account);
     }
 
@@ -104,7 +137,7 @@ contract ERC1155XTP is ERC1155X, TokenTTL, TokenPrice {
      * @param id The identifier of the token type to set the price for.
      * @param price The price to set for the token type.
      */
-    function setPrice(uint256 id, uint256 price) public virtual onlyRole(TREASURER_ROLE) {
+    function setPrice(uint256 id, uint256 price) public virtual override onlyRole(TREASURER_ROLE) {
         _setPrice(id, price);
     }
 
@@ -118,7 +151,7 @@ contract ERC1155XTP is ERC1155X, TokenTTL, TokenPrice {
      *
      * @param id The identifier of the token type to suspend the price for.
      */
-    function suspendPrice(uint256 id) public virtual onlyRole(TREASURER_ROLE) {
+    function suspendPrice(uint256 id) public virtual override onlyRole(TREASURER_ROLE) {
         _suspendPrice(id);
     }
 

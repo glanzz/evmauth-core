@@ -1,22 +1,18 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import { TokenPrice } from "./TokenPrice.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { PausableUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/PausableUpgradeable.sol";
 
 /**
- * @dev Implementation of an ERC-6909 compliant contract that supports the direct purchase of tokens
- * using ERC-20 tokens (e.g. USDC, USDT).
- *
- * This is a mixin contract that expects the following functions to be available:
- * - _validatePurchase(address, uint256, uint256) returns (uint256)
- * - _completePurchase(address, uint256, uint256, uint256)
- * - _getTreasury() returns (address payable)
- * - supportsInterface(bytes4) returns (bool)
+ * @dev Mixin for token contracts that adds support for direct purchase using
+ * ERC-20 tokens (e.g. USDC, USDT).
  */
-abstract contract TokenPurchaseERC20 is Pausable {
+abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
     // Import SafeERC20 to revert if a transfer returns false
     using SafeERC20 for IERC20;
 
@@ -58,6 +54,22 @@ abstract contract TokenPurchaseERC20 is Pausable {
     error TokenPurchaseERC20InvalidPaymentToken(address token);
 
     /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     *
+     * @param initialTreasury The address where purchase revenues will be sent.
+     */
+    function __TokenPurchaseERC20_init(address payable initialTreasury) public onlyInitializing {
+        __TokenPrice_init(initialTreasury);
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __TokenPurchaseERC20_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
+
+    /**
      * @dev Returns the list of all accepted ERC-20 tokens for purchases.
      *
      * @return An array of addresses of accepted ERC-20 tokens
@@ -74,6 +86,62 @@ abstract contract TokenPurchaseERC20 is Pausable {
      */
     function isERC20PaymentTokenAccepted(address token) external view virtual returns (bool) {
         return _paymentTokens[token];
+    }
+
+    /**
+     * @dev Allows the caller to purchase a specific `amount` of tokens of type `id`
+     * using the specified ERC-20 `paymentToken`. The caller must have approved
+     * this contract to spend sufficient amount of the ERC-20 token.
+     *
+     * Emits a {Transfer} event with `from` set to the zero address and `to` set to the caller's address.
+     * Emits a {Purchase} event where the `caller` and `receiver` are the same.
+     *
+     * Requirements:
+     * - The contract must not be paused.
+     * - The amount must be greater than zero.
+     * - The token `id` must have a set price.
+     * - The payment token must be in the list of accepted ERC-20 tokens.
+     * - The caller must have approved this contract to transfer the required amount of ERC-20 tokens.
+     * - The caller must have sufficient balance of the ERC-20 token.
+     *
+     * @param paymentToken The address of the ERC-20 token to use for payment.
+     * @param id The identifier of the token type to purchase.
+     * @param amount The number of tokens to purchase.
+     */
+    function purchase(address paymentToken, uint256 id, uint256 amount) external virtual whenNotPaused nonReentrant {
+        _purchaseFor(_msgSender(), paymentToken, id, amount);
+    }
+
+    /**
+     * @dev Allows the caller to purchase a specific `amount` of tokens of type `id`
+     * for a designated `receiver` using the specified ERC-20 `paymentToken`.
+     * The caller must have approved this contract to spend sufficient amount
+     * of the ERC-20 token.
+     *
+     * Emits a {Transfer} event with `from` set to the zero address and `to` set to the receiver's address.
+     * Emits a {Purchase} event where the `caller` may be different than the `receiver`.
+     *
+     * Requirements:
+     * - The contract must not be paused.
+     * - The receiver address must not be zero.
+     * - The amount must be greater than zero.
+     * - The token `id` must have a set price.
+     * - The payment token must be in the list of accepted ERC-20 tokens.
+     * - The caller must have approved this contract to transfer the required amount of ERC-20 tokens.
+     * - The caller must have sufficient balance of the ERC-20 token.
+     *
+     * @param receiver The address of the receiver who will receive the purchased tokens.
+     * @param paymentToken The address of the ERC-20 token to use for payment.
+     * @param id The identifier of the token type to purchase.
+     * @param amount The number of tokens to purchase.
+     */
+    function purchaseFor(address receiver, address paymentToken, uint256 id, uint256 amount)
+        external
+        virtual
+        whenNotPaused
+        nonReentrant
+    {
+        _purchaseFor(receiver, paymentToken, id, amount);
     }
 
     /**
@@ -161,8 +229,4 @@ abstract contract TokenPurchaseERC20 is Pausable {
             emit TokenPurchaseERC20PaymentTokenRemoved(token);
         }
     }
-
-    function _validatePurchase(address receiver, uint256 id, uint256 amount) internal virtual returns (uint256);
-    function _completePurchase(address receiver, uint256 id, uint256 amount, uint256 totalPrice) internal virtual;
-    function _getTreasury() internal view virtual returns (address payable);
 }

@@ -1,29 +1,57 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {ERC1155X} from "src/ERC1155/ERC1155X.sol";
-import {TokenPrice} from "src/common/TokenPrice.sol";
+import { ERC1155X } from "src/ERC1155/ERC1155X.sol";
+import { TokenPurchase } from "src/common/TokenPurchase.sol";
 
 /**
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
- * This contract combines ERC1155X with the TokenPrice extension. It should be combined with
- * TokenPurchase, TokenPurchaseERC20, or a custom contract with external purchase methods.
+ * This contract combines {ERC1155X} with the {TokenPurchase} mixin, allowing tokens to be purchased
+ * using the native currency (e.g., ETH, MATIC).
  */
-contract ERC1155XP is ERC1155X, TokenPrice {
+contract ERC1155XP is ERC1155X, TokenPurchase {
     /**
-     * @dev Initializes the contract with an initial delay, default admin address, URI, and initial
-     * treasury address for payment collection.
+     * @dev Initializer used when deployed directly as an upgradeable contract.
      *
-     * @param initialDelay The initial delay for transfer of the default admin role.
-     * @param initialDefaultAdmin The address of the initial default admin.
-     * @param uri_ The base URI for token metadata.
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      * @param initialTreasury The address where purchase revenues will be sent.
      */
-    constructor(uint48 initialDelay, address initialDefaultAdmin, string memory uri_, address payable initialTreasury)
-        ERC1155X(initialDelay, initialDefaultAdmin, uri_)
-        TokenPrice(initialTreasury)
-    {}
+    function initialize(
+        uint48 initialDelay,
+        address initialDefaultAdmin,
+        string memory uri_,
+        address payable initialTreasury
+    ) public virtual initializer {
+        __ERC1155XP_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+    }
+
+    /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     *
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
+     * @param initialTreasury The address where purchase revenues will be sent.
+     */
+    function __ERC1155XP_init(
+        uint48 initialDelay,
+        address initialDefaultAdmin,
+        string memory uri_,
+        address payable initialTreasury
+    ) public onlyInitializing {
+        __ERC1155X_init(initialDelay, initialDefaultAdmin, uri_);
+        __TokenPurchase_init(initialTreasury);
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __ERC1155XP_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
 
     /**
      * @dev Returns the address of the current treasury account where funds are collected.

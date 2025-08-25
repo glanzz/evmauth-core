@@ -1,27 +1,54 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {ERC6909X} from "src/ERC6909/ERC6909X.sol";
-import {TokenTTL} from "src/common/TokenTTL.sol";
-import {IERC6909} from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
-import {ERC6909} from "@openzeppelin/contracts/token/ERC6909/draft-ERC6909.sol";
+import { ERC6909X } from "src/ERC6909/ERC6909X.sol";
+import { TokenTTL } from "src/common/TokenTTL.sol";
+import { IERC6909 } from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
+import { ERC6909Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC6909/draft-ERC6909Upgradeable.sol";
 
 /**
  * @dev Implementation of an ERC-6909 compliant contract with extended features.
- * This contract combines ERC6909X with the TokenTTL extension.
+ * This contract combines {ERC6909X} with the {TokenTTL} mixin, which adds automatic token expiry
+ * for any token type that has a time-to-live (TTL) set.
  */
 contract ERC6909XT is ERC6909X, TokenTTL {
     /**
-     * @dev Initializes the contract with an initial delay, default admin address, and URI.
+     * @dev Initializer used when deployed directly as an upgradeable contract.
      *
-     * @param initialDelay The initial delay for transfer of the default admin role.
-     * @param initialDefaultAdmin The address of the initial default admin.
-     * @param uri_ The contract URI.
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
      */
-    constructor(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
-        ERC6909X(initialDelay, initialDefaultAdmin, uri_)
-    {}
+    function initialize(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        virtual
+        override
+        initializer
+    {
+        __ERC6909XT_init(initialDelay, initialDefaultAdmin, uri_);
+    }
+
+    /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     *
+     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
+     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+     */
+    function __ERC6909XT_init(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        onlyInitializing
+    {
+        __ERC6909X_init(initialDelay, initialDefaultAdmin, uri_);
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __ERC6909XT_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
 
     /**
      * @dev Returns the balance of specific token `id` for the given `account`, excluding expired tokens.
@@ -34,7 +61,7 @@ contract ERC6909XT is ERC6909X, TokenTTL {
         public
         view
         virtual
-        override(ERC6909, IERC6909, TokenTTL)
+        override(ERC6909Upgradeable, IERC6909, TokenTTL)
         returns (uint256)
     {
         return TokenTTL.balanceOf(account, id);

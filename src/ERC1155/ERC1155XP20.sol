@@ -2,21 +2,21 @@
 
 pragma solidity ^0.8.24;
 
-import { ERC6909X } from "src/ERC6909/ERC6909X.sol";
-import { TokenPurchase } from "src/common/TokenPurchase.sol";
+import { ERC1155X } from "src/ERC1155/ERC1155X.sol";
+import { TokenPurchaseERC20 } from "src/common/TokenPurchaseERC20.sol";
 
 /**
- * @dev Implementation of an ERC-6909 compliant contract with extended features.
- * This contract combines {ERC6909X} with the {TokenPurchase} mixin, allowing tokens to be purchased
- * using the native currency (e.g., ETH, MATIC).
+ * @dev Implementation of an ERC-1155 compliant contract with extended features.
+ * This contract combines {ERC1155X} with the {TokenPurchaseERC20} mixin, allowing tokens to
+ * be purchased using the native currency (e.g., ETH, MATIC).
  */
-contract ERC6909XP is ERC6909X, TokenPurchase {
+contract ERC1155XP20 is ERC1155X, TokenPurchaseERC20 {
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
      * @param initialDelay The delay in seconds before a new default admin can exercise their role.
      * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      * @param initialTreasury The address where purchase revenues will be sent.
      */
     function initialize(
@@ -25,7 +25,7 @@ contract ERC6909XP is ERC6909X, TokenPurchase {
         string memory uri_,
         address payable initialTreasury
     ) public virtual initializer {
-        __ERC6909XP_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+        __ERC1155XP20_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
     }
 
     /**
@@ -33,23 +33,23 @@ contract ERC6909XP is ERC6909X, TokenPurchase {
      *
      * @param initialDelay The delay in seconds before a new default admin can exercise their role.
      * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      * @param initialTreasury The address where purchase revenues will be sent.
      */
-    function __ERC6909XP_init(
+    function __ERC1155XP20_init(
         uint48 initialDelay,
         address initialDefaultAdmin,
         string memory uri_,
         address payable initialTreasury
     ) public onlyInitializing {
-        __ERC6909X_init(initialDelay, initialDefaultAdmin, uri_);
-        __TokenPurchase_init(initialTreasury);
+        __ERC1155X_init(initialDelay, initialDefaultAdmin, uri_);
+        __TokenPurchaseERC20_init(initialTreasury);
     }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __ERC6909XP_init_unchained() public onlyInitializing {
+    function __ERC1155XP20_init_unchained() public onlyInitializing {
         // Nothing to initialize
     }
 

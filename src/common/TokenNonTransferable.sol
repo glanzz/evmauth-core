@@ -1,18 +1,13 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import { ContextUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/ContextUpgradeable.sol";
 
 /**
- * @dev Abstract contract that implements non-transferable token functionality.
- * This contract allows for the management of token transferability,
- * where specific token IDs can be marked as non-transferable.
- * It provides a modifier to restrict transfers of non-transferable tokens,
- * an event to notify when a token's transferability status is updated,
- * and an error to indicate when a transfer is attempted for a non-transferable token.
+ * @dev Mixin to add non-transferable functionality to token contracts.
  */
-abstract contract TokenNonTransferable is Context {
+abstract contract TokenNonTransferable is ContextUpgradeable {
     /**
      * @dev Mapping from token `id` to its non-transferable status.
      * If `true`, the token cannot be transferred between accounts.
@@ -67,6 +62,20 @@ abstract contract TokenNonTransferable is Context {
             }
         }
         _;
+    }
+
+    /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     */
+    function __TokenNonTransferable_init() public onlyInitializing {
+        // Nothing to initialize
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __TokenNonTransferable_init_unchained() public onlyInitializing {
+        // Nothing to initialize
     }
 
     /**

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 abstract contract BaseTest is Test {
     address public alice;
@@ -39,5 +40,15 @@ abstract contract BaseTest is Test {
         burner = makeAddr("burner");
         treasurer = makeAddr("treasurer");
         treasury = payable(makeAddr("treasury"));
+    }
+
+    /**
+     * @dev Helper function to deploy an upgradeable contract using ERC1967Proxy.
+     * @param implementation The implementation contract address.
+     * @param data The initialization data to call on the proxy.
+     * @return proxy The deployed proxy address.
+     */
+    function deployProxy(address implementation, bytes memory data) internal returns (address proxy) {
+        proxy = address(new ERC1967Proxy(implementation, data));
     }
 }

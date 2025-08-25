@@ -1,34 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {Test} from "forge-std/Test.sol";
-import {TokenPrice} from "src/common/TokenPrice.sol";
-import {TokenPurchaseERC20} from "src/common/TokenPurchaseERC20.sol";
+import { Test } from "forge-std/Test.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { TokenPurchaseERC20 } from "src/common/TokenPurchaseERC20.sol";
 
-contract MockTokenPurchaseERC20 is TokenPurchaseERC20, TokenPrice {
-    constructor(address payable initialTreasury) TokenPrice(initialTreasury) {}
-
-    // @inheritdoc TokenPrice
-    function _validatePurchase(address receiver, uint256 id, uint256 amount)
-        internal
-        view
-        override(TokenPrice, TokenPurchaseERC20)
-        returns (uint256)
-    {
-        return TokenPrice._validatePurchase(receiver, id, amount);
-    }
-
-    // @inheritdoc TokenPrice
-    function _completePurchase(address receiver, uint256 id, uint256 amount, uint256 totalPrice)
-        internal
-        override(TokenPrice, TokenPurchaseERC20)
-    {
-        TokenPrice._completePurchase(receiver, id, amount, totalPrice);
-    }
-
-    // @inheritdoc TokenPrice
-    function _getTreasury() internal view override(TokenPrice, TokenPurchaseERC20) returns (address payable) {
-        return TokenPrice._getTreasury();
+contract MockTokenPurchaseERC20 is TokenPurchaseERC20 {
+    function initialize(address payable initialTreasury) public initializer {
+        __TokenPurchaseERC20_init(initialTreasury);
     }
 }
 
@@ -39,6 +18,15 @@ contract TokenPurchaseERC20_Test is Test {
 
     function setUp() public {
         treasury = payable(makeAddr("treasury"));
-        token = new MockTokenPurchaseERC20(treasury);
+
+        // Deploy implementation contract
+        MockTokenPurchaseERC20 implementation = new MockTokenPurchaseERC20();
+
+        // Prepare initialization data
+        bytes memory initData = abi.encodeWithSelector(MockTokenPurchaseERC20.initialize.selector, treasury);
+
+        // Deploy proxy and initialize
+        address proxyAddress = address(new ERC1967Proxy(address(implementation), initData));
+        token = MockTokenPurchaseERC20(proxyAddress);
     }
 }

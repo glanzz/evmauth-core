@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import { ContextUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/ContextUpgradeable.sol";
 
 /**
- * @dev Implementation of an ERC-6909 compliant contract with expiring tokens.
+ * @dev Mixin that provides time-to-live (TTL) functionality for token contracts.
+ * Tokens can be configured to expire after a certain period, and the contract manages balance
+ * records with expiration times automatically
  */
-abstract contract TokenTTL is Context {
+abstract contract TokenTTL is ContextUpgradeable {
     // Maximum BalanceRecord array size per address, per token ID
     uint256 public constant DEFAULT_MAX_BALANCE_RECORDS = 30;
 
@@ -49,6 +51,20 @@ abstract contract TokenTTL is Context {
      * @dev Error thrown when trying to access the TTL of a token `id` that has not been set.
      */
     error TokenTLLNotSet(uint256 id);
+
+    /**
+     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     */
+    function __TokenTTL_init() public onlyInitializing {
+        // Nothing to initialize
+    }
+
+    /**
+     * @dev Unchained initializer that only initializes THIS contract's storage.
+     */
+    function __TokenTTL_init_unchained() public onlyInitializing {
+        // Nothing to initialize
+    }
 
     /**
      * @dev Returns the balance of a specific token `id` for a given `account`, excluding expired tokens.
