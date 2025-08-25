@@ -2,24 +2,28 @@
 
 pragma solidity ^0.8.24;
 
-import { ERC6909XP20 } from "src/ERC6909/ERC6909XP20.sol";
+import { EVMAuth1155P } from "src/ERC1155/EVMAuth1155P.sol";
 import { TokenPrice } from "src/common/TokenPrice.sol";
 import { TokenTTL } from "src/common/TokenTTL.sol";
-import { IERC6909 } from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
-import { ERC6909Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC6909/draft-ERC6909Upgradeable.sol";
+import { ERC1155Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import { IERC1155Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import { Arrays } from "@openzeppelin/contracts/utils/Arrays.sol";
 
 /**
- * @dev Implementation of an ERC-6909 compliant contract with extended features.
- * This contract combines {ERC6909XP20} with the {TokenTTL} mixin, which adds automatic token expiry
+ * @dev Implementation of an ERC-1155 compliant contract with extended features.
+ * This contract combines {EVMAuth1155P} with the {TokenTTL} mixin, which adds automatic token expiry
  * for any token type that has a time-to-live (TTL) set.
  */
-contract ERC6909XTP20 is ERC6909XP20, TokenTTL {
+contract EVMAuth1155TP is EVMAuth1155P, TokenTTL {
+    using Arrays for uint256[];
+    using Arrays for address[];
+
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
      * @param initialDelay The delay in seconds before a new default admin can exercise their role.
      * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      * @param initialTreasury The address where purchase revenues will be sent.
      */
     function initialize(
@@ -28,7 +32,7 @@ contract ERC6909XTP20 is ERC6909XP20, TokenTTL {
         string memory uri_,
         address payable initialTreasury
     ) public virtual override initializer {
-        __ERC6909XTP20_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+        __EVMAuth1155TP_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
     }
 
     /**
@@ -36,22 +40,22 @@ contract ERC6909XTP20 is ERC6909XP20, TokenTTL {
      *
      * @param initialDelay The delay in seconds before a new default admin can exercise their role.
      * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      * @param initialTreasury The address where purchase revenues will be sent.
      */
-    function __ERC6909XTP20_init(
+    function __EVMAuth1155TP_init(
         uint48 initialDelay,
         address initialDefaultAdmin,
         string memory uri_,
         address payable initialTreasury
     ) public onlyInitializing {
-        __ERC6909XP20_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+        __EVMAuth1155P_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
     }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __ERC6909XTP20_init_unchained() public onlyInitializing {
+    function __EVMAuth1155TP_init_unchained() public onlyInitializing {
         // Nothing to initialize
     }
 
@@ -66,62 +70,37 @@ contract ERC6909XTP20 is ERC6909XP20, TokenTTL {
         public
         view
         virtual
-        override(ERC6909Upgradeable, IERC6909, TokenTTL)
+        override(ERC1155Upgradeable, TokenTTL)
         returns (uint256)
     {
         return TokenTTL.balanceOf(account, id);
     }
 
     /**
-     * @dev Returns the address of the current treasury account where funds are collected.
+     * @dev Returns the balance of specific token `ids` for the given `accounts`, excluding expired tokens.
      *
-     * @return The address of the treasury account.
+     * @param accounts[] The addresses of the accounts to check the balances for.
+     * @param ids[] The identifiers of the token types to check the balances for.
+     * @return The balances of the token `ids` for the specified `accounts`, excluding expired tokens.
      */
-    function treasury() public view virtual override returns (address) {
-        return _getTreasury();
-    }
+    function balanceOfBatch(address[] memory accounts, uint256[] memory ids)
+        public
+        view
+        virtual
+        override
+        returns (uint256[] memory)
+    {
+        if (accounts.length != ids.length) {
+            revert IERC1155Errors.ERC1155InvalidArrayLength(ids.length, accounts.length);
+        }
 
-    /**
-     * @dev Sets a new treasury account address where funds will be collected.
-     *
-     * Emits a {TreasuryUpdated} event.
-     *
-     * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
-     *
-     * @param account The address of the new treasury account.
-     */
-    function setTreasury(address payable account) public virtual override onlyRole(TREASURER_ROLE) {
-        _setTreasury(account);
-    }
+        uint256[] memory batchBalances = new uint256[](accounts.length);
 
-    /**
-     * @dev Sets the price for a specific token ID, making it available for purchase.
-     *
-     * Emits a {PriceSet} event.
-     *
-     * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
-     *
-     * @param id The identifier of the token type to set the price for.
-     * @param price The price to set for the token type.
-     */
-    function setPrice(uint256 id, uint256 price) public virtual override onlyRole(TREASURER_ROLE) {
-        _setPrice(id, price);
-    }
+        for (uint256 i = 0; i < accounts.length; ++i) {
+            batchBalances[i] = TokenTTL.balanceOf(accounts.unsafeMemoryAccess(i), ids.unsafeMemoryAccess(i));
+        }
 
-    /**
-     * @dev Suspends the price for a specific token ID, making it unavailable for purchase.
-     *
-     * Emits a {PriceSuspended} event.
-     *
-     * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
-     *
-     * @param id The identifier of the token type to suspend the price for.
-     */
-    function suspendPrice(uint256 id) public virtual override onlyRole(TREASURER_ROLE) {
-        _suspendPrice(id);
+        return batchBalances;
     }
 
     /**

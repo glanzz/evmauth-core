@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.24;
 
-import { ERC1155X } from "src/ERC1155/ERC1155X.sol";
-import { TokenPurchaseERC20 } from "src/common/TokenPurchaseERC20.sol";
+import { EVMAuth1155 } from "src/ERC1155/EVMAuth1155.sol";
+import { TokenPurchase } from "src/common/TokenPurchase.sol";
 
 /**
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
- * This contract combines {ERC1155X} with the {TokenPurchaseERC20} mixin, allowing tokens to
- * be purchased using the native currency (e.g., ETH, MATIC).
+ * This contract combines {EVMAuth1155} with the {TokenPurchase} mixin, allowing tokens to be purchased
+ * using the native currency (e.g., ETH, MATIC).
  */
-contract ERC1155XP20 is ERC1155X, TokenPurchaseERC20 {
+contract EVMAuth1155P is EVMAuth1155, TokenPurchase {
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
@@ -25,7 +25,7 @@ contract ERC1155XP20 is ERC1155X, TokenPurchaseERC20 {
         string memory uri_,
         address payable initialTreasury
     ) public virtual initializer {
-        __ERC1155XP20_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+        __EVMAuth1155P_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
     }
 
     /**
@@ -36,30 +36,21 @@ contract ERC1155XP20 is ERC1155X, TokenPurchaseERC20 {
      * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      * @param initialTreasury The address where purchase revenues will be sent.
      */
-    function __ERC1155XP20_init(
+    function __EVMAuth1155P_init(
         uint48 initialDelay,
         address initialDefaultAdmin,
         string memory uri_,
         address payable initialTreasury
     ) public onlyInitializing {
-        __ERC1155X_init(initialDelay, initialDefaultAdmin, uri_);
-        __TokenPurchaseERC20_init(initialTreasury);
+        __EVMAuth1155_init(initialDelay, initialDefaultAdmin, uri_);
+        __TokenPrice_init_unchained(initialTreasury);
     }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __ERC1155XP20_init_unchained() public onlyInitializing {
+    function __EVMAuth1155P_init_unchained() public onlyInitializing {
         // Nothing to initialize
-    }
-
-    /**
-     * @dev Returns the address of the current treasury account where funds are collected.
-     *
-     * @return The address of the treasury account.
-     */
-    function treasury() public view virtual returns (address) {
-        return _getTreasury();
     }
 
     /**

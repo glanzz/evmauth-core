@@ -2,18 +2,18 @@
 
 pragma solidity ^0.8.24;
 
-import { ERC1155XP20 } from "src/ERC1155/ERC1155XP20.sol";
+import { EVMAuth1155 } from "src/ERC1155/EVMAuth1155.sol";
 import { TokenTTL } from "src/common/TokenTTL.sol";
-import { ERC1155Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
+import { ERC1155Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import { IERC1155Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Arrays } from "@openzeppelin/contracts/utils/Arrays.sol";
 
 /**
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
- * This contract combines {ERC1155XP20} with the {TokenTTL} mixin, which adds automatic token expiry
+ * This contract combines {EVMAuth1155} with the {TokenTTL} mixin, which adds automatic token expiry
  * for any token type that has a time-to-live (TTL) set.
  */
-contract ERC1155XTP20 is ERC1155XP20, TokenTTL {
+contract EVMAuth1155T is EVMAuth1155, TokenTTL {
     using Arrays for uint256[];
     using Arrays for address[];
 
@@ -23,15 +23,14 @@ contract ERC1155XTP20 is ERC1155XP20, TokenTTL {
      * @param initialDelay The delay in seconds before a new default admin can exercise their role.
      * @param initialDefaultAdmin The address to be granted the initial default admin role.
      * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
-     * @param initialTreasury The address where purchase revenues will be sent.
      */
-    function initialize(
-        uint48 initialDelay,
-        address initialDefaultAdmin,
-        string memory uri_,
-        address payable initialTreasury
-    ) public virtual override initializer {
-        __ERC1155XTP20_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+    function initialize(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        virtual
+        override
+        initializer
+    {
+        __EVMAuth1155T_init(initialDelay, initialDefaultAdmin, uri_);
     }
 
     /**
@@ -40,21 +39,18 @@ contract ERC1155XTP20 is ERC1155XP20, TokenTTL {
      * @param initialDelay The delay in seconds before a new default admin can exercise their role.
      * @param initialDefaultAdmin The address to be granted the initial default admin role.
      * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
-     * @param initialTreasury The address where purchase revenues will be sent.
      */
-    function __ERC1155XTP20_init(
-        uint48 initialDelay,
-        address initialDefaultAdmin,
-        string memory uri_,
-        address payable initialTreasury
-    ) public onlyInitializing {
-        __ERC1155XP20_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+    function __EVMAuth1155T_init(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+        public
+        onlyInitializing
+    {
+        __EVMAuth1155_init(initialDelay, initialDefaultAdmin, uri_);
     }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __ERC1155XTP20_init_unchained() public onlyInitializing {
+    function __EVMAuth1155T_init_unchained() public onlyInitializing {
         // Nothing to initialize
     }
 
@@ -100,58 +96,6 @@ contract ERC1155XTP20 is ERC1155XP20, TokenTTL {
         }
 
         return batchBalances;
-    }
-
-    /**
-     * @dev Returns the address of the current treasury account where funds are collected.
-     *
-     * @return The address of the treasury account.
-     */
-    function treasury() public view virtual override returns (address) {
-        return _getTreasury();
-    }
-
-    /**
-     * @dev Sets a new treasury account address where funds will be collected.
-     *
-     * Emits a {TreasuryUpdated} event.
-     *
-     * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
-     *
-     * @param account The address of the new treasury account.
-     */
-    function setTreasury(address payable account) public virtual override onlyRole(TREASURER_ROLE) {
-        _setTreasury(account);
-    }
-
-    /**
-     * @dev Sets the price for a specific token ID, making it available for purchase.
-     *
-     * Emits a {PriceSet} event.
-     *
-     * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
-     *
-     * @param id The identifier of the token type to set the price for.
-     * @param price The price to set for the token type.
-     */
-    function setPrice(uint256 id, uint256 price) public virtual override onlyRole(TREASURER_ROLE) {
-        _setPrice(id, price);
-    }
-
-    /**
-     * @dev Suspends the price for a specific token ID, making it unavailable for purchase.
-     *
-     * Emits a {PriceSuspended} event.
-     *
-     * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
-     *
-     * @param id The identifier of the token type to suspend the price for.
-     */
-    function suspendPrice(uint256 id) public virtual override onlyRole(TREASURER_ROLE) {
-        _suspendPrice(id);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-import { ContextUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/ContextUpgradeable.sol";
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 /**
  * @dev Mixin to add non-transferable functionality to token contracts.

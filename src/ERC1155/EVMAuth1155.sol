@@ -4,12 +4,13 @@ pragma solidity ^0.8.24;
 
 import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
 import { TokenNonTransferable } from "src/common/TokenNonTransferable.sol";
-import { ERC1155Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
-import { ERC1155SupplyUpgradeable } from
-    "@openzeppelin-upgradeable/contracts/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
-import { ERC1155URIStorageUpgradeable } from
-    "@openzeppelin-upgradeable/contracts/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { ERC1155Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import { ERC1155SupplyUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
+import { ERC1155URIStorageUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
@@ -17,11 +18,12 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
  * {ERC1155URIStorageUpgradeable} extensions, as well as the {TokenAccessControl} and
  * {TokenNonTransferable} mixins.
  */
-contract ERC1155X is
+contract EVMAuth1155 is
     ERC1155SupplyUpgradeable,
     ERC1155URIStorageUpgradeable,
     TokenNonTransferable,
-    TokenAccessControl
+    TokenAccessControl,
+    UUPSUpgradeable
 {
     /**
      * @dev Error thrown when a transfer is attempted with the same sender and recipient addresses.
@@ -45,7 +47,7 @@ contract ERC1155X is
         virtual
         initializer
     {
-        __ERC1155X_init(initialDelay, initialDefaultAdmin, uri_);
+        __EVMAuth1155_init(initialDelay, initialDefaultAdmin, uri_);
     }
 
     /**
@@ -55,7 +57,7 @@ contract ERC1155X is
      * @param initialDefaultAdmin The address to be granted the initial default admin role.
      * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
      */
-    function __ERC1155X_init(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+    function __EVMAuth1155_init(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
         public
         onlyInitializing
     {
@@ -66,11 +68,11 @@ contract ERC1155X is
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __ERC1155X_init_unchained() public onlyInitializing {
+    function __EVMAuth1155_init_unchained() public onlyInitializing {
         // Nothing to initialize
     }
 
-    // @inheritdoc IERC165
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -189,6 +191,11 @@ contract ERC1155X is
      */
     function setNonTransferable(uint256 id, bool nonTransferable) external onlyRole(TOKEN_MANAGER_ROLE) {
         _setNonTransferable(id, nonTransferable);
+    }
+
+    /// @inheritdoc UUPSUpgradeable
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADE_MANAGER_ROLE) {
+        // This will revert if the caller does not have the UPGRADE_MANAGER_ROLE
     }
 
     /**

@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.24;
 
-import { ERC6909X } from "src/ERC6909/ERC6909X.sol";
-import { TokenPurchaseERC20 } from "src/common/TokenPurchaseERC20.sol";
+import { EVMAuth6909 } from "src/ERC6909/EVMAuth6909.sol";
+import { TokenPurchase } from "src/common/TokenPurchase.sol";
 
 /**
  * @dev Implementation of an ERC-6909 compliant contract with extended features.
- * This contract combines {ERC6909X} with the {TokenPurchaseERC20} mixin, allowing tokens to
- * be purchased using the native currency (e.g., ETH, MATIC).
+ * This contract combines {EVMAuth6909} with the {TokenPurchase} mixin, allowing tokens to be purchased
+ * using the native currency (e.g., ETH, MATIC).
  */
-contract ERC6909XP20 is ERC6909X, TokenPurchaseERC20 {
+contract EVMAuth6909P is EVMAuth6909, TokenPurchase {
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
@@ -25,7 +25,7 @@ contract ERC6909XP20 is ERC6909X, TokenPurchaseERC20 {
         string memory uri_,
         address payable initialTreasury
     ) public virtual initializer {
-        __ERC6909XP20_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+        __EVMAuth6909P_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
     }
 
     /**
@@ -36,30 +36,21 @@ contract ERC6909XP20 is ERC6909X, TokenPurchaseERC20 {
      * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
      * @param initialTreasury The address where purchase revenues will be sent.
      */
-    function __ERC6909XP20_init(
+    function __EVMAuth6909P_init(
         uint48 initialDelay,
         address initialDefaultAdmin,
         string memory uri_,
         address payable initialTreasury
     ) public onlyInitializing {
-        __ERC6909X_init(initialDelay, initialDefaultAdmin, uri_);
-        __TokenPurchaseERC20_init(initialTreasury);
+        __EVMAuth6909_init(initialDelay, initialDefaultAdmin, uri_);
+        __TokenPrice_init_unchained(initialTreasury);
     }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __ERC6909XP20_init_unchained() public onlyInitializing {
+    function __EVMAuth6909P_init_unchained() public onlyInitializing {
         // Nothing to initialize
-    }
-
-    /**
-     * @dev Returns the address of the current treasury account where funds are collected.
-     *
-     * @return The address of the treasury account.
-     */
-    function treasury() public view virtual returns (address) {
-        return _getTreasury();
     }
 
     /**

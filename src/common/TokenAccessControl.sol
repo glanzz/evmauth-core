@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.24;
 
-import { PausableUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/PausableUpgradeable.sol";
-import { AccessControlDefaultAdminRulesUpgradeable } from
-    "@openzeppelin-upgradeable/contracts/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { AccessControlDefaultAdminRulesUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 /**
  * @dev Mixin providing role-based access control and pausability for token contracts.
@@ -14,6 +14,11 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
  * authorized accounts to pause and unpause contract operations.
  */
 abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeable, PausableUpgradeable {
+    /**
+     * @dev Role required to upgrade the contract.
+     */
+    bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
+
     /**
      * @dev Role required to pause/un-pause the contract and freeze/un-freeze accounts.
      */
@@ -98,7 +103,7 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
         // Nothing to initialize
     }
 
-    // @inheritdoc IERC165
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
         view

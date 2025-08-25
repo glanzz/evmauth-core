@@ -3,9 +3,9 @@
 pragma solidity ^0.8.24;
 
 import { IERC6909 } from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
-import { ContextUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/ContextUpgradeable.sol";
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import { ReentrancyGuardTransientUpgradeable } from
-    "@openzeppelin-upgradeable/contracts/utils/ReentrancyGuardTransientUpgradeable.sol";
+    "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 
 /**
  * @dev Base mixin for token contracts that adds token pricing and direct purchase functionality.
@@ -123,6 +123,15 @@ abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgr
     }
 
     /**
+     * @dev Returns the address of the current treasury account where funds are collected.
+     *
+     * @return The address of the treasury account.
+     */
+    function treasury() public view virtual returns (address) {
+        return _getTreasury();
+    }
+
+    /**
      * @dev Internal validation for purchase operations.
      * Validates receiver address, amount, and price configuration.
      *
@@ -201,7 +210,7 @@ abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgr
     /**
      * @dev Sets the price for a specific token `id`.
      *
-     * Emits a {ERC1155XPriceUpdated} event.
+     * Emits a {EVMAuth1155PriceUpdated} event.
      *
      * @param id The identifier of the token type for which to set the price.
      * @param price The price to set for the token type.
@@ -220,7 +229,7 @@ abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgr
      *
      * This function does nothing if the price is not set.
      *
-     * Emits a {ERC1155XPriceSuspended} event.
+     * Emits a {EVMAuth1155PriceSuspended} event.
      *
      * @param id The identifier of the token type for which to disable the sale.
      */

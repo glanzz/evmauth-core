@@ -4,14 +4,15 @@ pragma solidity ^0.8.24;
 
 import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
 import { TokenNonTransferable } from "src/common/TokenNonTransferable.sol";
-import { ERC6909Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC6909/draft-ERC6909Upgradeable.sol";
-import { ERC6909ContentURIUpgradeable } from
-    "@openzeppelin-upgradeable/contracts/token/ERC6909/extensions/draft-ERC6909ContentURIUpgradeable.sol";
-import { ERC6909MetadataUpgradeable } from
-    "@openzeppelin-upgradeable/contracts/token/ERC6909/extensions/draft-ERC6909MetadataUpgradeable.sol";
-import { ERC6909TokenSupplyUpgradeable } from
-    "@openzeppelin-upgradeable/contracts/token/ERC6909/extensions/draft-ERC6909TokenSupplyUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { ERC6909Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC6909/draft-ERC6909Upgradeable.sol";
+import { ERC6909ContentURIUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC6909/extensions/draft-ERC6909ContentURIUpgradeable.sol";
+import { ERC6909MetadataUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC6909/extensions/draft-ERC6909MetadataUpgradeable.sol";
+import { ERC6909TokenSupplyUpgradeable } from
+    "@openzeppelin/contracts-upgradeable/token/ERC6909/extensions/draft-ERC6909TokenSupplyUpgradeable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @dev Implementation of an ERC-6909 compliant contract with extended features.
@@ -19,12 +20,13 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
  * {ERC6909MetadataUpgradeable}, and {ERC6909TokenSupplyUpgradeable} extensions, as well as
  * the {TokenAccessControl} and {TokenNonTransferable} mixins.
  */
-contract ERC6909X is
+contract EVMAuth6909 is
     ERC6909ContentURIUpgradeable,
     ERC6909MetadataUpgradeable,
     ERC6909TokenSupplyUpgradeable,
     TokenNonTransferable,
-    TokenAccessControl
+    TokenAccessControl,
+    UUPSUpgradeable
 {
     /**
      * @dev Error thrown when a transfer is attempted with the same sender and recipient addresses.
@@ -48,7 +50,7 @@ contract ERC6909X is
         virtual
         initializer
     {
-        __ERC6909X_init(initialDelay, initialDefaultAdmin, uri_);
+        __EVMAuth6909_init(initialDelay, initialDefaultAdmin, uri_);
     }
 
     /**
@@ -58,7 +60,7 @@ contract ERC6909X is
      * @param initialDefaultAdmin The address to be granted the initial default admin role.
      * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
      */
-    function __ERC6909X_init(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
+    function __EVMAuth6909_init(uint48 initialDelay, address initialDefaultAdmin, string memory uri_)
         public
         onlyInitializing
     {
@@ -69,11 +71,11 @@ contract ERC6909X is
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __ERC6909X_init_unchained() public onlyInitializing {
+    function __EVMAuth6909_init_unchained() public onlyInitializing {
         // Nothing to initialize
     }
 
-    // @inheritdoc IERC165
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -168,6 +170,11 @@ contract ERC6909X is
      */
     function setNonTransferable(uint256 id, bool nonTransferable) external onlyRole(TOKEN_MANAGER_ROLE) {
         _setNonTransferable(id, nonTransferable);
+    }
+
+    /// @inheritdoc UUPSUpgradeable
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADE_MANAGER_ROLE) {
+        // This will revert if the caller does not have the UPGRADE_MANAGER_ROLE
     }
 
     /**

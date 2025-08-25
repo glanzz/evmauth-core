@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.24;
 
-import { TokenPrice } from "./TokenPrice.sol";
-import { PausableUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/PausableUpgradeable.sol";
+import { TokenPrice } from "src/common/TokenPrice.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 /**
- * @dev Mixin for token contracts that adds support for direct purchase using
- * native currency (e.g., ETH, MATIC).
+ * @dev Mixin for token contracts that adds support for direct purchase using native currency (e.g., ETH, MATIC).
+ * This contract extends {TokenPrice} to include price management and treasury handling.
  */
 abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {
     /**
@@ -21,7 +21,7 @@ abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {
      * @param initialTreasury The address where purchase revenues will be sent.
      */
     function __TokenPurchase_init(address payable initialTreasury) public onlyInitializing {
-        __TokenPrice_init(initialTreasury);
+        __TokenPrice_init_unchained(initialTreasury);
     }
 
     /**

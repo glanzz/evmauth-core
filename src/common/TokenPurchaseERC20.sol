@@ -4,13 +4,13 @@ pragma solidity ^0.8.24;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { TokenPrice } from "./TokenPrice.sol";
+import { TokenPrice } from "src/common/TokenPrice.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { PausableUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/PausableUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 /**
- * @dev Mixin for token contracts that adds support for direct purchase using
- * ERC-20 tokens (e.g. USDC, USDT).
+ * @dev Mixin for token contracts that adds support for direct purchase using ERC-20 tokens (e.g. USDC, USDT).
+ * This contract extends {TokenPrice} to include price management and treasury handling.
  */
 abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
     // Import SafeERC20 to revert if a transfer returns false
@@ -59,7 +59,7 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
      * @param initialTreasury The address where purchase revenues will be sent.
      */
     function __TokenPurchaseERC20_init(address payable initialTreasury) public onlyInitializing {
-        __TokenPrice_init(initialTreasury);
+        __TokenPrice_init_unchained(initialTreasury);
     }
 
     /**

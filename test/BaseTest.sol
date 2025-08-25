@@ -2,53 +2,14 @@
 pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { Options } from "openzeppelin-foundry-upgrades/Options.sol";
 
 abstract contract BaseTest is Test {
-    address public alice;
-    address public bob;
-    address public carol;
+    address internal proxy;
 
-    address public owner;
-    address public accessManager;
-    address public tokenManager;
-    address public minter;
-    address public burner;
-    address public treasurer;
-    address payable public treasury;
-
-    uint256 public constant TOKEN_ID_1 = 1;
-    uint256 public constant TOKEN_ID_2 = 2;
-    uint256 public constant TOKEN_ID_3 = 3;
-
-    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
-    bytes32 public constant ACCESS_MANAGER_ROLE = keccak256("ACCESS_MANAGER_ROLE");
-    bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
-    bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
-
-    function setUp() public virtual {
-        alice = makeAddr("alice");
-        bob = makeAddr("bob");
-        carol = makeAddr("carol");
-
-        owner = makeAddr("owner");
-        accessManager = makeAddr("accessManager");
-        tokenManager = makeAddr("tokenManager");
-        minter = makeAddr("minter");
-        burner = makeAddr("burner");
-        treasurer = makeAddr("treasurer");
-        treasury = payable(makeAddr("treasury"));
-    }
-
-    /**
-     * @dev Helper function to deploy an upgradeable contract using ERC1967Proxy.
-     * @param implementation The implementation contract address.
-     * @param data The initialization data to call on the proxy.
-     * @return proxy The deployed proxy address.
-     */
-    function deployProxy(address implementation, bytes memory data) internal returns (address proxy) {
-        proxy = address(new ERC1967Proxy(implementation, data));
+    function deployUUPSProxy(string memory contractName, bytes memory initializerData) internal returns (address) {
+        Options memory opts;
+        return Upgrades.deployUUPSProxy(contractName, initializerData, opts);
     }
 }

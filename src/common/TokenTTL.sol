@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-import { ContextUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/ContextUpgradeable.sol";
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 /**
  * @dev Mixin that provides time-to-live (TTL) functionality for token contracts.
@@ -343,7 +343,7 @@ abstract contract TokenTTL is ContextUpgradeable {
      * This function can only be called once per token `id`. If the token configuration
      * already exists, it reverts with an error.
      *
-     * Emits a {ERC6909XTTLUpdated} event.
+     * Emits a {EVMAuth6909TTLUpdated} event.
      *
      * Revert if the token configuration does not exist.
      *
