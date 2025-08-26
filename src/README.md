@@ -56,7 +56,7 @@ The contract naming follows a clear pattern:
 | Recipient Requirements | Contract recipients must implement callback functions with return values     | No special requirements for contract recipients                             |
 | Approval Granularity   | Operators only (all-or-nothing for entire contract)                          | Granular allowances per token ID + full operators                           |
 | Metadata Handling      | URI-based metadata (typically off-chain JSON)                                | On-chain name/symbol/decimals per token ID                                  |
-| Supply Tracking        | Global totalSupply() plus per-token supply                                   | Only per-token totalSupply(id)                                              |
+| Supply Tracking        | Global `totalSupply()` plus per-token supply                                 | Only per-token `totalSupply(id)`                                            |
 
 ### When to Choose Which
 
