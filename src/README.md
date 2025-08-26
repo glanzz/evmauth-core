@@ -45,13 +45,35 @@ The contract naming follows a clear pattern:
 
 ### ERC-1155 vs ERC-6909
 
-| Feature                 |    ERC-1155    | ERC-6909 |
-|-------------------------|:--------------:|:---------:|
-| **Multi-token Support** |       ✅        | ✅ |
-| **Batch Operations**    |       ✅        | ❌ |
-| **Operator Approvals**  |  Per-account   | Per-token ID |
-| **Metadata**            | URI per token  | Name, Symbol, Decimals per token |
-| **Adoption**            | Widely adopted | Newer standard |
+1. Approval Model
+   - **ERC-1155:** Binary operator model (all tokens or none)
+   - **ERC-6909:** Granular allowances per token ID (like ERC-20)
+2. Token Metadata
+   - **ERC-1155:** URI-based metadata (typically pointing to JSON)
+   - **ERC-6909:** On-chain name/symbol/decimals per token (like ERC-20)
+3. Transfer Semantics
+   - **ERC-1155:** Uses safe transfer with data parameter and receiver hooks
+   - **ERC-6909:** Simple transfer without hooks (like ERC-20)
+4. Batch Operations
+   - **ERC-1155:** Native batch transfer and balance queries
+   - **ERC-6909:** No batch operations (must iterate)
+5. Supply Tracking
+   - **ERC-1155:** Has global totalSupply() plus per-token
+   - **ERC-6909:** Only per-token totalSupply(id)
+
+### When to Choose Which
+
+Choose [ERC-1155] when you:
+- Need NFT marketplace compatibility
+- Batch operations are important
+- Want receiver hook notifications
+- Prefer URI-based metadata
+
+Choose [ERC-6909] when you:
+- Need ERC-20-like semantics per token
+- Want granular approval control
+- Need on-chain token metadata
+- Prefer a simpler token transfer model
 
 ## Contract Architecture
 
