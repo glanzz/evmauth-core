@@ -45,21 +45,18 @@ The contract naming follows a clear pattern:
 
 ### ERC-1155 vs ERC-6909
 
-1. Approval Model
-   - **ERC-1155:** Binary operator model (all tokens or none)
-   - **ERC-6909:** Granular allowances per token ID (like ERC-20)
-2. Token Metadata
-   - **ERC-1155:** URI-based metadata (typically pointing to JSON)
-   - **ERC-6909:** On-chain name/symbol/decimals per token (like ERC-20)
-3. Transfer Semantics
-   - **ERC-1155:** Uses safe transfer with data parameter and receiver hooks
-   - **ERC-6909:** Simple transfer without hooks (like ERC-20)
-4. Batch Operations
-   - **ERC-1155:** Native batch transfer and balance queries
-   - **ERC-6909:** No batch operations (must iterate)
-5. Supply Tracking
-   - **ERC-1155:** Has global totalSupply() plus per-token
-   - **ERC-6909:** Only per-token totalSupply(id)
+| Feature                | ERC-1155                                                                     | ERC-6909                                                                    |
+|------------------------|------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| Callbacks              | Required for each transfer to contract accounts; must return specific values | Removed entirely; no callbacks required                                     |
+| Batch Operations       | Included in specification (batch transfers)                                  | Excluded from specification to allow custom implementations                 |
+| Permission System      | Single operator scheme: operators get unlimited allowance on all token IDs   | Hybrid scheme: allowances for specific token IDs + operators for all tokens |
+| Transfer Methods       | Both transferFrom and safeTransferFrom required; no opt-out for callbacks    | Simplified transfers without mandatory recipient validation                 |
+| Transfer Semantics     | Safe transfers with data parameter and receiver hooks                        | Simple transfers without hooks                                              |
+| Interface Complexity   | Includes multiple features (callbacks, batching, etc.)                       | Minimized to bare essentials for multi-token management                     |
+| Recipient Requirements | Contract recipients must implement callback functions with return values     | No special requirements for contract recipients                             |
+| Approval Granularity   | Operators only (all-or-nothing for entire contract)                          | Granular allowances per token ID + full operators                           |
+| Metadata Handling      | URI-based metadata (typically off-chain JSON)                                | On-chain name/symbol/decimals per token ID                                  |
+| Supply Tracking        | Global totalSupply() plus per-token supply                                   | Only per-token totalSupply(id)                                              |
 
 ### When to Choose Which
 
@@ -74,7 +71,6 @@ Choose [ERC-6909] when you:
 - Want granular approval control
 - Need on-chain token metadata
 - Prefer a simpler token transfer model
-
 
 ## Contract Mixins
 
