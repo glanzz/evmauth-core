@@ -35,11 +35,11 @@ There are several variations of EVMAuth for each token standard, combining featu
 The contract naming follows a clear pattern:
 - **Base Name**: `EVMAuth` + Token Standard (`1155` or `6909`)
 - **Suffixes**:
-    - `T`: Includes TTL (Time-To-Live) support
-    - `P`: Includes native currency purchase
-    - `P20`: Includes ERC-20 token purchase
-    - `TP`: Combines TTL + native token purchase
-    - `TP20`: Combines TTL + ERC-20 purchase
+    - `T`: Includes TTL (Time-To-Live) and token expiry
+    - `P`: Includes price and purchasing via native currency
+    - `P20`: Includes price and purchasing via ERC-20 tokens
+    - `TP`: Combines TTL + purchasing via native currency
+    - `TP20`: Combines TTL + purchasing via ERC-20 tokens
 
 ## Token Standards Comparison
 
