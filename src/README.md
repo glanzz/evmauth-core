@@ -54,20 +54,6 @@ The contract naming follows a clear pattern:
 | **Gas Efficiency** | Good | Better for specific use cases |
 | **Adoption** | Widely adopted | Newer standard |
 
-### When to Choose Which
-
-**Use ERC-1155 variants when:**
-- You need batch transfer operations
-- Broader ecosystem compatibility is required
-- Working with NFT marketplaces
-- Simple metadata requirements (URI-based)
-
-**Use ERC-6909 variants when:**
-- You need granular operator permissions per token ID
-- Tokens require individual name/symbol/decimals metadata
-- Gas optimization for single transfers is critical
-- Building financial or DeFi applications
-
 ## Contract Architecture
 
 ### TokenAccessControl
