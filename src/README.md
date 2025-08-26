@@ -4,6 +4,23 @@
 
 The EVMAuth smart contracts provide a flexible authentication and access control system built on top of ERC-1155 and ERC-6909 token standards. The contracts are designed with modularity and upgradability in mind, offering various combinations of features through inheritance.
 
+## Contract Features
+
+| Contract | Token Standard | Access Control | Base Config | Upgradeable Contract | Native Token Purchase | ERC-20 Purchase | Token Expiry |
+|----------|:--------------:|:--------------:|:-----------:|:--------------------:|:---------------------:|:---------------:|:------------:|
+| EVMAuth1155 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| EVMAuth1155P | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| EVMAuth1155P20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| EVMAuth1155T | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| EVMAuth1155TP | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| EVMAuth1155TP20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| EVMAuth6909 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| EVMAuth6909P | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| EVMAuth6909P20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| EVMAuth6909T | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| EVMAuth6909TP | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| EVMAuth6909TP20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
 ## Contract Architecture
 
 ### TokenAccessControl
@@ -708,24 +725,7 @@ classDiagram
     TokenTTL <|-- EVMAuth6909TP20
 ```
 
-## EVMAuth Contract Features Matrix
-
-| Contract | Token Standard | Access Control | Base Config | Upgradeable Contract | Native Token Purchase | ERC-20 Purchase | Token Expiry |
-|----------|:--------------:|:--------------:|:-----------:|:--------------------:|:---------------------:|:---------------:|:------------:|
-| EVMAuth1155 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| EVMAuth1155P | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| EVMAuth1155P20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| EVMAuth1155T | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| EVMAuth1155TP | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| EVMAuth1155TP20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
-| EVMAuth6909 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| EVMAuth6909P | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| EVMAuth6909P20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| EVMAuth6909T | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| EVMAuth6909TP | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| EVMAuth6909TP20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
-
-## Common Contract Details
+## Contract Mixins
 
 ### TokenAccessControl
 Provides role-based access control:
@@ -768,7 +768,7 @@ Provides role-based access control:
 - Support for any ERC-20 payment token
 - Configurable payment token per token ID
 
-## EVMAuth Contract Variant Naming Convention
+## EVMAuth Contract Naming Convention
 
 The contract naming follows a clear pattern:
 - **Base Name**: `EVMAuth` + Token Standard (`1155` or `6909`)
