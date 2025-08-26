@@ -4,7 +4,7 @@
 
 EVMAuth is an authorization state management system for token-gating, built on top of [ERC-1155] and [ERC-6909] token standards.
 
-There are several variations of EVMAuth for each token standard, combining features like upgrade-ability, role-based access control, account freezing, non-transferable tokens, direct token purchase, and automatic expiration.
+There are several variations of EVMAuth for each token standard, combining features like upgrade-ability, role-based access control, account freezing, and token configuration (transferability, price, TTL) with optional direct token purchasing (native currency or ERC-20 payments) and token expiry.
 
 ## Contract Features
 
