@@ -10,8 +10,8 @@ There are several variations of EVMAuth for each token standard, combining featu
 
 ### ERC-1155 Variants
 
-| Contract | Token Standard | Access Control | Base Config | Upgradeable Contract | Native Token Purchase | ERC-20 Purchase | Token Expiry |
-|----------|:--------------:|:--------------:|:-----------:|:--------------------:|:---------------------:|:---------------:|:------------:|
+| Contract | Token Standard | Upgradeable Contract | Access Control | Base Config | Native Token Purchase | ERC-20 Purchase | Token Expiry |
+|----------|:--------------:|:--------------------:|:--------------:|:-----------:|:---------------------:|:---------------:|:------------:|
 | EVMAuth1155 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | EVMAuth1155P | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | EVMAuth1155P20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
@@ -21,8 +21,8 @@ There are several variations of EVMAuth for each token standard, combining featu
 
 ### ERC-6909 Variants
 
-| Contract | Token Standard | Access Control | Base Config | Upgradeable Contract | Native Token Purchase | ERC-20 Purchase | Token Expiry |
-|----------|:--------------:|:--------------:|:-----------:|:--------------------:|:---------------------:|:---------------:|:------------:|
+| Contract | Token Standard | Upgradeable Contract | Access Control | Base Config | Native Token Purchase | ERC-20 Purchase | Token Expiry |
+|----------|:--------------:|:--------------------:|:--------------:|:-----------:|:---------------------:|:---------------:|:------------:|
 | EVMAuth6909 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | EVMAuth6909P | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | EVMAuth6909P20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
