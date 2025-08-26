@@ -45,14 +45,13 @@ The contract naming follows a clear pattern:
 
 ### ERC-1155 vs ERC-6909
 
-| Feature | ERC-1155 | ERC-6909 |
-|---------|----------|----------|
-| **Multi-token Support** | ✅ | ✅ |
-| **Batch Operations** | ✅ | ❌ |
-| **Operator Approvals** | Per-account | Per-token ID |
-| **Metadata** | URI per token | Name, Symbol, Decimals per token |
-| **Gas Efficiency** | Good | Better for specific use cases |
-| **Adoption** | Widely adopted | Newer standard |
+| Feature                 |    ERC-1155    | ERC-6909 |
+|-------------------------|:--------------:|:---------:|
+| **Multi-token Support** |       ✅        | ✅ |
+| **Batch Operations**    |       ✅        | ❌ |
+| **Operator Approvals**  |  Per-account   | Per-token ID |
+| **Metadata**            | URI per token  | Name, Symbol, Decimals per token |
+| **Adoption**            | Widely adopted | Newer standard |
 
 ## Contract Architecture
 
