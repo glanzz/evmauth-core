@@ -40,7 +40,7 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
     /**
-     * @dev Role required to modify the treasury address and set token prices.
+     * @dev Role required to modify the treasury address.
      */
     bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
 

@@ -8,7 +8,7 @@ import { TokenPurchaseERC20 } from "src/common/TokenPurchaseERC20.sol";
 /**
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
  * This contract combines {EVMAuth1155} with the {TokenPurchaseERC20} mixin, allowing tokens to
- * be purchased using the native currency (e.g., ETH, MATIC).
+ * be purchased using the native currency (e.g., ETH, POL).
  */
 contract EVMAuth1155P20 is EVMAuth1155, TokenPurchaseERC20 {
     /**
@@ -101,12 +101,12 @@ contract EVMAuth1155P20 is EVMAuth1155, TokenPurchaseERC20 {
      * Emits a {PriceSet} event.
      *
      * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
+     * - The caller must have the `TOKEN_MANAGER_ROLE`.
      *
      * @param id The identifier of the token type to set the price for.
      * @param price The price to set for the token type.
      */
-    function setPrice(uint256 id, uint256 price) public virtual onlyRole(TREASURER_ROLE) {
+    function setPrice(uint256 id, uint256 price) public virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setPrice(id, price);
     }
 
@@ -116,11 +116,22 @@ contract EVMAuth1155P20 is EVMAuth1155, TokenPurchaseERC20 {
      * Emits a {PriceSuspended} event.
      *
      * Requirements:
-     * - The caller must have the `TREASURER_ROLE`.
+     * - The caller must have the `TOKEN_MANAGER_ROLE`.
      *
      * @param id The identifier of the token type to suspend the price for.
      */
-    function suspendPrice(uint256 id) public virtual onlyRole(TREASURER_ROLE) {
+    function suspendPrice(uint256 id) public virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _suspendPrice(id);
+    }
+
+    /**
+     * @dev Internal function to mint purchased tokens after successful purchase.
+     *
+     * @param to The address to mint tokens to.
+     * @param id The token ID to mint.
+     * @param amount The amount of tokens to mint.
+     */
+    function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual override {
+        _mint(to, id, amount, "");
     }
 }

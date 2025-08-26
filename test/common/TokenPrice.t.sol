@@ -7,6 +7,8 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract MockTokenPrice is TokenPrice, OwnableUpgradeable, UUPSUpgradeable {
+    event MintPurchasedTokensCalled(address to, uint256 id, uint256 amount);
+
     function initialize(address payable initialTreasury) public initializer {
         __TokenPrice_init(initialTreasury);
         __Ownable_init(_msgSender());
@@ -15,6 +17,11 @@ contract MockTokenPrice is TokenPrice, OwnableUpgradeable, UUPSUpgradeable {
     /// @inheritdoc UUPSUpgradeable
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
         // This will revert if the caller is not the owner
+    }
+
+    /// @inheritdoc TokenPrice
+    function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual override {
+        emit MintPurchasedTokensCalled(to, id, amount);
     }
 }
 

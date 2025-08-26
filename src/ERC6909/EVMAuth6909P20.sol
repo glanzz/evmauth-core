@@ -8,7 +8,7 @@ import { TokenPurchaseERC20 } from "src/common/TokenPurchaseERC20.sol";
 /**
  * @dev Implementation of an ERC-6909 compliant contract with extended features.
  * This contract combines {EVMAuth6909} with the {TokenPurchaseERC20} mixin, allowing tokens to
- * be purchased using the native currency (e.g., ETH, MATIC).
+ * be purchased using the native currency (e.g., ETH, POL).
  */
 contract EVMAuth6909P20 is EVMAuth6909, TokenPurchaseERC20 {
     /**
@@ -122,5 +122,16 @@ contract EVMAuth6909P20 is EVMAuth6909, TokenPurchaseERC20 {
      */
     function suspendPrice(uint256 id) public virtual onlyRole(TREASURER_ROLE) {
         _suspendPrice(id);
+    }
+
+    /**
+     * @dev Internal function to mint purchased tokens after successful purchase.
+     *
+     * @param to The address to mint tokens to.
+     * @param id The token ID to mint.
+     * @param amount The amount of tokens to mint.
+     */
+    function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual override {
+        _mint(to, id, amount);
     }
 }

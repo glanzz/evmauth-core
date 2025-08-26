@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
-import { TokenNonTransferable } from "src/common/TokenNonTransferable.sol";
+import { TokenBaseConfig } from "src/common/TokenBaseConfig.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ERC6909Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC6909/draft-ERC6909Upgradeable.sol";
 import { ERC6909ContentURIUpgradeable } from
@@ -18,13 +18,13 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
  * @dev Implementation of an ERC-6909 compliant contract with extended features.
  * This contract combines {ERC6909Upgradeable} with the {ERC6909ContentURIUpgradeable},
  * {ERC6909MetadataUpgradeable}, and {ERC6909TokenSupplyUpgradeable} extensions, as well as
- * the {TokenAccessControl} and {TokenNonTransferable} mixins.
+ * the {TokenAccessControl} and {TokenBaseConfig} mixins.
  */
 contract EVMAuth6909 is
     ERC6909ContentURIUpgradeable,
     ERC6909MetadataUpgradeable,
     ERC6909TokenSupplyUpgradeable,
-    TokenNonTransferable,
+    TokenBaseConfig,
     TokenAccessControl,
     UUPSUpgradeable
 {

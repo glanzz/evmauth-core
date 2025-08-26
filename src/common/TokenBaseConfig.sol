@@ -7,7 +7,7 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 /**
  * @dev Mixin to add non-transferable functionality to token contracts.
  */
-abstract contract TokenNonTransferable is ContextUpgradeable {
+abstract contract TokenBaseConfig is ContextUpgradeable {
     /**
      * @dev Mapping from token `id` to its non-transferable status.
      * If `true`, the token cannot be transferred between accounts.
@@ -28,7 +28,7 @@ abstract contract TokenNonTransferable is ContextUpgradeable {
      * @dev Modifier to check if a token `id` can be transferred between accounts,
      * while also ensuring that neither the sender nor the receiver is the zero address.
      *
-     * Reverts with {TokenNonTransferable} error if the token is non-transferable.
+     * Reverts with {TokenBaseConfig} error if the token is non-transferable.
      *
      * @param from The address of the sender.
      * @param to The address of the receiver.
@@ -46,7 +46,7 @@ abstract contract TokenNonTransferable is ContextUpgradeable {
     /**
      * @dev Modifier to check if a batch of token `ids` can be transferred between accounts,
      * while also ensuring that neither the sender nor the receiver is the zero address.
-     * Reverts with {TokenNonTransferable} error if any token in the batch is non-transferable.
+     * Reverts with {TokenBaseConfig} error if any token in the batch is non-transferable.
      * @param from The address of the sender.
      * @param to The address of the receiver.
      * @param ids The identifiers of the token types to check.

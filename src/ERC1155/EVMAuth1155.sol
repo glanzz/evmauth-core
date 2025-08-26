@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
-import { TokenNonTransferable } from "src/common/TokenNonTransferable.sol";
+import { TokenBaseConfig } from "src/common/TokenBaseConfig.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ERC1155Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import { ERC1155SupplyUpgradeable } from
@@ -16,12 +16,12 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
  * This contract combines {ERC1155Upgradeable} with the {ERC1155SupplyUpgradeable} and
  * {ERC1155URIStorageUpgradeable} extensions, as well as the {TokenAccessControl} and
- * {TokenNonTransferable} mixins.
+ * {TokenBaseConfig} mixins.
  */
 contract EVMAuth1155 is
     ERC1155SupplyUpgradeable,
     ERC1155URIStorageUpgradeable,
-    TokenNonTransferable,
+    TokenBaseConfig,
     TokenAccessControl,
     UUPSUpgradeable
 {

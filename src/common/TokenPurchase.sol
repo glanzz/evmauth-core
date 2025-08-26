@@ -6,7 +6,7 @@ import { TokenPrice } from "src/common/TokenPrice.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 /**
- * @dev Mixin for token contracts that adds support for direct purchase using native currency (e.g., ETH, MATIC).
+ * @dev Mixin for token contracts that adds support for direct purchase using native currency (e.g., ETH, POL).
  * This contract extends {TokenPrice} to include price management and treasury handling.
  */
 abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {

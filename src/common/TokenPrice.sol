@@ -163,7 +163,6 @@ abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgr
      * @dev Internal function to mint tokens after successful purchase.
      * Mints the tokens to the receiver and emits the Purchase event.
      *
-     * Emits a {Transfer} event with `from` set to the zero address and `to` set to the receiver's address.
      * Emits a {Purchase} event where the `caller` may be different than the `receiver`.
      *
      * @param receiver The address of the receiver who will receive the purchased tokens.
@@ -172,12 +171,19 @@ abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgr
      * @param totalPrice The total price for the requested amount of tokens
      */
     function _completePurchase(address receiver, uint256 id, uint256 amount, uint256 totalPrice) internal virtual {
-        if (receiver == address(0)) {
-            revert TokenPriceInvalidReceiver(address(0));
-        }
-
+        _mintPurchasedTokens(receiver, id, amount);
         emit Purchase(_msgSender(), receiver, id, amount, totalPrice);
     }
+
+    /**
+     * @dev Internal function to mint the purchased tokens.
+     * This function must be implemented by the inheriting contract to define how tokens are minted.
+     *
+     * @param to The address to mint tokens to.
+     * @param id The token ID to mint.
+     * @param amount The amount of tokens to mint.
+     */
+    function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual;
 
     /**
      * @dev Returns the treasury address for internal use.
