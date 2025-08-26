@@ -2,9 +2,13 @@
 
 ## Overview
 
-The EVMAuth smart contracts provide a flexible authentication and access control system built on top of ERC-1155 and ERC-6909 token standards. The contracts are designed with modularity and upgradability in mind, offering various combinations of features through inheritance.
+EVMAuth is an authorization state management system for token-gating, built on top of [ERC-1155] and [ERC-6909] token standards.
+
+There are several variations of EVMAuth for each token standard, combining features like upgrade-ability, role-based access control, account freezing, non-transferable tokens, direct token purchase, and automatic expiration.
 
 ## Contract Features
+
+### ERC-1155 Variants
 
 | Contract | Token Standard | Access Control | Base Config | Upgradeable Contract | Native Token Purchase | ERC-20 Purchase | Token Expiry |
 |----------|:--------------:|:--------------:|:-----------:|:--------------------:|:---------------------:|:---------------:|:------------:|
@@ -14,12 +18,55 @@ The EVMAuth smart contracts provide a flexible authentication and access control
 | EVMAuth1155T | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
 | EVMAuth1155TP | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | EVMAuth1155TP20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
+### ERC-6909 Variants
+
+| Contract | Token Standard | Access Control | Base Config | Upgradeable Contract | Native Token Purchase | ERC-20 Purchase | Token Expiry |
+|----------|:--------------:|:--------------:|:-----------:|:--------------------:|:---------------------:|:---------------:|:------------:|
 | EVMAuth6909 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | EVMAuth6909P | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | EVMAuth6909P20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | EVMAuth6909T | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
 | EVMAuth6909TP | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | EVMAuth6909TP20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
+## Contract Naming Convention
+
+The contract naming follows a clear pattern:
+- **Base Name**: `EVMAuth` + Token Standard (`1155` or `6909`)
+- **Suffixes**:
+    - `T`: Includes TTL (Time-To-Live) support
+    - `P`: Includes native currency purchase
+    - `P20`: Includes ERC-20 token purchase
+    - `TP`: Combines TTL + native token purchase
+    - `TP20`: Combines TTL + ERC-20 purchase
+
+## Token Standards Comparison
+
+### ERC-1155 vs ERC-6909
+
+| Feature | ERC-1155 | ERC-6909 |
+|---------|----------|----------|
+| **Multi-token Support** | ✅ | ✅ |
+| **Batch Operations** | ✅ | ❌ |
+| **Operator Approvals** | Per-account | Per-token ID |
+| **Metadata** | URI per token | Name, Symbol, Decimals per token |
+| **Gas Efficiency** | Good | Better for specific use cases |
+| **Adoption** | Widely adopted | Newer standard |
+
+### When to Choose Which
+
+**Use ERC-1155 variants when:**
+- You need batch transfer operations
+- Broader ecosystem compatibility is required
+- Working with NFT marketplaces
+- Simple metadata requirements (URI-based)
+
+**Use ERC-6909 variants when:**
+- You need granular operator permissions per token ID
+- Tokens require individual name/symbol/decimals metadata
+- Gas optimization for single transfers is critical
+- Building financial or DeFi applications
 
 ## Contract Architecture
 
@@ -768,44 +815,6 @@ Provides role-based access control:
 - Support for any ERC-20 payment token
 - Configurable payment token per token ID
 
-## EVMAuth Contract Naming Convention
-
-The contract naming follows a clear pattern:
-- **Base Name**: `EVMAuth` + Token Standard (`1155` or `6909`)
-- **Suffixes**:
-  - `T`: Includes TTL (Time-To-Live) support
-  - `P`: Includes native currency purchase
-  - `P20`: Includes ERC-20 token purchase
-  - `TP`: Combines TTL + native token purchase
-  - `TP20`: Combines TTL + ERC-20 purchase
-
-## Token Standards Comparison
-
-### ERC-1155 vs ERC-6909
-
-| Feature | ERC-1155 | ERC-6909 |
-|---------|----------|----------|
-| **Multi-token Support** | ✅ | ✅ |
-| **Batch Operations** | ✅ | ❌ |
-| **Operator Approvals** | Per-account | Per-token ID |
-| **Metadata** | URI per token | Name, Symbol, Decimals per token |
-| **Gas Efficiency** | Good | Better for specific use cases |
-| **Adoption** | Widely adopted | Newer standard |
-
-### When to Choose Which
-
-**Use ERC-1155 variants when:**
-- You need batch transfer operations
-- Broader ecosystem compatibility is required
-- Working with NFT marketplaces
-- Simple metadata requirements (URI-based)
-
-**Use ERC-6909 variants when:**
-- You need granular operator permissions per token ID
-- Tokens require individual name/symbol/decimals metadata
-- Gas optimization for single transfers is critical
-- Building financial or DeFi applications
-
 ## Key Architectural Decisions
 
 1. **Upgradability**: All contracts use the UUPS (Universal Upgradeable Proxy Standard) pattern for future improvements
@@ -849,6 +858,8 @@ The contract naming follows a clear pattern:
    - Set price (if enabled)
    - Set metadata/URI (if applicable)
 
+[ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155
+[ERC-6909]: https://eips.ethereum.org/EIPS/eip-6909
 [transfer delay]: https://docs.openzeppelin.com/contracts/5.x/api/access#AccessControlDefaultAdminRules-defaultAdminDelay--
 [for role management]: https://docs.openzeppelin.com/contracts/5.x/api/access#AccessControlDefaultAdminRules
 [for ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
