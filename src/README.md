@@ -341,7 +341,7 @@ classDiagram
     class EVMAuth1155P20{
         +initialize(uint48, address, string, address)
         +addERC20PaymentToken(address)
-        #removeERC20PaymentToken(address)
+        +removeERC20PaymentToken(address)
         +setPrice(uint256, uint256)
         +suspendPrice(uint256)
         +setTreasury(address)
@@ -423,7 +423,7 @@ classDiagram
 classDiagram
     class EVMAuth1155P20{
         +addERC20PaymentToken(address)
-        #removeERC20PaymentToken(address)
+        +removeERC20PaymentToken(address)
         +setPrice(uint256, uint256)
         +suspendPrice(uint256)
         +setTreasury(address)
@@ -594,7 +594,7 @@ classDiagram
     class EVMAuth6909P20{
         +initialize(uint48, address, string, address)
         +addERC20PaymentToken(address)
-        #removeERC20PaymentToken(address)
+        +removeERC20PaymentToken(address)
         +setPrice(uint256, uint256)
         +suspendPrice(uint256)
         +setTreasury(address)
@@ -678,7 +678,7 @@ classDiagram
 classDiagram
     class EVMAuth6909P20{
         +addERC20PaymentToken(address)
-        #removeERC20PaymentToken(address)
+        +removeERC20PaymentToken(address)
         +setPrice(uint256, uint256)
         +suspendPrice(uint256)
         +setTreasury(address)

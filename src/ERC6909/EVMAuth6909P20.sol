@@ -77,7 +77,7 @@ contract EVMAuth6909P20 is EVMAuth6909, TokenPurchaseERC20 {
      *
      * @param token The address of the ERC-20 token to be removed from the payment options.
      */
-    function removeERC20PaymentToken(address token) internal virtual onlyRole(TREASURER_ROLE) {
+    function removeERC20PaymentToken(address token) public virtual onlyRole(TREASURER_ROLE) {
         super._removeERC20PaymentToken(token);
     }
 
