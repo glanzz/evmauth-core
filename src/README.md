@@ -6,9 +6,7 @@ The EVMAuth smart contracts provide a flexible authentication and access control
 
 ## Contract Architecture
 
-### Common
-
-#### TokenAccessControl
+### TokenAccessControl
 
 ```mermaid
 classDiagram
@@ -60,7 +58,7 @@ classDiagram
     PausableUpgradeable <|-- TokenAccessControl
 ```
 
-#### TokenBaseConfig
+### TokenBaseConfig
 
 ```mermaid
 classDiagram
@@ -78,7 +76,7 @@ classDiagram
     ContextUpgradeable <|-- TokenBaseConfig
 ```
 
-#### TokenPrice
+### TokenPrice
 
 ```mermaid
 classDiagram
@@ -109,7 +107,7 @@ classDiagram
     ReentrancyGuardTransientUpgradeable <|-- TokenPrice
 ```
 
-#### TokenPurchase
+### TokenPurchase
 
 ```mermaid
 classDiagram
@@ -144,7 +142,7 @@ classDiagram
     TokenPrice <|-- TokenPurchase
 ```
 
-#### TokenPurchaseERC20
+### TokenPurchaseERC20
 
 ```mermaid
 classDiagram
@@ -185,7 +183,7 @@ classDiagram
     TokenPrice <|-- TokenPurchaseERC20
 ```
 
-#### TokenTTL
+### TokenTTL
 
 ```mermaid
 classDiagram
@@ -211,9 +209,7 @@ classDiagram
     ContextUpgradeable <|-- TokenTTL
 ```
 
-### ERC1155
-
-#### EVMAuth1155
+### EVMAuth1155
 
 ```mermaid
 classDiagram
@@ -288,7 +284,7 @@ classDiagram
     TokenBaseConfig <|-- EVMAuth1155
 ```
 
-#### EVMAuth1155P
+### EVMAuth1155P
 
 ```mermaid
 classDiagram
@@ -320,7 +316,7 @@ classDiagram
     TokenPurchase <|-- EVMAuth1155P
 ```
 
-#### EVMAuth1155P20
+### EVMAuth1155P20
 
 ```mermaid
 classDiagram
@@ -356,7 +352,7 @@ classDiagram
     TokenPurchaseERC20 <|-- EVMAuth1155P20
 ```
 
-#### EVMAuth1155T
+### EVMAuth1155T
 
 ```mermaid
 classDiagram
@@ -387,7 +383,7 @@ classDiagram
     TokenTTL <|-- EVMAuth1155T
 ```
 
-#### EVMAuth1155TP
+### EVMAuth1155TP
 
 ```mermaid
 classDiagram
@@ -421,7 +417,7 @@ classDiagram
     TokenTTL <|-- EVMAuth1155TP
 ```
 
-#### EVMAuth1155TP20
+### EVMAuth1155TP20
 
 ```mermaid
 classDiagram
@@ -457,9 +453,7 @@ classDiagram
     TokenTTL <|-- EVMAuth1155TP20
 ```
 
-### ERC-6909
-
-#### EVMAuth6909
+### EVMAuth6909
 
 ```mermaid
 classDiagram
@@ -539,7 +533,7 @@ classDiagram
     TokenBaseConfig <|-- EVMAuth6909
 ```
 
-#### EVMAuth6909P
+### EVMAuth6909P
 
 ```mermaid
 classDiagram
@@ -573,7 +567,7 @@ classDiagram
     TokenPurchase <|-- EVMAuth6909P
 ```
 
-#### EVMAuth6909P20
+### EVMAuth6909P20
 
 ```mermaid
 classDiagram
@@ -611,7 +605,7 @@ classDiagram
     TokenPurchaseERC20 <|-- EVMAuth6909P20
 ```
 
-#### EVMAuth6909T
+### EVMAuth6909T
 
 ```mermaid
 classDiagram
@@ -644,7 +638,7 @@ classDiagram
     TokenTTL <|-- EVMAuth6909T
 ```
 
-#### EVMAuth6909TP
+### EVMAuth6909TP
 
 ```mermaid
 classDiagram
@@ -678,7 +672,7 @@ classDiagram
     TokenTTL <|-- EVMAuth6909TP
 ```
 
-#### EVMAuth6909TP20
+### EVMAuth6909TP20
 
 ```mermaid
 classDiagram
