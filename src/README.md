@@ -75,6 +75,93 @@ Choose [ERC-6909] when you:
 - Need on-chain token metadata
 - Prefer a simpler token transfer model
 
+
+## Contract Mixins
+
+### TokenAccessControl
+Provides role-based access control:
+- **Roles:**
+    - `DEFAULT_ADMIN_ROLE`: Assign/revoke other roles
+    - `UPGRADE_MANAGER_ROLE`: Perform contract upgrades
+    - `ACCESS_MANAGER_ROLE`: Pause/unpause and account freezing
+    - `TOKEN_MANAGER_ROLE`: Token configuration, pricing, and metadata
+    - `MINTER_ROLE`: Minting tokens
+    - `BURNER_ROLE`: Burning tokens
+    - `TREASURER_ROLE`: Modify treasury account (for purchase variants)
+- **Features:**
+    - Pausable operations
+    - Account freezing capability
+    - Time-delayed admin role transfers
+
+### TokenBaseConfig
+- Allows marking specific token IDs as non-transferable
+- Non-transferable tokens can only be minted or burned
+
+### TokenTTL (Time-To-Live)
+- Adds automatic token expiration functionality
+- Each token ID can have a configured TTL (time-to-live)
+- Maintains balance records with expiration timestamps
+- Automatically excludes expired tokens from balance queries
+- Supports balance record pruning for gas optimization
+
+### TokenPrice
+- Base pricing functionality for tokens
+- Treasury management for collecting revenues
+- Purchase suspension capability
+
+### TokenPurchase (extends TokenPrice)
+- Direct purchase with native currency (e.g., ETH, POL)
+- Automatic minting upon purchase
+- Revenue collection to treasury
+
+### TokenPurchaseERC20 (extends TokenPrice)
+- Direct purchase with ERC-20 tokens (e.g., USDC, USDT)
+- Support for any ERC-20 payment token
+- Configurable payment token per token ID
+
+## Key Architectural Decisions
+
+1. **Upgradability**: All contracts use the [UUPS] (Universal Upgradeable Proxy Standard) pattern for future improvements
+
+2. **Modularity**: Features are separated into mixins that can be combined as needed
+
+3. **Security**:
+    - Role-based access control with time-delayed admin transfers
+    - Pausable operations for emergency situations
+    - Account freezing capabilities
+    - Reentrancy protection on purchase functions
+
+4. **Gas Optimization**:
+    - TTL implementation uses bounded arrays and time buckets for balance records
+    - Automatic pruning of expired records, with manual pruning methods available
+    - Efficient storage patterns for token properties
+
+5. **Flexibility**:
+    - Alternative purchase options (native, ERC-20)
+    - Configurable token properties (transferability, TTL, pricing)
+    - Support for both ERC-1155 and ERC-6909 token standards
+
+## Deployment Considerations
+
+1. **Initialization**:
+    - Admin role [transfer delay]
+    - Admin address [for role management]
+    - Base URI ([for ERC-1155]) or Contract URI ([for ERC-6909])
+    - Treasury address (for `P` and `P20` contract variants)
+
+2. **Role Assignment**:
+    - `grantRole(TOKEN_MANAGER_ROLE, address)` for accounts that can configure tokens and token metadata
+    - `grantRole(ACCESS_MANAGER_ROLE, address)` for accounts that can pause/unpause the contract and freeze accounts
+    - `grantRole(TREASURER_ROLE, address)` for accounts that can modify the treasury address where funds are collected
+    - `grantRole(MINTER_ROLE, address)`for accounts that can issue tokens to addresses
+    - `grantRole(BURNER_ROLE, address)`for accounts that can deduct tokens from addresses
+
+3. **Token Configuration**:
+    - Configure transferability
+    - Set TTL (if enabled)
+    - Set price (if enabled)
+    - Set metadata/URI (if applicable)
+
 ## Contract Architecture
 
 ### TokenAccessControl
@@ -779,95 +866,10 @@ classDiagram
     TokenTTL <|-- EVMAuth6909TP20
 ```
 
-## Contract Mixins
-
-### TokenAccessControl
-Provides role-based access control:
-- **Roles:**
-  - `DEFAULT_ADMIN_ROLE`: Assign/revoke other roles
-  - `UPGRADE_MANAGER_ROLE`: Perform contract upgrades
-  - `ACCESS_MANAGER_ROLE`: Pause/unpause and account freezing
-  - `TOKEN_MANAGER_ROLE`: Token configuration, pricing, and metadata
-  - `MINTER_ROLE`: Minting tokens
-  - `BURNER_ROLE`: Burning tokens
-  - `TREASURER_ROLE`: Modify treasury account (for purchase variants)
-- **Features:**
-  - Pausable operations
-  - Account freezing capability
-  - Time-delayed admin role transfers
-
-### TokenBaseConfig
-- Allows marking specific token IDs as non-transferable
-- Non-transferable tokens can only be minted or burned
-
-### TokenTTL (Time-To-Live)
-- Adds automatic token expiration functionality
-- Each token ID can have a configured TTL (time-to-live)
-- Maintains balance records with expiration timestamps
-- Automatically excludes expired tokens from balance queries
-- Supports balance record pruning for gas optimization
-
-### TokenPrice
-- Base pricing functionality for tokens
-- Treasury management for collecting revenues
-- Purchase suspension capability
-
-### TokenPurchase (extends TokenPrice)
-- Direct purchase with native currency (e.g., ETH, POL)
-- Automatic minting upon purchase
-- Revenue collection to treasury
-
-### TokenPurchaseERC20 (extends TokenPrice)
-- Direct purchase with ERC-20 tokens (e.g., USDC, USDT)
-- Support for any ERC-20 payment token
-- Configurable payment token per token ID
-
-## Key Architectural Decisions
-
-1. **Upgradability**: All contracts use the UUPS (Universal Upgradeable Proxy Standard) pattern for future improvements
-
-2. **Modularity**: Features are separated into mixins that can be combined as needed
-
-3. **Security**: 
-   - Role-based access control with time-delayed admin transfers
-   - Pausable operations for emergency situations
-   - Account freezing capabilities
-   - Reentrancy protection on purchase functions
-
-4. **Gas Optimization**:
-   - TTL implementation uses bounded arrays and time buckets for balance records
-   - Automatic pruning of expired records, with manual pruning methods available
-   - Efficient storage patterns for token properties
-
-5. **Flexibility**: 
-   - Alternative purchase options (native, ERC-20)
-   - Configurable token properties (transferability, TTL, pricing)
-   - Support for both ERC-1155 and ERC-6909 token standards
-
-## Deployment Considerations
-
-1. **Initialization**:
-   - Admin role [transfer delay]
-   - Admin address ([for role management])
-   - Base URI ([for ERC-1155]) or Contract URI ([for ERC-6909])
-   - Treasury address (for `P` and `P20` contract variants)
-
-2. **Role Assignment**:
-   - `grantRole(TOKEN_MANAGER_ROLE, address)` for accounts that can configure tokens and token metadata
-   - `grantRole(ACCESS_MANAGER_ROLE, address)` for accounts that can pause/unpause the contract and freeze accounts
-   - `grantRole(TREASURER_ROLE, address)` for accounts that can modify the treasury address where funds are collected
-   - `grantRole(MINTER_ROLE, address)`for accounts that can issue tokens to addresses
-   - `grantRole(BURNER_ROLE, address)`for accounts that can deduct tokens from addresses
-
-3. **Token Configuration**:
-   - Configure transferability
-   - Set TTL (if enabled)
-   - Set price (if enabled)
-   - Set metadata/URI (if applicable)
-
 [ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155
 [ERC-6909]: https://eips.ethereum.org/EIPS/eip-6909
-[transfer delay]: https://docs.openzeppelin.com/contracts/5.x/api/access#AccessControlDefaultAdminRules-defaultAdminDelay--
-[for role management]: https://docs.openzeppelin.com/contracts/5.x/api/access#AccessControlDefaultAdminRules
 [for ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions
 [for ERC-6909]: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+[for role management]: https://docs.openzeppelin.com/contracts/5.x/api/access#AccessControlDefaultAdminRules
+[transfer delay]: https://docs.openzeppelin.com/contracts/5.x/api/access#AccessControlDefaultAdminRules-defaultAdminDelay--
+[UUPS]: https://docs.openzeppelin.com/contracts-stylus/0.3.0-rc.1/uups-proxy
