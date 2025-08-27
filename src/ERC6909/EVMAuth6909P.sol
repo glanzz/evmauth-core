@@ -70,7 +70,7 @@ contract EVMAuth6909P is EVMAuth6909, TokenPurchase {
     /**
      * @dev Sets the price for a specific token ID, making it available for purchase.
      *
-     * Emits a {PriceSet} event.
+     * Emits a {TokenConfigUpdated} event.
      *
      * Requirements:
      * - The caller must have the `TOKEN_MANAGER_ROLE`.
@@ -83,20 +83,6 @@ contract EVMAuth6909P is EVMAuth6909, TokenPurchase {
     }
 
     /**
-     * @dev Suspends the price for a specific token ID, making it unavailable for purchase.
-     *
-     * Emits a {PriceSuspended} event.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     *
-     * @param id The identifier of the token type to suspend the price for.
-     */
-    function suspendPrice(uint256 id) public virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _suspendPrice(id);
-    }
-
-    /**
      * @dev Internal function to mint purchased tokens after successful purchase.
      *
      * @param to The address to mint tokens to.
@@ -105,21 +91,5 @@ contract EVMAuth6909P is EVMAuth6909, TokenPurchase {
      */
     function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual override {
         _mint(to, id, amount);
-    }
-
-    /**
-     * @dev Override to configure price when a token is configured.
-     */
-    function _afterTokenConfiguration(uint256 tokenId, TokenConfig memory config) internal virtual override {
-        super._afterTokenConfiguration(tokenId, config);
-        _configureTokenPrice(tokenId, config.price);
-    }
-
-    /**
-     * @dev Override to include price in token configuration.
-     */
-    function _getTokenConfig(uint256 id) internal view virtual override returns (TokenConfig memory config) {
-        config = super._getTokenConfig(id);
-        config.price = _getTokenPrice(id);
     }
 }

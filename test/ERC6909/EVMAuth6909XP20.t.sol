@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { BaseTestWithRoles } from "test/BaseTestWithRoles.sol";
-import { EVMAuth1155T } from "src/ERC1155/EVMAuth1155T.sol";
+import { BaseTestWithRolesAndERC20s } from "test/BaseTestWithRolesAndERC20s.sol";
+import { EVMAuth6909XP20 } from "src/ERC6909/EVMAuth6909XP20.sol";
 
-contract EVMAuth1155T_Test is BaseTestWithRoles {
-    EVMAuth1155T internal token;
+contract EVMAuth6909XP20_Test is BaseTestWithRolesAndERC20s {
+    EVMAuth6909XP20 internal token;
 
     function setUp() public virtual override {
         super.setUp();
@@ -14,10 +14,13 @@ contract EVMAuth1155T_Test is BaseTestWithRoles {
 
         // Deploy the proxy and initialize
         proxy = deployUUPSProxy(
-            "EVMAuth1155T",
-            abi.encodeCall(EVMAuth1155T.initialize, (2 days, owner, "https://token-cdn-domain/{id}.json"))
+            "EVMAuth6909XP20",
+            abi.encodeCall(
+                EVMAuth6909XP20.initialize,
+                (2 days, owner, "https://contract-cdn-domain/contract-metadata.json", treasury)
+            )
         );
-        token = EVMAuth1155T(proxy);
+        token = EVMAuth6909XP20(proxy);
 
         // Grant roles
         token.grantRole(token.UPGRADE_MANAGER_ROLE(), owner);
@@ -26,6 +29,10 @@ contract EVMAuth1155T_Test is BaseTestWithRoles {
         token.grantRole(token.MINTER_ROLE(), minter);
         token.grantRole(token.BURNER_ROLE(), burner);
         token.grantRole(token.TREASURER_ROLE(), treasurer);
+
+        // Accept USDC and Tether mock ERC-20 tokens as payment
+        token.addERC20PaymentToken(address(usdc));
+        token.addERC20PaymentToken(address(usdt));
 
         vm.stopPrank();
     }

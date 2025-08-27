@@ -2,10 +2,10 @@
 pragma solidity ^0.8.24;
 
 import { BaseTestWithRoles } from "test/BaseTestWithRoles.sol";
-import { EVMAuth6909T } from "src/ERC6909/EVMAuth6909T.sol";
+import { EVMAuth6909XP } from "src/ERC6909/EVMAuth6909XP.sol";
 
-contract EVMAuth6909T_Test is BaseTestWithRoles {
-    EVMAuth6909T internal token;
+contract EVMAuth6909XP_Test is BaseTestWithRoles {
+    EVMAuth6909XP internal token;
 
     function setUp() public virtual override {
         super.setUp();
@@ -14,12 +14,13 @@ contract EVMAuth6909T_Test is BaseTestWithRoles {
 
         // Deploy the proxy and initialize
         proxy = deployUUPSProxy(
-            "EVMAuth6909T",
+            "EVMAuth6909XP",
             abi.encodeCall(
-                EVMAuth6909T.initialize, (2 days, owner, "https://contract-cdn-domain/contract-metadata.json")
+                EVMAuth6909XP.initialize,
+                (2 days, owner, "https://contract-cdn-domain/contract-metadata.json", treasury)
             )
         );
-        token = EVMAuth6909T(proxy);
+        token = EVMAuth6909XP(proxy);
 
         // Grant roles
         token.grantRole(token.UPGRADE_MANAGER_ROLE(), owner);

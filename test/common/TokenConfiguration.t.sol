@@ -2,13 +2,12 @@
 pragma solidity ^0.8.24;
 
 import { BaseTest } from "test/BaseTest.sol";
-import { TokenTTL } from "src/common/TokenTTL.sol";
+import { TokenConfiguration } from "src/common/TokenConfiguration.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract MockTokenTTL is TokenTTL, OwnableUpgradeable, UUPSUpgradeable {
+contract MockTokenConfiguration is TokenConfiguration, OwnableUpgradeable, UUPSUpgradeable {
     function initialize() public initializer {
-        __TokenTTL_init();
         __Ownable_init(_msgSender());
     }
 
@@ -18,12 +17,12 @@ contract MockTokenTTL is TokenTTL, OwnableUpgradeable, UUPSUpgradeable {
     }
 }
 
-contract TokenTTL_Test is BaseTest {
-    MockTokenTTL internal token;
+contract TokenConfiguration_Test is BaseTest {
+    MockTokenConfiguration internal token;
 
     function setUp() public virtual {
         // Deploy the proxy and initialize
-        proxy = deployUUPSProxy("MockTokenTTL", abi.encodeCall(MockTokenTTL.initialize, ()));
-        token = MockTokenTTL(proxy);
+        proxy = deployUUPSProxy("MockTokenConfiguration", abi.encodeCall(MockTokenConfiguration.initialize, ()));
+        token = MockTokenConfiguration(proxy);
     }
 }

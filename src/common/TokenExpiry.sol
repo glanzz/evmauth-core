@@ -2,17 +2,17 @@
 
 pragma solidity ^0.8.24;
 
-import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import { TokenConfiguration } from "src/common/TokenConfiguration.sol";
 
 /**
- * @dev Mixin that provides time-to-live (TTL) functionality for token contracts.
+ * @dev Mixin that provides automatic expiration functionality for token contracts.
  * Tokens can be configured to expire after a certain period, and the contract manages balance
  * records with expiration times automatically.
  *
  * With sequential token IDs, we can determine if a TTL has been set by checking if the token exists.
  * A TTL of 0 means the token never expires.
  */
-abstract contract TokenTTL is ContextUpgradeable {
+abstract contract TokenExpiry is TokenConfiguration {
     // Maximum BalanceRecord array size per address, per token ID
     uint256 public constant DEFAULT_MAX_BALANCE_RECORDS = 30;
 
@@ -25,39 +25,28 @@ abstract contract TokenTTL is ContextUpgradeable {
     // Owner => Token ID => Array of balance records
     mapping(address owner => mapping(uint256 id => BalanceRecord[])) private _balanceRecords;
 
-    // Token ID => TTL in seconds (0 means never expires)
-    mapping(uint256 id => uint256) private _ttls;
-
-    // Token ID => whether TTL is immutable (can only be set once)
-    mapping(uint256 id => bool) private _ttlImmutable;
-
-    /**
-     * @dev Emitted when the TTL for a token `id` is set by `caller`.
-     */
-    event TTLUpdated(address caller, uint256 indexed id, uint256 ttl);
-
     /**
      * @dev Error thrown when deducting or transferring tokens from an account with insufficient funds.
      */
-    error TokenTTLInsufficientBalance(address account, uint256 available, uint256 requested, uint256 id);
+    error TokenExpiryInsufficientBalance(address account, uint256 available, uint256 requested, uint256 id);
 
     /**
      * @dev Error thrown when trying to set the TTL for a token `id` that has already been set.
      * Once a TTL is set for a token `id`, it cannot be changed or removed.
      */
-    error TokenTTLAlreadySet(uint256 id, uint256 ttl);
+    error TokenExpiryAlreadySet(uint256 id, uint256 ttl);
 
     /**
      * @dev Initializer that calls the parent initializers for upgradeable contracts.
      */
-    function __TokenTTL_init() public onlyInitializing {
+    function __TokenExpiry_init() public onlyInitializing {
         // Nothing to initialize
     }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __TokenTTL_init_unchained() public onlyInitializing {
+    function __TokenExpiry_init_unchained() public onlyInitializing {
         // Nothing to initialize
     }
 
@@ -94,31 +83,6 @@ abstract contract TokenTTL is ContextUpgradeable {
     }
 
     /**
-     * @dev Returns true if the TTL for a specific token `id` is immutable (has been set and cannot be changed).
-     * Once a TTL is set as immutable for a token `id`, it cannot be changed or removed. This is necessary
-     * because expiring tokens are grouped into expiration time buckets, to prevent denial-of-service attacks
-     * based on unbounded data storage.
-     *
-     * @param id The identifier of the token type to check.
-     * @return bool indicating whether the TTL for the token `id` is immutable.
-     */
-    function isTTLImmutable(uint256 id) external view returns (bool) {
-        return _ttlImmutable[id];
-    }
-
-    /**
-     * @dev Returns the TTL (time-to-live) of a token `id` (in seconds).
-     * If the TTL is 0, it means the token does not expire.
-     * Returns 0 for tokens that don't exist or haven't been configured.
-     *
-     * @param id The identifier of the token type to get the TTL for.
-     * @return The TTL in seconds for the token `id`.
-     */
-    function ttlOf(uint256 id) external view returns (uint256) {
-        return _ttls[id];
-    }
-
-    /**
      * @dev Returns the maximum number of balance records per address, per token ID.
      * Each balance record is a tuple of (amount, expiresAt), and each address/token pair has an array of them.
      * This is used to limit the number of balance records stored for each address and token ID, which helps
@@ -147,7 +111,7 @@ abstract contract TokenTTL is ContextUpgradeable {
      */
     function _addToBalanceRecord(address account, uint256 id, uint256 amount, uint256 expiresAt) internal {
         // First, prune expired records to free up space
-        _pruneBalanceRecords(account, id);
+        pruneBalanceRecords(account, id);
 
         BalanceRecord[] storage records = _balanceRecords[account][id];
         uint256 currentLength = records.length;
@@ -227,11 +191,11 @@ abstract contract TokenTTL is ContextUpgradeable {
         }
 
         if (debt > 0) {
-            revert TokenTTLInsufficientBalance(account, amount - debt, amount, id);
+            revert TokenExpiryInsufficientBalance(account, amount - debt, amount, id);
         }
 
         // Prune expired records from the `account`
-        _pruneBalanceRecords(account, id);
+        pruneBalanceRecords(account, id);
     }
 
     /**
@@ -275,20 +239,22 @@ abstract contract TokenTTL is ContextUpgradeable {
         }
 
         if (debt > 0) {
-            revert TokenTTLInsufficientBalance(from, amount - debt, amount, id);
+            revert TokenExpiryInsufficientBalance(from, amount - debt, amount, id);
         }
 
         // Prune expired records from the `from` account
-        _pruneBalanceRecords(from, id);
+        pruneBalanceRecords(from, id);
     }
 
     /**
-     * @dev Remove expired or empty balance records and compact the array.
+     * @dev Prunes balance records for a specific account, removing entries that are expired or
+     * have a zero balances. This is handled automatically during transfers and minting, but can
+     * be manually invoked to clean up storage.
      *
      * @param account The address of the account to prune.
      * @param id The identifier of the token type to prune.
      */
-    function _pruneBalanceRecords(address account, uint256 id) internal {
+    function pruneBalanceRecords(address account, uint256 id) public virtual {
         BalanceRecord[] storage records = _balanceRecords[account][id];
         uint256 currentTime = block.timestamp;
         uint256 writeIndex = 0;
@@ -326,54 +292,6 @@ abstract contract TokenTTL is ContextUpgradeable {
     }
 
     /**
-     * @dev Configures the TTL for a token based on configuration.
-     * This method is designed to be called from the TokenBaseConfig hooks.
-     * TTL can only be set once per token ID if marked as immutable.
-     *
-     * @param id The token ID to configure TTL for.
-     * @param ttl The time-to-live in seconds (0 means never expires).
-     */
-    function _configureTokenTTL(uint256 id, uint256 ttl) internal virtual {
-        // Only set TTL if not already immutable
-        if (!_ttlImmutable[id]) {
-            _setTTL(id, ttl);
-        }
-    }
-
-    /**
-     * @dev Returns the TTL configuration for inclusion in TokenConfig.
-     * This is used when getting the full configuration of a token.
-     *
-     * @param id The token ID to get TTL for.
-     * @return ttl The TTL of the token (0 if never expires).
-     */
-    function _getTokenTTL(uint256 id) internal view virtual returns (uint256 ttl) {
-        return _ttls[id];
-    }
-
-    /**
-     * @dev Sets the TTL (time-to-live) for a token `id` (in seconds).
-     * If the TTL is already set as immutable, it reverts with an error.
-     * The TTL is marked as immutable after being set to prevent changes that could
-     * affect the balance record bucket management.
-     *
-     * Emits a {TTLUpdated} event.
-     *
-     * @param id The identifier of the token type to set the TTL for.
-     * @param ttl The time-to-live in seconds for the token. If 0, the token does not expire.
-     */
-    function _setTTL(uint256 id, uint256 ttl) internal {
-        if (_ttlImmutable[id]) {
-            revert TokenTTLAlreadySet(id, _ttls[id]);
-        }
-
-        _ttls[id] = ttl;
-        _ttlImmutable[id] = true; // Mark as immutable after first set
-
-        emit TTLUpdated(_msgSender(), id, ttl);
-    }
-
-    /**
      * @dev Calculates the expiration time for a token `id` based on its TTL.
      * If the TTL is 0, the token does not expire and returns the maximum value for `uint256`.
      * Otherwise, it calculates the expiration time rounded up to the next bucket size.
@@ -390,7 +308,7 @@ abstract contract TokenTTL is ContextUpgradeable {
      * @return The expiration timestamp for the token `id`.
      */
     function _expiration(uint256 id) internal view returns (uint256) {
-        uint256 ttl = _ttls[id];
+        uint256 ttl = ttlOf(id);
 
         if (ttl == 0) {
             return type(uint256).max;
@@ -399,6 +317,7 @@ abstract contract TokenTTL is ContextUpgradeable {
         uint256 exactExpiration = block.timestamp + ttl;
         uint256 arraySize = _maxBalanceRecords();
         uint256 bucketSize = ttl / arraySize;
+
         if (bucketSize == 0) {
             bucketSize = 1;
         }

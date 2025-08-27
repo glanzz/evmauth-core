@@ -111,7 +111,7 @@ abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {
         }
 
         // Transfer payment to treasury
-        _getTreasury().transfer(totalPrice);
+        payable(_treasury).transfer(totalPrice);
 
         // Complete the purchase
         _completePurchase(receiver, id, amount, totalPrice);

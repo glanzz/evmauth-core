@@ -187,7 +187,7 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
         }
 
         // Transfer ERC-20 tokens from sender to treasury
-        token.safeTransferFrom(_msgSender(), _getTreasury(), totalPrice);
+        token.safeTransferFrom(_msgSender(), _treasury, totalPrice);
 
         // Complete the purchase
         _completePurchase(receiver, id, amount, totalPrice);

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
-import { TokenBaseConfig } from "src/common/TokenBaseConfig.sol";
+import { TokenConfiguration } from "src/common/TokenConfiguration.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ERC1155Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import { ERC1155SupplyUpgradeable } from
@@ -16,12 +16,12 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
  * @dev Implementation of an ERC-1155 compliant contract with extended features.
  * This contract combines {ERC1155Upgradeable} with the {ERC1155SupplyUpgradeable} and
  * {ERC1155URIStorageUpgradeable} extensions, as well as the {TokenAccessControl} and
- * {TokenBaseConfig} mixins.
+ * {TokenConfiguration} mixins.
  */
 contract EVMAuth1155 is
     ERC1155SupplyUpgradeable,
     ERC1155URIStorageUpgradeable,
-    TokenBaseConfig,
+    TokenConfiguration,
     TokenAccessControl,
     UUPSUpgradeable
 {
@@ -92,6 +92,27 @@ contract EVMAuth1155 is
         returns (string memory)
     {
         return ERC1155URIStorageUpgradeable.uri(tokenId);
+    }
+
+    /**
+     * @dev Creates a new token with the given configuration, using the next sequential token ID.
+     * The value of `_nextTokenId` is incremented after assignment.
+     *
+     * Emits a {TokenConfigUpdated} event.
+     *
+     * Requirements:
+     * - The caller must have the `TOKEN_MANAGER_ROLE`.
+     *
+     * @param config The configuration for the new token.
+     * @return tokenId The ID of the configured token.
+     */
+    function newToken(TokenConfig memory config)
+        external
+        virtual
+        onlyRole(TOKEN_MANAGER_ROLE)
+        returns (uint256 tokenId)
+    {
+        return _newToken(config);
     }
 
     /**
@@ -181,53 +202,9 @@ contract EVMAuth1155 is
     }
 
     /**
-     * @dev Configures a token with the provided configuration.
-     * If id is 0, assigns the next sequential token ID.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     *
-     * @param id The token ID to configure (0 for next sequential ID).
-     * @param config The configuration to apply.
-     * @return tokenId The ID of the configured token.
-     */
-    function configureToken(uint256 id, TokenConfig memory config)
-        external
-        virtual
-        onlyRole(TOKEN_MANAGER_ROLE)
-        returns (uint256 tokenId)
-    {
-        return _configureToken(id, config);
-    }
-
-    /**
-     * @dev Batch configures multiple tokens.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     *
-     * @param ids Array of token IDs (0 for next sequential ID).
-     * @param configs Array of configurations to apply.
-     * @return tokenIds Array of configured token IDs.
-     */
-    function batchConfigureTokens(uint256[] memory ids, TokenConfig[] memory configs)
-        external
-        virtual
-        onlyRole(TOKEN_MANAGER_ROLE)
-        returns (uint256[] memory tokenIds)
-    {
-        require(ids.length == configs.length, "EVMAuth1155: arrays length mismatch");
-        tokenIds = new uint256[](ids.length);
-
-        for (uint256 i = 0; i < ids.length; i++) {
-            tokenIds[i] = this.configureToken(ids[i], configs[i]);
-        }
-
-        return tokenIds;
-    }
-
-    /**
      * @dev Sets whether a token ID is transferable.
+     *
+     * Emits a {TokenConfigUpdated} event.
      *
      * Requirements:
      * - The caller must have the `TOKEN_MANAGER_ROLE`.
@@ -235,8 +212,8 @@ contract EVMAuth1155 is
      * @param id The token ID to configure.
      * @param transferable Whether the token should be transferable.
      */
-    function setTransferability(uint256 id, bool transferable) external onlyRole(TOKEN_MANAGER_ROLE) {
-        _setTransferability(id, transferable);
+    function setTransferable(uint256 id, bool transferable) external onlyRole(TOKEN_MANAGER_ROLE) {
+        _setTransferable(id, transferable);
     }
 
     /// @inheritdoc UUPSUpgradeable

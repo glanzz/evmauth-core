@@ -98,7 +98,7 @@ contract EVMAuth1155P20 is EVMAuth1155, TokenPurchaseERC20 {
     /**
      * @dev Sets the price for a specific token ID, making it available for purchase.
      *
-     * Emits a {PriceSet} event.
+     * Emits a {TokenConfigUpdated} event.
      *
      * Requirements:
      * - The caller must have the `TOKEN_MANAGER_ROLE`.
@@ -108,20 +108,6 @@ contract EVMAuth1155P20 is EVMAuth1155, TokenPurchaseERC20 {
      */
     function setPrice(uint256 id, uint256 price) public virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setPrice(id, price);
-    }
-
-    /**
-     * @dev Suspends the price for a specific token ID, making it unavailable for purchase.
-     *
-     * Emits a {PriceSuspended} event.
-     *
-     * Requirements:
-     * - The caller must have the `TOKEN_MANAGER_ROLE`.
-     *
-     * @param id The identifier of the token type to suspend the price for.
-     */
-    function suspendPrice(uint256 id) public virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _suspendPrice(id);
     }
 
     /**

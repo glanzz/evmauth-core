@@ -2,12 +2,13 @@
 pragma solidity ^0.8.24;
 
 import { BaseTest } from "test/BaseTest.sol";
-import { TokenBaseConfig } from "src/common/TokenBaseConfig.sol";
+import { TokenExpiry } from "src/common/TokenExpiry.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract MockTokenNonTransferable is TokenBaseConfig, OwnableUpgradeable, UUPSUpgradeable {
+contract MockTokenExpiry is TokenExpiry, OwnableUpgradeable, UUPSUpgradeable {
     function initialize() public initializer {
+        __TokenExpiry_init();
         __Ownable_init(_msgSender());
     }
 
@@ -17,12 +18,12 @@ contract MockTokenNonTransferable is TokenBaseConfig, OwnableUpgradeable, UUPSUp
     }
 }
 
-contract TokenNonTransferable_Test is BaseTest {
-    MockTokenNonTransferable internal token;
+contract TokenExpiry_Test is BaseTest {
+    MockTokenExpiry internal token;
 
     function setUp() public virtual {
         // Deploy the proxy and initialize
-        proxy = deployUUPSProxy("MockTokenNonTransferable", abi.encodeCall(MockTokenNonTransferable.initialize, ()));
-        token = MockTokenNonTransferable(proxy);
+        proxy = deployUUPSProxy("MockTokenExpiry", abi.encodeCall(MockTokenExpiry.initialize, ()));
+        token = MockTokenExpiry(proxy);
     }
 }

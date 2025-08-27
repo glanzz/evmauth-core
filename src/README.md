@@ -10,36 +10,36 @@ There are several variations of EVMAuth for each token standard, combining featu
 
 ### ERC-1155 Variants
 
-| Contract | Token Standard | Upgradeable Contract | Access Control | Base Config | Native Token Purchase | ERC-20 Purchase | Token Expiry |
-|----------|:--------------:|:--------------------:|:--------------:|:-----------:|:---------------------:|:---------------:|:------------:|
+| Contract | Token Standard | Upgradeable | Access Control | Base Config | Native Token Purchase | ERC-20 Purchase | Token Expiry |
+|----------|:--------------:|:-----------:|:--------------:|:-----------:|:---------------------:|:---------------:|:------------:|
 | EVMAuth1155 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | EVMAuth1155P | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | EVMAuth1155P20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| EVMAuth1155T | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| EVMAuth1155TP | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| EVMAuth1155TP20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| EVMAuth1155X | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| EVMAuth1155XP | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| EVMAuth1155XP20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 
 ### ERC-6909 Variants
 
-| Contract | Token Standard | Upgradeable Contract | Access Control | Base Config | Native Token Purchase | ERC-20 Purchase | Token Expiry |
-|----------|:--------------:|:--------------------:|:--------------:|:-----------:|:---------------------:|:---------------:|:------------:|
+| Contract | Token Standard | Upgradeable | Access Control | Base Config | Native Token Purchase | ERC-20 Purchase | Token Expiry |
+|----------|:--------------:|:-----------:|:--------------:|:-----------:|:---------------------:|:---------------:|:------------:|
 | EVMAuth6909 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | EVMAuth6909P | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | EVMAuth6909P20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| EVMAuth6909T | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| EVMAuth6909TP | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| EVMAuth6909TP20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| EVMAuth6909X | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| EVMAuth6909XP | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| EVMAuth6909XP20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 
 ## Contract Naming Convention
 
 The contract naming follows a clear pattern:
 - **Base Name**: `EVMAuth` + Token Standard (`1155` or `6909`)
 - **Suffixes**:
-    - `T`: Includes TTL (Time-To-Live) and token expiry
+    - `X`: Includes token eXpiry (TTL/Time-To-Live)
     - `P`: Includes price and purchasing via native currency
     - `P20`: Includes price and purchasing via ERC-20 tokens
-    - `TP`: Combines TTL + purchasing via native currency
-    - `TP20`: Combines TTL + purchasing via ERC-20 tokens
+    - `XP`: Combines expiry + purchasing via native currency
+    - `XP20`: Combines expiry + purchasing via ERC-20 tokens
 
 ## Token Configuration
 
@@ -58,22 +58,23 @@ struct TokenConfig {
 Different contract variants use different fields:
 - **Base contracts** (EVMAuth1155/6909): Only use `isTransferable`
 - **With TokenPrice** (P variants): Also use `price` field (0 = not for sale)
-- **With TokenTTL** (T variants): Also use `ttl` field (0 = never expires)
-- **Combined** (TP variants): Use all fields
+- **With TokenExpiry** (X variants): Also use `ttl` field (0 = never expires)
+- **Combined** (XP variants): Use all fields
 
 Unused fields should be set to their zero values.
 
 ### Configuration Methods
 
 All contracts provide:
-- `configureToken(uint256 id, TokenConfig config)`: Configure a token (id=0 for auto-assign)
-- `batchConfigureTokens(uint256[] ids, TokenConfig[] configs)`: Configure multiple tokens
-- `setTransferability(uint256 id, bool transferable)`: Update transferability only
+- `newToken(TokenConfig config)`: Create a new token with the next sequential ID
+- `setTransferable(uint256 id, bool transferable)`: Update transferability of an existing token
 - `setTokenURI(uint256 id, string uri)`: Set token-specific URI (ERC1155 and ERC6909 specific)
-- `nextTokenId()`: Get the next sequential token ID
+- `tokenConfig(uint256 id)`: Get the complete configuration for a token
 - `tokenExists(uint256 id)`: Check if a token ID has been configured
-- `totalTokenTypes()`: Get total number of configured token types
-- `getTokenConfigurations(uint256[] ids)`: Export token configurations for migration
+- `isTransferable(uint256 id)`: Check if a token can be transferred
+- `priceOf(uint256 id)`: Get the price of a token (0 = not for sale)
+- `ttlOf(uint256 id)`: Get the TTL of a token (0 = never expires)
+- `nextTokenId`: Public variable for the next sequential token ID
 
 ## Token Standards Comparison
 
@@ -123,11 +124,14 @@ Provides role-based access control:
     - Account freezing capability
     - Time-delayed admin role transfers
 
-### TokenBaseConfig
+### TokenConfiguration
+- Provides unified token configuration management
+- Stores all token properties (transferability, price, TTL) in a single struct
+- Manages sequential token ID assignment
 - Allows marking specific token IDs as non-transferable
 - Non-transferable tokens can only be minted or burned
 
-### TokenTTL (Time-To-Live)
+### TokenExpiry (Time-To-Live)
 - Adds automatic token expiration functionality
 - Each token ID can have a configured TTL (time-to-live)
 - Maintains balance records with expiration timestamps
@@ -135,9 +139,10 @@ Provides role-based access control:
 - Supports balance record pruning for gas optimization
 
 ### TokenPrice
-- Base pricing functionality for tokens
+- Extends TokenConfiguration for pricing functionality
 - Treasury management for collecting revenues
-- Purchase suspension capability
+- Purchase validation and completion logic
+- Price is stored in the base TokenConfig struct
 
 ### TokenPurchase (extends TokenPrice)
 - Direct purchase with native currency (e.g., ETH, POL)
@@ -246,7 +251,7 @@ classDiagram
     PausableUpgradeable <|-- TokenAccessControl
 ```
 
-### TokenBaseConfig
+### TokenConfiguration
 
 ```mermaid
 classDiagram
@@ -255,21 +260,19 @@ classDiagram
         #_msgData() bytes
         #_contextSuffixLength() uint256
     }
-    class TokenBaseConfig{
+    class TokenConfiguration{
         +struct TokenConfig
         -mapping _nonTransferableTokens
         -uint256 _nextTokenId
         +nextTokenId() uint256
         +isTransferable(uint256) bool
-        +getTokenConfigurations(uint256[]) TokenConfig[]
-        #_setTransferability(uint256, bool)
+        #_setTransferable(uint256, bool)
         #_configureToken(uint256, TokenConfig) uint256
         #_beforeTokenConfiguration(uint256, TokenConfig)
         #_afterTokenConfiguration(uint256, TokenConfig)
-        #_getTokenConfig(uint256) TokenConfig
     }
     
-    ContextUpgradeable <|-- TokenBaseConfig
+    ContextUpgradeable <|-- TokenConfiguration
 ```
 
 ### TokenPrice
@@ -285,24 +288,15 @@ classDiagram
         #_reentrancyGuardEntered() bool
     }
     class TokenPrice{
-        +struct PriceConfig
-        -mapping priceConfigs
         -address treasury
-        +isPriceSet(uint256) bool
-        +priceOf(uint256) uint256
         +treasury() address
-        #_configureTokenPrice(uint256, uint256)
-        #_getTokenPrice(uint256) uint256
         #_validatePurchase(address, uint256, uint256) uint256
         #_completePurchase(address, uint256, uint256, uint256)
         #_mintPurchasedTokens(address, uint256, uint256)*
-        #_setPrice(uint256, uint256)
-        #_suspendPrice(uint256)
         #_setTreasury(address)
-        #_getTreasury() address
     }
     
-    ContextUpgradeable <|-- TokenPrice
+    TokenConfiguration <|-- TokenPrice
     ReentrancyGuardTransientUpgradeable <|-- TokenPrice
 ```
 
@@ -318,21 +312,12 @@ classDiagram
         #_requirePaused()
     }
     class TokenPrice{
-        +struct PriceConfig
-        -mapping priceConfigs
         -address treasury
-        +isPriceSet(uint256) bool
-        +priceOf(uint256) uint256
         +treasury() address
-        #_configureTokenPrice(uint256, uint256)
-        #_getTokenPrice(uint256) uint256
         #_validatePurchase(address, uint256, uint256) uint256
         #_completePurchase(address, uint256, uint256, uint256)
         #_mintPurchasedTokens(address, uint256, uint256)*
-        #_setPrice(uint256, uint256)
-        #_suspendPrice(uint256)
         #_setTreasury(address)
-        #_getTreasury() address
     }
     class TokenPurchase{
         +purchase(uint256, uint256) payable
@@ -356,21 +341,12 @@ classDiagram
         #_requirePaused()
     }
     class TokenPrice{
-        +struct PriceConfig
-        -mapping priceConfigs
         -address treasury
-        +isPriceSet(uint256) bool
-        +priceOf(uint256) uint256
         +treasury() address
-        #_configureTokenPrice(uint256, uint256)
-        #_getTokenPrice(uint256) uint256
         #_validatePurchase(address, uint256, uint256) uint256
         #_completePurchase(address, uint256, uint256, uint256)
         #_mintPurchasedTokens(address, uint256, uint256)*
-        #_setPrice(uint256, uint256)
-        #_suspendPrice(uint256)
         #_setTreasury(address)
-        #_getTreasury() address
     }
     class TokenPurchaseERC20{
         -mapping paymentTokens
@@ -388,35 +364,31 @@ classDiagram
     TokenPrice <|-- TokenPurchaseERC20
 ```
 
-### TokenTTL
+### TokenExpiry
 
 ```mermaid
 classDiagram
-    class ContextUpgradeable{
-        #_msgSender() address
-        #_msgData() bytes
-        #_contextSuffixLength() uint256
+    class TokenConfiguration{
+        +struct TokenConfig
+        -mapping _tokenConfigs
+        +uint256 nextTokenId
+        +tokenExists(uint256) bool
+        +ttlOf(uint256) uint256
+        #_setTTL(uint256, uint256)
     }
-    class TokenTTL{
+    class TokenExpiry{
         +struct BalanceRecord
-        +struct TTLConfig
-        -mapping ttlConfigs
         -mapping balanceRecords
         +balanceOf(address, uint256) uint256
         +balanceRecordsOf(address, uint256) BalanceRecord[]
-        +isTTLSet(uint256) bool
-        +ttlOf(uint256) uint256
-        #_configureTokenTTL(uint256, uint256)
-        #_getTokenTTL(uint256) uint256
+        +pruneBalanceRecords(address, uint256)
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
-        #_pruneBalanceRecords(address, uint256)
-        #_setTTL(uint256, uint256)
         #_expiration(uint256) uint256
     }
     
-    ContextUpgradeable <|-- TokenTTL
+    TokenConfiguration <|-- TokenExpiry
 ```
 
 ### EVMAuth1155
@@ -467,30 +439,27 @@ classDiagram
         +freezeAccount(address)
         +unfreezeAccount(address)
     }
-    class TokenBaseConfig{
+    class TokenConfiguration{
         +TokenConfig struct
         +tokenExists(uint256) bool
-        +totalTokenTypes() uint256
         +nextTokenId() uint256
         +isTransferable(uint256) bool
-        +getTokenConfigurations(uint256[]) TokenConfig[]
         #_configureToken(uint256, TokenConfig) uint256
-        #_setTransferability(uint256, bool)
+        #_setTransferable(uint256, bool)
         #_beforeTokenConfiguration(uint256, TokenConfig)
         #_afterTokenConfiguration(uint256, TokenConfig)
     }
     class EVMAuth1155{
         +initialize(uint48, address, string)
         +uri(uint256) string
+        +newToken(TokenConfig) uint256
         +mint(address, uint256, uint256, bytes)
         +mintBatch(address, uint256[], uint256[], bytes)
         +burn(address, uint256, uint256)
         +burnBatch(address, uint256[], uint256[])
         +setBaseURI(string)
         +setTokenURI(uint256, string)
-        +configureToken(uint256, TokenConfig) uint256
-        +batchConfigureTokens(uint256[], TokenConfig[]) uint256[]
-        +setTransferability(uint256, bool)
+        +setTransferable(uint256, bool)
         #_authorizeUpgrade(address)
         #_update(address, address, uint256[], uint256[])
     }
@@ -501,7 +470,7 @@ classDiagram
     ERC1155URIStorageUpgradeable <|-- EVMAuth1155
     UUPSUpgradeable <|-- EVMAuth1155
     TokenAccessControl <|-- EVMAuth1155
-    TokenBaseConfig <|-- EVMAuth1155
+    TokenConfiguration <|-- EVMAuth1155
 ```
 
 ### EVMAuth1155P
@@ -513,25 +482,19 @@ classDiagram
         +burn(address, uint256, uint256)
         +setBaseURI(string)
         +setTokenURI(uint256, string)
-        +setTransferability(uint256, bool)
+        +setTransferable(uint256, bool)
         +balanceOf(address, uint256) uint256
         +safeTransferFrom(address, address, uint256, uint256, bytes)
     }
     class TokenPurchase{
         +purchase(uint256, uint256) payable
         +purchaseFor(address, uint256, uint256) payable
-        +isPriceSet(uint256) bool
-        +priceOf(uint256) uint256
-        +treasury() address
     }
     class EVMAuth1155P{
         +initialize(uint48, address, string, address)
         +setPrice(uint256, uint256)
-        +suspendPrice(uint256)
         +setTreasury(address)
         #_mintPurchasedTokens(address, uint256, uint256)
-        #_afterTokenConfiguration(uint256, TokenConfig)*
-        #_getTokenConfig(uint256) TokenConfig*
     }
     
     EVMAuth1155 <|-- EVMAuth1155P
@@ -547,7 +510,7 @@ classDiagram
         +burn(address, uint256, uint256)
         +setBaseURI(string)
         +setTokenURI(uint256, string)
-        +setTransferability(uint256, bool)
+        +setTransferable(uint256, bool)
         +balanceOf(address, uint256) uint256
         +safeTransferFrom(address, address, uint256, uint256, bytes)
     }
@@ -556,16 +519,12 @@ classDiagram
         +isERC20PaymentTokenAccepted(address) bool
         +purchase(address, uint256, uint256)
         +purchaseFor(address, address, uint256, uint256)
-        +isPriceSet(uint256) bool
-        +priceOf(uint256) uint256
-        +treasury() address
     }
     class EVMAuth1155P20{
         +initialize(uint48, address, string, address)
         +addERC20PaymentToken(address)
         +removeERC20PaymentToken(address)
         +setPrice(uint256, uint256)
-        +suspendPrice(uint256)
         +setTreasury(address)
         #_mintPurchasedTokens(address, uint256, uint256)
     }
@@ -574,7 +533,7 @@ classDiagram
     TokenPurchaseERC20 <|-- EVMAuth1155P20
 ```
 
-### EVMAuth1155T
+### EVMAuth1155X
 
 ```mermaid
 classDiagram
@@ -583,37 +542,34 @@ classDiagram
         +burn(address, uint256, uint256)
         +setBaseURI(string)
         +setTokenURI(uint256, string)
-        +setTransferability(uint256, bool)
+        +setTransferable(uint256, bool)
         +safeTransferFrom(address, address, uint256, uint256, bytes)
     }
-    class TokenTTL{
+    class TokenExpiry{
+        +balanceOf(address, uint256) uint256
         +balanceRecordsOf(address, uint256) BalanceRecord[]
-        +isTTLSet(uint256) bool
-        +ttlOf(uint256) uint256
-        #_configureTokenTTL(uint256, uint256)
-        #_getTokenTTL(uint256) uint256
+        +pruneBalanceRecords(address, uint256)
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
     }
-    class EVMAuth1155T{
+    class EVMAuth1155X{
         +balanceOf(address, uint256) uint256
         +setTTL(uint256, uint256)
         +pruneBalanceRecords(address, uint256)
         #_update(address, address, uint256[], uint256[])
     }
     
-    EVMAuth1155 <|-- EVMAuth1155T
-    TokenTTL <|-- EVMAuth1155T
+    EVMAuth1155 <|-- EVMAuth1155X
+    TokenExpiry <|-- EVMAuth1155X
 ```
 
-### EVMAuth1155TP
+### EVMAuth1155XP
 
 ```mermaid
 classDiagram
     class EVMAuth1155P{
         +setPrice(uint256, uint256)
-        +suspendPrice(uint256)
         +setTreasury(address)
         +purchase(uint256, uint256) payable
         +purchaseFor(address, uint256, uint256) payable
@@ -621,31 +577,28 @@ classDiagram
         #_mintPurchasedTokens(address, uint256, uint256)
         +burn(address, uint256, uint256)
     }
-    class TokenTTL{
+    class TokenExpiry{
+        +balanceOf(address, uint256) uint256
         +balanceRecordsOf(address, uint256) BalanceRecord[]
-        +isTTLSet(uint256) bool
-        +ttlOf(uint256) uint256
-        #_configureTokenTTL(uint256, uint256)
-        #_getTokenTTL(uint256) uint256
+        +pruneBalanceRecords(address, uint256)
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
     }
-    class EVMAuth1155TP{
+    class EVMAuth1155XP{
         +initialize(uint48, address, string, address)
         +balanceOf(address, uint256) uint256
         +setTTL(uint256, uint256)
         +pruneBalanceRecords(address, uint256)
         #_update(address, address, uint256[], uint256[])
         #_afterTokenConfiguration(uint256, TokenConfig)*
-        #_getTokenConfig(uint256) TokenConfig*
     }
     
-    EVMAuth1155P <|-- EVMAuth1155TP
-    TokenTTL <|-- EVMAuth1155TP
+    EVMAuth1155P <|-- EVMAuth1155XP
+    TokenExpiry <|-- EVMAuth1155XP
 ```
 
-### EVMAuth1155TP20
+### EVMAuth1155XP20
 
 ```mermaid
 classDiagram
@@ -653,7 +606,6 @@ classDiagram
         +addERC20PaymentToken(address)
         +removeERC20PaymentToken(address)
         +setPrice(uint256, uint256)
-        +suspendPrice(uint256)
         +setTreasury(address)
         +purchase(address, uint256, uint256)
         +purchaseFor(address, address, uint256, uint256)
@@ -661,17 +613,15 @@ classDiagram
         +mint(address, uint256, uint256, bytes)
         +burn(address, uint256, uint256)
     }
-    class TokenTTL{
+    class TokenExpiry{
+        +balanceOf(address, uint256) uint256
         +balanceRecordsOf(address, uint256) BalanceRecord[]
-        +isTTLSet(uint256) bool
-        +ttlOf(uint256) uint256
-        #_configureTokenTTL(uint256, uint256)
-        #_getTokenTTL(uint256) uint256
+        +pruneBalanceRecords(address, uint256)
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
     }
-    class EVMAuth1155TP20{
+    class EVMAuth1155XP20{
         +initialize(uint48, address, string, address)
         +balanceOf(address, uint256) uint256
         +setTTL(uint256, uint256)
@@ -679,8 +629,8 @@ classDiagram
         #_update(address, address, uint256[], uint256[])
     }
     
-    EVMAuth1155P20 <|-- EVMAuth1155TP20
-    TokenTTL <|-- EVMAuth1155TP20
+    EVMAuth1155P20 <|-- EVMAuth1155XP20
+    TokenExpiry <|-- EVMAuth1155XP20
 ```
 
 ### EVMAuth6909
@@ -736,28 +686,25 @@ classDiagram
         +freezeAccount(address)
         +unfreezeAccount(address)
     }
-    class TokenBaseConfig{
+    class TokenConfiguration{
         +TokenConfig struct
         +tokenExists(uint256) bool
-        +totalTokenTypes() uint256
         +nextTokenId() uint256
         +isTransferable(uint256) bool
-        +getTokenConfigurations(uint256[]) TokenConfig[]
         #_configureToken(uint256, TokenConfig) uint256
-        #_setTransferability(uint256, bool)
+        #_setTransferable(uint256, bool)
         #_beforeTokenConfiguration(uint256, TokenConfig)
         #_afterTokenConfiguration(uint256, TokenConfig)
     }
     class EVMAuth6909{
         +initialize(uint48, address, string)
+        +newToken(TokenConfig) uint256
         +mint(address, uint256, uint256)
         +burn(address, uint256, uint256)
         +setContractURI(string)
         +setTokenURI(uint256, string)
         +setTokenMetadata(uint256, string, string, uint8)
-        +configureToken(uint256, TokenConfig) uint256
-        +batchConfigureTokens(uint256[], TokenConfig[]) uint256[]
-        +setTransferability(uint256, bool)
+        +setTransferable(uint256, bool)
         #_authorizeUpgrade(address)
         #_update(address, address, uint256, uint256)
     }
@@ -770,7 +717,7 @@ classDiagram
     ERC6909TokenSupplyUpgradeable <|-- EVMAuth6909
     UUPSUpgradeable <|-- EVMAuth6909
     TokenAccessControl <|-- EVMAuth6909
-    TokenBaseConfig <|-- EVMAuth6909
+    TokenConfiguration <|-- EVMAuth6909
 ```
 
 ### EVMAuth6909P
@@ -783,7 +730,7 @@ classDiagram
         +setContractURI(string)
         +setTokenURI(uint256, string)
         +setTokenMetadata(uint256, string, string, uint8)
-        +setTransferability(uint256, bool)
+        +setTransferable(uint256, bool)
         +balanceOf(address, uint256) uint256
         +transfer(address, uint256, uint256) bool
         +transferFrom(address, address, uint256, uint256) bool
@@ -791,18 +738,12 @@ classDiagram
     class TokenPurchase{
         +purchase(uint256, uint256) payable
         +purchaseFor(address, uint256, uint256) payable
-        +isPriceSet(uint256) bool
-        +priceOf(uint256) uint256
-        +treasury() address
     }
     class EVMAuth6909P{
         +initialize(uint48, address, string, address)
         +setPrice(uint256, uint256)
-        +suspendPrice(uint256)
         +setTreasury(address)
         #_mintPurchasedTokens(address, uint256, uint256)
-        #_afterTokenConfiguration(uint256, TokenConfig)*
-        #_getTokenConfig(uint256) TokenConfig*
     }
     
     EVMAuth6909 <|-- EVMAuth6909P
@@ -819,7 +760,7 @@ classDiagram
         +setContractURI(string)
         +setTokenURI(uint256, string)
         +setTokenMetadata(uint256, string, string, uint8)
-        +setTransferability(uint256, bool)
+        +setTransferable(uint256, bool)
         +balanceOf(address, uint256) uint256
         +transfer(address, uint256, uint256) bool
         +transferFrom(address, address, uint256, uint256) bool
@@ -829,16 +770,12 @@ classDiagram
         +isERC20PaymentTokenAccepted(address) bool
         +purchase(address, uint256, uint256)
         +purchaseFor(address, address, uint256, uint256)
-        +isPriceSet(uint256) bool
-        +priceOf(uint256) uint256
-        +treasury() address
     }
     class EVMAuth6909P20{
         +initialize(uint48, address, string, address)
         +addERC20PaymentToken(address)
         +removeERC20PaymentToken(address)
         +setPrice(uint256, uint256)
-        +suspendPrice(uint256)
         +setTreasury(address)
         #_mintPurchasedTokens(address, uint256, uint256)
     }
@@ -847,7 +784,7 @@ classDiagram
     TokenPurchaseERC20 <|-- EVMAuth6909P20
 ```
 
-### EVMAuth6909T
+### EVMAuth6909X
 
 ```mermaid
 classDiagram
@@ -857,38 +794,35 @@ classDiagram
         +setContractURI(string)
         +setTokenURI(uint256, string)
         +setTokenMetadata(uint256, string, string, uint8)
-        +setTransferability(uint256, bool)
+        +setTransferable(uint256, bool)
         +transfer(address, uint256, uint256) bool
         +transferFrom(address, address, uint256, uint256) bool
     }
-    class TokenTTL{
+    class TokenExpiry{
+        +balanceOf(address, uint256) uint256
         +balanceRecordsOf(address, uint256) BalanceRecord[]
-        +isTTLSet(uint256) bool
-        +ttlOf(uint256) uint256
-        #_configureTokenTTL(uint256, uint256)
-        #_getTokenTTL(uint256) uint256
+        +pruneBalanceRecords(address, uint256)
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
     }
-    class EVMAuth6909T{
+    class EVMAuth6909X{
         +balanceOf(address, uint256) uint256
         +setTTL(uint256, uint256)
         +pruneBalanceRecords(address, uint256)
         #_update(address, address, uint256, uint256)
     }
     
-    EVMAuth6909 <|-- EVMAuth6909T
-    TokenTTL <|-- EVMAuth6909T
+    EVMAuth6909 <|-- EVMAuth6909X
+    TokenExpiry <|-- EVMAuth6909X
 ```
 
-### EVMAuth6909TP
+### EVMAuth6909XP
 
 ```mermaid
 classDiagram
     class EVMAuth6909P{
         +setPrice(uint256, uint256)
-        +suspendPrice(uint256)
         +setTreasury(address)
         +purchase(uint256, uint256) payable
         +purchaseFor(address, uint256, uint256) payable
@@ -896,31 +830,27 @@ classDiagram
         #_mintPurchasedTokens(address, uint256, uint256)
         +burn(address, uint256, uint256)
     }
-    class TokenTTL{
+    class TokenExpiry{
+        +balanceOf(address, uint256) uint256
         +balanceRecordsOf(address, uint256) BalanceRecord[]
-        +isTTLSet(uint256) bool
-        +ttlOf(uint256) uint256
-        #_configureTokenTTL(uint256, uint256)
-        #_getTokenTTL(uint256) uint256
+        +pruneBalanceRecords(address, uint256)
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
     }
-    class EVMAuth6909TP{
+    class EVMAuth6909XP{
         +initialize(uint48, address, string, address)
         +balanceOf(address, uint256) uint256
         +setTTL(uint256, uint256)
         +pruneBalanceRecords(address, uint256)
         #_update(address, address, uint256, uint256)
-        #_afterTokenConfiguration(uint256, TokenConfig)*
-        #_getTokenConfig(uint256) TokenConfig*
     }
     
-    EVMAuth6909P <|-- EVMAuth6909TP
-    TokenTTL <|-- EVMAuth6909TP
+    EVMAuth6909P <|-- EVMAuth6909XP
+    TokenExpiry <|-- EVMAuth6909XP
 ```
 
-### EVMAuth6909TP20
+### EVMAuth6909XP20
 
 ```mermaid
 classDiagram
@@ -928,7 +858,6 @@ classDiagram
         +addERC20PaymentToken(address)
         +removeERC20PaymentToken(address)
         +setPrice(uint256, uint256)
-        +suspendPrice(uint256)
         +setTreasury(address)
         +purchase(address, uint256, uint256)
         +purchaseFor(address, address, uint256, uint256)
@@ -936,17 +865,15 @@ classDiagram
         +mint(address, uint256, uint256)
         +burn(address, uint256, uint256)
     }
-    class TokenTTL{
+    class TokenExpiry{
+        +balanceOf(address, uint256) uint256
         +balanceRecordsOf(address, uint256) BalanceRecord[]
-        +isTTLSet(uint256) bool
-        +ttlOf(uint256) uint256
-        #_configureTokenTTL(uint256, uint256)
-        #_getTokenTTL(uint256) uint256
+        +pruneBalanceRecords(address, uint256)
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
     }
-    class EVMAuth6909TP20{
+    class EVMAuth6909XP20{
         +initialize(uint48, address, string, address)
         +balanceOf(address, uint256) uint256
         +setTTL(uint256, uint256)
@@ -954,8 +881,8 @@ classDiagram
         #_update(address, address, uint256, uint256)
     }
     
-    EVMAuth6909P20 <|-- EVMAuth6909TP20
-    TokenTTL <|-- EVMAuth6909TP20
+    EVMAuth6909P20 <|-- EVMAuth6909XP20
+    TokenExpiry <|-- EVMAuth6909XP20
 ```
 
 [ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155
