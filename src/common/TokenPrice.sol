@@ -25,7 +25,7 @@ abstract contract TokenPrice is TokenConfiguration, ReentrancyGuardTransientUpgr
     /**
      * @dev Emitted when `amount` tokens of type `id` are purchased by `caller` for `receiver`.
      */
-    event Purchase(address caller, address indexed receiver, uint256 indexed id, uint256 amount, uint256 price);
+    event TokenPurchased(address caller, address indexed receiver, uint256 indexed id, uint256 amount, uint256 price);
 
     /**
      * @dev Emitted when the treasury address is set by `caller`.
@@ -35,22 +35,22 @@ abstract contract TokenPrice is TokenConfiguration, ReentrancyGuardTransientUpgr
     /**
      * @dev Error thrown when a purchase is attempted an invalid amount.
      */
-    error TokenPriceInvalidAmount(uint256 amount);
+    error InvalidTokenQuantity(uint256 amount);
 
     /**
      * @dev Error thrown when a purchase is attempted with an invalid receiver address.
      */
-    error TokenPriceInvalidReceiver(address receiver);
+    error InvalidReceiverAddress(address receiver);
 
     /**
      * @dev Error thrown when the treasury address being set is invalid.
      */
-    error TokenPriceInvalidTreasury(address treasury);
+    error InvalidTreasuryAddress(address treasury);
 
     /**
      * @dev Error thrown when a purchase is attempted for a token `id` that does not have a price set.
      */
-    error TokenPriceNotSet(uint256 id);
+    error TokenNotForSale(uint256 id);
 
     /**
      * @dev Initializer that calls the parent initializers for upgradeable contracts.
@@ -90,7 +90,7 @@ abstract contract TokenPrice is TokenConfiguration, ReentrancyGuardTransientUpgr
      */
     function _setTreasury(address payable account) internal virtual {
         if (account == address(0)) {
-            revert TokenPriceInvalidTreasury(account);
+            revert InvalidTreasuryAddress(account);
         }
 
         _treasury = account;
@@ -112,17 +112,23 @@ abstract contract TokenPrice is TokenConfiguration, ReentrancyGuardTransientUpgr
      * @param amount The number of tokens to purchase.
      * @return totalPrice The total price for the requested amount of tokens
      */
-    function _validatePurchase(address receiver, uint256 id, uint256 amount) internal view virtual returns (uint256) {
+    function _validatePurchase(address receiver, uint256 id, uint256 amount)
+        internal
+        view
+        virtual
+        requireTokenExists(id)
+        returns (uint256)
+    {
         if (receiver == address(0)) {
-            revert TokenPriceInvalidReceiver(receiver);
+            revert InvalidReceiverAddress(receiver);
         }
         if (amount == 0) {
-            revert TokenPriceInvalidAmount(amount);
+            revert InvalidTokenQuantity(amount);
         }
 
         uint256 price = priceOf(id);
         if (price == 0) {
-            revert TokenPriceNotSet(id);
+            revert TokenNotForSale(id);
         }
 
         return price * amount;
@@ -132,7 +138,7 @@ abstract contract TokenPrice is TokenConfiguration, ReentrancyGuardTransientUpgr
      * @dev Internal function to mint tokens after successful purchase.
      * Mints the tokens to the receiver and emits the Purchase event.
      *
-     * Emits a {Purchase} event where the `caller` may be different than the `receiver`.
+     * Emits a {TokenPurchased} event where the `caller` may be different than the `receiver`.
      *
      * @param receiver The address of the receiver who will receive the purchased tokens.
      * @param id The identifier of the token type to purchase.
@@ -142,7 +148,7 @@ abstract contract TokenPrice is TokenConfiguration, ReentrancyGuardTransientUpgr
     function _completePurchase(address receiver, uint256 id, uint256 amount, uint256 totalPrice) internal virtual {
         _mintPurchasedTokens(receiver, id, amount);
 
-        emit Purchase(_msgSender(), receiver, id, amount, totalPrice);
+        emit TokenPurchased(_msgSender(), receiver, id, amount, totalPrice);
     }
 
     /**

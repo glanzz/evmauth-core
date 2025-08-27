@@ -28,12 +28,12 @@ contract EVMAuth1155 is
     /**
      * @dev Error thrown when a transfer is attempted with the same sender and recipient addresses.
      */
-    error ERC1155InvalidSelfTransfer(address sender);
+    error InvalidSelfTransfer(address sender);
 
     /**
      * @dev Error thrown when a transfer is attempted with a zero value `amount`.
      */
-    error ERC1155InvalidZeroValueTransfer();
+    error InvalidZeroValueTransfer();
 
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
@@ -248,13 +248,13 @@ contract EVMAuth1155 is
     {
         // Check if the sender and receiver are the same
         if (from == to) {
-            revert ERC1155InvalidSelfTransfer(from);
+            revert InvalidSelfTransfer(from);
         }
 
         // Check if any values are zero
         for (uint256 i = 0; i < values.length; ++i) {
             if (values[i] == 0) {
-                revert ERC1155InvalidZeroValueTransfer();
+                revert InvalidZeroValueTransfer();
             }
         }
 

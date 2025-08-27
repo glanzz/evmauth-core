@@ -31,12 +31,12 @@ contract EVMAuth6909 is
     /**
      * @dev Error thrown when a transfer is attempted with the same sender and recipient addresses.
      */
-    error ERC6909InvalidSelfTransfer(address sender);
+    error InvalidSelfTransfer(address sender);
 
     /**
      * @dev Error thrown when a transfer is attempted with a zero value `amount`.
      */
-    error ERC6909InvalidZeroValueTransfer();
+    error InvalidZeroValueTransfer();
 
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
@@ -226,12 +226,12 @@ contract EVMAuth6909 is
     {
         // Check if the sender and receiver are the same
         if (from == to) {
-            revert ERC6909InvalidSelfTransfer(from);
+            revert InvalidSelfTransfer(from);
         }
 
         // Check if the amount is zero
         if (amount == 0) {
-            revert ERC6909InvalidZeroValueTransfer();
+            revert InvalidZeroValueTransfer();
         }
 
         super._update(from, to, id, amount);

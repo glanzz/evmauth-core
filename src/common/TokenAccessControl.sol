@@ -63,17 +63,17 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
     /**
      * @dev Emitted when an address is frozen, unfrozen, added to, or removed from the allowlist.
      */
-    event AccountStatusUpdate(address indexed account, bytes32 indexed status);
+    event AccountStatusUpdated(address indexed account, bytes32 indexed status);
 
     /**
      * @dev Error indicating an account is frozen and cannot perform the requested operation.
      */
-    error ERC6909AccessControlAccountFrozen(address account);
+    error AccountFrozen(address account);
 
     /**
      * @dev Error indicating an invalid address was provided for access control operations.
      */
-    error ERC6909AccessControlInvalidAddress(address account);
+    error InvalidAddress(address account);
 
     /**
      * @dev Modifier to check if an `account` is not frozen.
@@ -81,7 +81,7 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
      */
     modifier notFrozen(address account) {
         if (_frozenAccounts[account]) {
-            revert ERC6909AccessControlAccountFrozen(account);
+            revert AccountFrozen(account);
         }
         _;
     }
@@ -148,12 +148,12 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
      */
     function freezeAccount(address account) external virtual onlyRole(ACCESS_MANAGER_ROLE) {
         if (account == address(0)) {
-            revert ERC6909AccessControlInvalidAddress(account);
+            revert InvalidAddress(account);
         }
         if (!_frozenAccounts[account]) {
             _frozenAccounts[account] = true;
             _frozenList.push(account);
-            emit AccountStatusUpdate(account, ACCOUNT_FROZEN_STATUS);
+            emit AccountStatusUpdated(account, ACCOUNT_FROZEN_STATUS);
         }
     }
 
@@ -179,7 +179,7 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
                     break;
                 }
             }
-            emit AccountStatusUpdate(account, ACCOUNT_UNFROZEN_STATUS);
+            emit AccountStatusUpdated(account, ACCOUNT_UNFROZEN_STATUS);
         }
     }
 }

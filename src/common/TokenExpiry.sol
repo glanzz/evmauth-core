@@ -28,13 +28,7 @@ abstract contract TokenExpiry is TokenConfiguration {
     /**
      * @dev Error thrown when deducting or transferring tokens from an account with insufficient funds.
      */
-    error TokenExpiryInsufficientBalance(address account, uint256 available, uint256 requested, uint256 id);
-
-    /**
-     * @dev Error thrown when trying to set the TTL for a token `id` that has already been set.
-     * Once a TTL is set for a token `id`, it cannot be changed or removed.
-     */
-    error TokenExpiryAlreadySet(uint256 id, uint256 ttl);
+    error InsufficientBalance(address account, uint256 available, uint256 requested, uint256 id);
 
     /**
      * @dev Initializer that calls the parent initializers for upgradeable contracts.
@@ -191,7 +185,7 @@ abstract contract TokenExpiry is TokenConfiguration {
         }
 
         if (debt > 0) {
-            revert TokenExpiryInsufficientBalance(account, amount - debt, amount, id);
+            revert InsufficientBalance(account, amount - debt, amount, id);
         }
 
         // Prune expired records from the `account`
@@ -239,7 +233,7 @@ abstract contract TokenExpiry is TokenConfiguration {
         }
 
         if (debt > 0) {
-            revert TokenExpiryInsufficientBalance(from, amount - debt, amount, id);
+            revert InsufficientBalance(from, amount - debt, amount, id);
         }
 
         // Prune expired records from the `from` account

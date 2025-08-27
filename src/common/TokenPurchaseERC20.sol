@@ -31,27 +31,27 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
     /**
      * @dev Emitted when a accepted ERC-20 token is added to the list of payment tokens.
      */
-    event TokenPurchaseERC20PaymentTokenAdded(address indexed token);
+    event PaymentTokenAdded(address indexed token);
 
     /**
      * @dev Emitted when a accepted ERC-20 token is removed from the list of payment tokens.
      */
-    event TokenPurchaseERC20PaymentTokenRemoved(address indexed token);
+    event PaymentTokenRemoved(address indexed token);
 
     /**
      * @dev Error thrown when the payer has insufficient allowance for the ERC-20 token payment.
      */
-    error TokenPurchaseERC20InsufficientAllowance(address token, uint256 required, uint256 allowance);
+    error InsufficientERC20Allowance(address token, uint256 required, uint256 allowance);
 
     /**
      * @dev Error thrown when the payer has insufficient balance of the ERC-20 token for the payment.
      */
-    error TokenPurchaseERC20InsufficientBalance(address token, uint256 required, uint256 balance);
+    error InsufficientERC20Balance(address token, uint256 required, uint256 balance);
 
     /**
      * @dev Error thrown when the ERC-20 token being used for payment is not accepted.
      */
-    error TokenPurchaseERC20InvalidPaymentToken(address token);
+    error InvalidERC20PaymentToken(address token);
 
     /**
      * @dev Initializer that calls the parent initializers for upgradeable contracts.
@@ -94,7 +94,7 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
      * this contract to spend sufficient amount of the ERC-20 token.
      *
      * Emits a {Transfer} event with `from` set to the zero address and `to` set to the caller's address.
-     * Emits a {Purchase} event where the `caller` and `receiver` are the same.
+     * Emits a {TokenPurchased} event where the `caller` and `receiver` are the same.
      *
      * Requirements:
      * - The contract must not be paused.
@@ -119,7 +119,7 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
      * of the ERC-20 token.
      *
      * Emits a {Transfer} event with `from` set to the zero address and `to` set to the receiver's address.
-     * Emits a {Purchase} event where the `caller` may be different than the `receiver`.
+     * Emits a {TokenPurchased} event where the `caller` may be different than the `receiver`.
      *
      * Requirements:
      * - The contract must not be paused.
@@ -150,7 +150,7 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
      * and mints the tokens to the receiver.
      *
      * Emits a {Transfer} event with `from` set to the zero address and `to` set to the receiver's address.
-     * Emits a {Purchase} event where the `caller` may be different than the `receiver`.
+     * Emits a {TokenPurchased} event where the `caller` may be different than the `receiver`.
      *
      * Requirements:
      * - The receiver address must not be zero.
@@ -167,7 +167,7 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
      */
     function _purchaseFor(address receiver, address paymentToken, uint256 id, uint256 amount) internal virtual {
         if (!_paymentTokens[paymentToken]) {
-            revert TokenPurchaseERC20InvalidPaymentToken(paymentToken);
+            revert InvalidERC20PaymentToken(paymentToken);
         }
 
         uint256 totalPrice = _validatePurchase(receiver, id, amount);
@@ -177,13 +177,13 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
         // Check allowance
         uint256 allowance = token.allowance(_msgSender(), address(this));
         if (allowance < totalPrice) {
-            revert TokenPurchaseERC20InsufficientAllowance(paymentToken, totalPrice, allowance);
+            revert InsufficientERC20Allowance(paymentToken, totalPrice, allowance);
         }
 
         // Check balance
         uint256 balance = token.balanceOf(_msgSender());
         if (balance < totalPrice) {
-            revert TokenPurchaseERC20InsufficientBalance(paymentToken, totalPrice, balance);
+            revert InsufficientERC20Balance(paymentToken, totalPrice, balance);
         }
 
         // Transfer ERC-20 tokens from sender to treasury
@@ -199,12 +199,12 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
      */
     function _addERC20PaymentToken(address token) internal virtual {
         if (token == address(0)) {
-            revert TokenPurchaseERC20InvalidPaymentToken(token);
+            revert InvalidERC20PaymentToken(token);
         }
         if (!_paymentTokens[token]) {
             _paymentTokens[token] = true;
             _paymentTokensList.push(token);
-            emit TokenPurchaseERC20PaymentTokenAdded(token);
+            emit PaymentTokenAdded(token);
         }
     }
 
@@ -226,7 +226,7 @@ abstract contract TokenPurchaseERC20 is TokenPrice, PausableUpgradeable {
                 }
             }
 
-            emit TokenPurchaseERC20PaymentTokenRemoved(token);
+            emit PaymentTokenRemoved(token);
         }
     }
 }

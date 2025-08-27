@@ -13,7 +13,7 @@ abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {
     /**
      * @dev Error thrown when the payment made for a purchase is insufficient.
      */
-    error TokenPurchaseInsufficientPayment(uint256 id, uint256 amount, uint256 price, uint256 paid);
+    error InsufficientPayment(uint256 id, uint256 amount, uint256 price, uint256 paid);
 
     /**
      * @dev Initializer that calls the parent initializers for upgradeable contracts.
@@ -36,7 +36,7 @@ abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {
      * using native currency. The caller must send sufficient payment with the transaction.
      *
      * Emits a {Transfer} event with `from` set to the zero address and `to` set to the caller's address.
-     * Emits a {Purchase} event where the `caller` and `receiver` are the same.
+     * Emits a {TokenPurchased} event where the `caller` and `receiver` are the same.
      *
      * Requirements:
      * - The contract must not be paused.
@@ -57,7 +57,7 @@ abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {
      * payment with the transaction.
      *
      * Emits a {Transfer} event with `from` set to the zero address and `to` set to the receiver's address.
-     * Emits a {Purchase} event where the `caller` may be different than the `receiver`.
+     * Emits a {TokenPurchased} event where the `caller` may be different than the `receiver`.
      *
      * Requirements:
      * - The contract must not be paused.
@@ -86,7 +86,7 @@ abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {
      * and mints the tokens to the receiver.
      *
      * Emits a {Transfer} event with `from` set to the zero address and `to` set to the receiver's address.
-     * Emits a {Purchase} event where the `caller` may be different than the `receiver`.
+     * Emits a {TokenPurchased} event where the `caller` may be different than the `receiver`.
      *
      * Requirements:
      * - The receiver address must not be zero.
@@ -102,7 +102,7 @@ abstract contract TokenPurchase is TokenPrice, PausableUpgradeable {
         uint256 totalPrice = _validatePurchase(receiver, id, amount);
 
         if (msg.value < totalPrice) {
-            revert TokenPurchaseInsufficientPayment(id, amount, totalPrice, msg.value);
+            revert InsufficientPayment(id, amount, totalPrice, msg.value);
         }
 
         // Refund excess payment to the sender

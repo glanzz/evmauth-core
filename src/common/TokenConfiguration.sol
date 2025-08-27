@@ -37,11 +37,6 @@ abstract contract TokenConfiguration is ContextUpgradeable {
     uint256 public nextTokenId;
 
     /**
-     * @dev Emitted when the transferability of a token `id` is updated.
-     */
-    event TokenTransferabilityUpdated(address caller, uint256 indexed id, bool isTransferable);
-
-    /**
      * @dev Emitted when a token is configured.
      */
     event TokenConfigUpdated(address caller, uint256 indexed id, TokenConfig config);
