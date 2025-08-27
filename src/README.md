@@ -10,34 +10,34 @@ There are several variations of EVMAuth for each token standard, combining featu
 
 ### ERC-1155 Variants
 
-| Contract | Token Standard | Upgradeable | Access Control | Base Config | Native Token Purchase | ERC-20 Purchase | Token Expiry |
-|----------|:--------------:|:-----------:|:--------------:|:-----------:|:---------------------:|:---------------:|:------------:|
+| Contract | Token Standard | Upgradeable | Access Control | Base Config | Token Expiry | Native Token Purchase | ERC-20 Purchase |
+|----------|:--------------:|:-----------:|:--------------:|:-----------:|:------------:|:---------------------:|:---------------:|
 | EVMAuth1155 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| EVMAuth1155P | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| EVMAuth1155P20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| EVMAuth1155X | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| EVMAuth1155XP | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| EVMAuth1155XP20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| EVMAuth1155P | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| EVMAuth1155P20 | ERC-1155 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| EVMAuth1155X | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| EVMAuth1155XP | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| EVMAuth1155XP20 | ERC-1155 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 
 ### ERC-6909 Variants
 
-| Contract | Token Standard | Upgradeable | Access Control | Base Config | Native Token Purchase | ERC-20 Purchase | Token Expiry |
-|----------|:--------------:|:-----------:|:--------------:|:-----------:|:---------------------:|:---------------:|:------------:|
+| Contract | Token Standard | Upgradeable | Access Control | Base Config | Token Expiry | Native Token Purchase | ERC-20 Purchase |
+|----------|:--------------:|:-----------:|:--------------:|:-----------:|:------------:|:---------------------:|:---------------:|
 | EVMAuth6909 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| EVMAuth6909P | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| EVMAuth6909P20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| EVMAuth6909X | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| EVMAuth6909XP | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| EVMAuth6909XP20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| EVMAuth6909P | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| EVMAuth6909P20 | ERC-6909 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| EVMAuth6909X | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| EVMAuth6909XP | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| EVMAuth6909XP20 | ERC-6909 | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 
 ## Contract Naming Convention
 
 The contract naming follows a clear pattern:
 - **Base Name**: `EVMAuth` + Token Standard (`1155` or `6909`)
 - **Suffixes**:
-    - `X`: Includes token eXpiry (TTL/Time-To-Live)
     - `P`: Includes price and purchasing via native currency
     - `P20`: Includes price and purchasing via ERC-20 tokens
+    - `X`: Includes token expiry (TTL, automatic expiration)
     - `XP`: Combines expiry + purchasing via native currency
     - `XP20`: Combines expiry + purchasing via ERC-20 tokens
 
@@ -262,14 +262,17 @@ classDiagram
     }
     class TokenConfiguration{
         +struct TokenConfig
-        -mapping _nonTransferableTokens
-        -uint256 _nextTokenId
-        +nextTokenId() uint256
+        -mapping _tokenConfigs
+        +uint256 nextTokenId
+        +tokenExists(uint256) bool
+        +tokenConfig(uint256) TokenConfig
         +isTransferable(uint256) bool
+        +priceOf(uint256) uint256
+        +ttlOf(uint256) uint256
+        #_newToken(TokenConfig) uint256
         #_setTransferable(uint256, bool)
-        #_configureToken(uint256, TokenConfig) uint256
-        #_beforeTokenConfiguration(uint256, TokenConfig)
-        #_afterTokenConfiguration(uint256, TokenConfig)
+        #_setPrice(uint256, uint256)
+        #_setTTL(uint256, uint256)
     }
     
     ContextUpgradeable <|-- TokenConfiguration
@@ -279,10 +282,19 @@ classDiagram
 
 ```mermaid
 classDiagram
-    class ContextUpgradeable{
-        #_msgSender() address
-        #_msgData() bytes
-        #_contextSuffixLength() uint256
+    class TokenConfiguration{
+        +struct TokenConfig
+        -mapping _tokenConfigs
+        +uint256 nextTokenId
+        +tokenExists(uint256) bool
+        +tokenConfig(uint256) TokenConfig
+        +isTransferable(uint256) bool
+        +priceOf(uint256) uint256
+        +ttlOf(uint256) uint256
+        #_newToken(TokenConfig) uint256
+        #_setTransferable(uint256, bool)
+        #_setPrice(uint256, uint256)
+        #_setTTL(uint256, uint256)
     }
     class ReentrancyGuardTransientUpgradeable{
         #_reentrancyGuardEntered() bool
@@ -441,13 +453,16 @@ classDiagram
     }
     class TokenConfiguration{
         +TokenConfig struct
+        +uint256 nextTokenId
         +tokenExists(uint256) bool
-        +nextTokenId() uint256
+        +tokenConfig(uint256) TokenConfig
         +isTransferable(uint256) bool
-        #_configureToken(uint256, TokenConfig) uint256
+        +priceOf(uint256) uint256
+        +ttlOf(uint256) uint256
+        #_newToken(TokenConfig) uint256
         #_setTransferable(uint256, bool)
-        #_beforeTokenConfiguration(uint256, TokenConfig)
-        #_afterTokenConfiguration(uint256, TokenConfig)
+        #_setPrice(uint256, uint256)
+        #_setTTL(uint256, uint256)
     }
     class EVMAuth1155{
         +initialize(uint48, address, string)
@@ -591,7 +606,6 @@ classDiagram
         +setTTL(uint256, uint256)
         +pruneBalanceRecords(address, uint256)
         #_update(address, address, uint256[], uint256[])
-        #_afterTokenConfiguration(uint256, TokenConfig)*
     }
     
     EVMAuth1155P <|-- EVMAuth1155XP
@@ -688,13 +702,16 @@ classDiagram
     }
     class TokenConfiguration{
         +TokenConfig struct
+        +uint256 nextTokenId
         +tokenExists(uint256) bool
-        +nextTokenId() uint256
+        +tokenConfig(uint256) TokenConfig
         +isTransferable(uint256) bool
-        #_configureToken(uint256, TokenConfig) uint256
+        +priceOf(uint256) uint256
+        +ttlOf(uint256) uint256
+        #_newToken(TokenConfig) uint256
         #_setTransferable(uint256, bool)
-        #_beforeTokenConfiguration(uint256, TokenConfig)
-        #_afterTokenConfiguration(uint256, TokenConfig)
+        #_setPrice(uint256, uint256)
+        #_setTTL(uint256, uint256)
     }
     class EVMAuth6909{
         +initialize(uint48, address, string)
