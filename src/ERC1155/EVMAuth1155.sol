@@ -181,16 +181,62 @@ contract EVMAuth1155 is
     }
 
     /**
-     * @dev Sets whether a token ID is non-transferable.
+     * @dev Configures a token with the provided configuration.
+     * If id is 0, assigns the next sequential token ID.
+     *
+     * Requirements:
+     * - The caller must have the `TOKEN_MANAGER_ROLE`.
+     *
+     * @param id The token ID to configure (0 for next sequential ID).
+     * @param config The configuration to apply.
+     * @return tokenId The ID of the configured token.
+     */
+    function configureToken(uint256 id, TokenConfig memory config)
+        external
+        virtual
+        onlyRole(TOKEN_MANAGER_ROLE)
+        returns (uint256 tokenId)
+    {
+        return _configureToken(id, config);
+    }
+
+    /**
+     * @dev Batch configures multiple tokens.
+     *
+     * Requirements:
+     * - The caller must have the `TOKEN_MANAGER_ROLE`.
+     *
+     * @param ids Array of token IDs (0 for next sequential ID).
+     * @param configs Array of configurations to apply.
+     * @return tokenIds Array of configured token IDs.
+     */
+    function batchConfigureTokens(uint256[] memory ids, TokenConfig[] memory configs)
+        external
+        virtual
+        onlyRole(TOKEN_MANAGER_ROLE)
+        returns (uint256[] memory tokenIds)
+    {
+        require(ids.length == configs.length, "EVMAuth1155: arrays length mismatch");
+        tokenIds = new uint256[](ids.length);
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            tokenIds[i] = this.configureToken(ids[i], configs[i]);
+        }
+
+        return tokenIds;
+    }
+
+    /**
+     * @dev Sets whether a token ID is transferable.
      *
      * Requirements:
      * - The caller must have the `TOKEN_MANAGER_ROLE`.
      *
      * @param id The token ID to configure.
-     * @param nonTransferable Whether the token should be non-transferable.
+     * @param transferable Whether the token should be transferable.
      */
-    function setNonTransferable(uint256 id, bool nonTransferable) external onlyRole(TOKEN_MANAGER_ROLE) {
-        _setNonTransferable(id, nonTransferable);
+    function setTransferability(uint256 id, bool transferable) external onlyRole(TOKEN_MANAGER_ROLE) {
+        _setTransferability(id, transferable);
     }
 
     /// @inheritdoc UUPSUpgradeable

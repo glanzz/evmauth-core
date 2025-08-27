@@ -11,22 +11,16 @@ import { ReentrancyGuardTransientUpgradeable } from
  * @dev Base mixin for token contracts that adds token pricing and direct purchase functionality.
  * Use this to implement your own purchase logic, or use TokenPurchase or TokenPurchaseERC20 for
  * native currency or ERC-20 token purchases, respectively.
+ *
+ * With sequential token IDs, a price of 0 means "not for sale" and we can determine if a token
+ * exists by checking if its ID is less than _nextTokenId (from TokenBaseConfig).
  */
 abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgradeable {
     /**
-     * @dev Data structure that holds the price for a token and whether it has been set.
-     * This structure allows us to differentiate between a token that has a price intentionally set to 0
-     * and one that has not had its price set at all.
+     * @dev Mapping from token ID to its price.
+     * A price of 0 means the token is not for sale.
      */
-    struct PriceConfig {
-        bool isSet; // Price can be 0, so we need a flag to indicate if it was intentionally set to 0
-        uint256 price; // Price for the token ID
-    }
-
-    /**
-     * @dev Mapping from token ID to its price configuration.
-     */
-    mapping(uint256 => PriceConfig) private _priceConfigs;
+    mapping(uint256 => uint256) private _prices;
 
     /**
      * @dev Wallet address where token purchase revenues will be sent.
@@ -43,11 +37,6 @@ abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgr
      * @dev Emitted when the price of a token `id` is set by `caller`.
      */
     event PriceUpdated(address caller, uint256 indexed id, uint256 price);
-
-    /**
-     * @dev Emitted when purchase of a token `id` is disabled by `caller`.
-     */
-    event PriceSuspended(address caller, uint256 indexed id);
 
     /**
      * @dev Emitted when the treasury address is set by `caller`.
@@ -93,33 +82,24 @@ abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgr
     }
 
     /**
-     * @dev Returns true if the price for a specific token `id` has been set.
-     * This is useful to check if a token can be purchased.
-     *
-     * If the price is set to 0, it will still return true, as it indicates that the price was intentionally set to 0.
+     * @dev Returns true if a token can be purchased (has a non-zero price).
      *
      * @param id The identifier of the token type to check.
-     * @return bool indicating whether the price is set for the token `id`.
+     * @return bool indicating whether the token can be purchased.
      */
-    function isPriceSet(uint256 id) external view returns (bool) {
-        return _priceConfigs[id].isSet;
+    function isPurchasable(uint256 id) external view returns (bool) {
+        return _prices[id] > 0;
     }
 
     /**
      * @dev Returns the price of a specific token `id`.
-     *
-     * Revert if the price is not set for the token `id`.
+     * Returns 0 if the token is not for sale.
      *
      * @param id The identifier of the token type to get the price for.
      * @return uint256 representing the price of the token `id`.
      */
     function priceOf(uint256 id) external view returns (uint256) {
-        if (!_priceConfigs[id].isSet) {
-            // We need to revert here, to prevent un-configured tokens from being treated as zero-cost
-            revert TokenPriceNotSet(id);
-        }
-
-        return _priceConfigs[id].price;
+        return _prices[id];
     }
 
     /**
@@ -152,11 +132,12 @@ abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgr
         if (amount == 0) {
             revert TokenPriceInvalidAmount(amount);
         }
-        if (!_priceConfigs[id].isSet) {
+        uint256 price = _prices[id];
+        if (price == 0) {
             revert TokenPriceNotSet(id);
         }
 
-        return _priceConfigs[id].price * amount;
+        return price * amount;
     }
 
     /**
@@ -214,35 +195,50 @@ abstract contract TokenPrice is ContextUpgradeable, ReentrancyGuardTransientUpgr
     }
 
     /**
-     * @dev Sets the price for a specific token `id`.
+     * @dev Configures the price for a token based on configuration.
+     * This method is designed to be called from the TokenBaseConfig hooks.
+     * If price is 0, the token will not be available for purchase.
      *
-     * Emits a {EVMAuth1155PriceUpdated} event.
+     * @param id The token ID to configure pricing for.
+     * @param price The price to set (0 means not for sale).
+     */
+    function _configureTokenPrice(uint256 id, uint256 price) internal virtual {
+        _setPrice(id, price);
+    }
+
+    /**
+     * @dev Returns the price configuration for inclusion in TokenConfig.
+     * This is used when getting the full configuration of a token.
+     *
+     * @param id The token ID to get price for.
+     * @return price The price of the token (0 if not for sale).
+     */
+    function _getTokenPrice(uint256 id) internal view virtual returns (uint256 price) {
+        return _prices[id];
+    }
+
+    /**
+     * @dev Sets the price for a specific token `id`.
+     * Setting price to 0 disables purchases for this token.
+     *
+     * Emits a {PriceUpdated} event.
      *
      * @param id The identifier of the token type for which to set the price.
-     * @param price The price to set for the token type.
+     * @param price The price to set for the token type (0 to disable purchases).
      */
     function _setPrice(uint256 id, uint256 price) internal {
-        _priceConfigs[id] = PriceConfig({ isSet: true, price: price });
-
+        _prices[id] = price;
         emit PriceUpdated(_msgSender(), id, price);
     }
 
     /**
-     * @dev Disables token purchases for a specific token `id` by resetting its PriceConfig.
-     * After calling this function, isPriceSet will return false for the token `id` and
-     * _validatePurchase will revert if called with this `id`, suspending purchases.
-     * Call _setPrice to re-enable purchases for the token `id`.
-     *
-     * This function does nothing if the price is not set.
-     *
-     * Emits a {EVMAuth1155PriceSuspended} event.
+     * @dev Disables token purchases for a specific token `id` by setting its price to 0.
+     * After calling this function, the token cannot be purchased.
+     * Call _setPrice with a non-zero price to re-enable purchases.
      *
      * @param id The identifier of the token type for which to disable the sale.
      */
     function _suspendPrice(uint256 id) internal {
-        if (_priceConfigs[id].isSet) {
-            _priceConfigs[id] = PriceConfig({ isSet: false, price: 0 });
-            emit PriceSuspended(_msgSender(), id);
-        }
+        _setPrice(id, 0);
     }
 }

@@ -126,4 +126,20 @@ contract EVMAuth1155TP is EVMAuth1155P, TokenTTL {
     function setTTL(uint256 id, uint256 ttl) public virtual onlyRole(TREASURER_ROLE) {
         _setTTL(id, ttl);
     }
+
+    /**
+     * @dev Override to configure both price and TTL when a token is configured.
+     */
+    function _afterTokenConfiguration(uint256 tokenId, TokenConfig memory config) internal virtual override {
+        super._afterTokenConfiguration(tokenId, config); // This calls EVMAuth1155P's version which handles price
+        _configureTokenTTL(tokenId, config.ttl);
+    }
+
+    /**
+     * @dev Override to include both price and TTL in token configuration.
+     */
+    function _getTokenConfig(uint256 id) internal view virtual override returns (TokenConfig memory config) {
+        config = super._getTokenConfig(id); // This gets price from EVMAuth1155P
+        config.ttl = _getTokenTTL(id);
+    }
 }

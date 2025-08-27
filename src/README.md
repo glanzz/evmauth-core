@@ -41,6 +41,40 @@ The contract naming follows a clear pattern:
     - `TP`: Combines TTL + purchasing via native currency
     - `TP20`: Combines TTL + purchasing via ERC-20 tokens
 
+## Token Configuration
+
+### TokenConfig Struct
+
+All EVMAuth contracts use a unified `TokenConfig` struct for token configuration:
+
+```solidity
+struct TokenConfig {
+    bool isTransferable;  // Whether the token can be transferred
+    uint256 price;        // Price for purchase (0 = not for sale)
+    uint256 ttl;          // Time-to-live in seconds (0 = never expires)
+}
+```
+
+Different contract variants use different fields:
+- **Base contracts** (EVMAuth1155/6909): Only use `isTransferable`
+- **With TokenPrice** (P variants): Also use `price` field (0 = not for sale)
+- **With TokenTTL** (T variants): Also use `ttl` field (0 = never expires)
+- **Combined** (TP variants): Use all fields
+
+Unused fields should be set to their zero values.
+
+### Configuration Methods
+
+All contracts provide:
+- `configureToken(uint256 id, TokenConfig config)`: Configure a token (id=0 for auto-assign)
+- `batchConfigureTokens(uint256[] ids, TokenConfig[] configs)`: Configure multiple tokens
+- `setTransferability(uint256 id, bool transferable)`: Update transferability only
+- `setTokenURI(uint256 id, string uri)`: Set token-specific URI (ERC1155 and ERC6909 specific)
+- `nextTokenId()`: Get the next sequential token ID
+- `tokenExists(uint256 id)`: Check if a token ID has been configured
+- `totalTokenTypes()`: Get total number of configured token types
+- `getTokenConfigurations(uint256[] ids)`: Export token configurations for migration
+
 ## Token Standards Comparison
 
 ### ERC-1155 vs ERC-6909
@@ -222,9 +256,17 @@ classDiagram
         #_contextSuffixLength() uint256
     }
     class TokenBaseConfig{
-        -mapping nonTransferableTokens
+        +struct TokenConfig
+        -mapping _nonTransferableTokens
+        -uint256 _nextTokenId
+        +nextTokenId() uint256
         +isTransferable(uint256) bool
-        #_setNonTransferable(uint256, bool)
+        +getTokenConfigurations(uint256[]) TokenConfig[]
+        #_setTransferability(uint256, bool)
+        #_configureToken(uint256, TokenConfig) uint256
+        #_beforeTokenConfiguration(uint256, TokenConfig)
+        #_afterTokenConfiguration(uint256, TokenConfig)
+        #_getTokenConfig(uint256) TokenConfig
     }
     
     ContextUpgradeable <|-- TokenBaseConfig
@@ -243,11 +285,14 @@ classDiagram
         #_reentrancyGuardEntered() bool
     }
     class TokenPrice{
+        +struct PriceConfig
         -mapping priceConfigs
         -address treasury
         +isPriceSet(uint256) bool
         +priceOf(uint256) uint256
         +treasury() address
+        #_configureTokenPrice(uint256, uint256)
+        #_getTokenPrice(uint256) uint256
         #_validatePurchase(address, uint256, uint256) uint256
         #_completePurchase(address, uint256, uint256, uint256)
         #_mintPurchasedTokens(address, uint256, uint256)*
@@ -273,11 +318,14 @@ classDiagram
         #_requirePaused()
     }
     class TokenPrice{
+        +struct PriceConfig
         -mapping priceConfigs
         -address treasury
         +isPriceSet(uint256) bool
         +priceOf(uint256) uint256
         +treasury() address
+        #_configureTokenPrice(uint256, uint256)
+        #_getTokenPrice(uint256) uint256
         #_validatePurchase(address, uint256, uint256) uint256
         #_completePurchase(address, uint256, uint256, uint256)
         #_mintPurchasedTokens(address, uint256, uint256)*
@@ -308,11 +356,14 @@ classDiagram
         #_requirePaused()
     }
     class TokenPrice{
+        +struct PriceConfig
         -mapping priceConfigs
         -address treasury
         +isPriceSet(uint256) bool
         +priceOf(uint256) uint256
         +treasury() address
+        #_configureTokenPrice(uint256, uint256)
+        #_getTokenPrice(uint256) uint256
         #_validatePurchase(address, uint256, uint256) uint256
         #_completePurchase(address, uint256, uint256, uint256)
         #_mintPurchasedTokens(address, uint256, uint256)*
@@ -347,17 +398,22 @@ classDiagram
         #_contextSuffixLength() uint256
     }
     class TokenTTL{
+        +struct BalanceRecord
+        +struct TTLConfig
         -mapping ttlConfigs
         -mapping balanceRecords
         +balanceOf(address, uint256) uint256
         +balanceRecordsOf(address, uint256) BalanceRecord[]
         +isTTLSet(uint256) bool
         +ttlOf(uint256) uint256
+        #_configureTokenTTL(uint256, uint256)
+        #_getTokenTTL(uint256) uint256
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
         #_pruneBalanceRecords(address, uint256)
         #_setTTL(uint256, uint256)
+        #_expiration(uint256) uint256
     }
     
     ContextUpgradeable <|-- TokenTTL
@@ -412,8 +468,16 @@ classDiagram
         +unfreezeAccount(address)
     }
     class TokenBaseConfig{
+        +TokenConfig struct
+        +tokenExists(uint256) bool
+        +totalTokenTypes() uint256
+        +nextTokenId() uint256
         +isTransferable(uint256) bool
-        #_setNonTransferable(uint256, bool)
+        +getTokenConfigurations(uint256[]) TokenConfig[]
+        #_configureToken(uint256, TokenConfig) uint256
+        #_setTransferability(uint256, bool)
+        #_beforeTokenConfiguration(uint256, TokenConfig)
+        #_afterTokenConfiguration(uint256, TokenConfig)
     }
     class EVMAuth1155{
         +initialize(uint48, address, string)
@@ -424,7 +488,9 @@ classDiagram
         +burnBatch(address, uint256[], uint256[])
         +setBaseURI(string)
         +setTokenURI(uint256, string)
-        +setNonTransferable(uint256, bool)
+        +configureToken(uint256, TokenConfig) uint256
+        +batchConfigureTokens(uint256[], TokenConfig[]) uint256[]
+        +setTransferability(uint256, bool)
         #_authorizeUpgrade(address)
         #_update(address, address, uint256[], uint256[])
     }
@@ -447,7 +513,7 @@ classDiagram
         +burn(address, uint256, uint256)
         +setBaseURI(string)
         +setTokenURI(uint256, string)
-        +setNonTransferable(uint256, bool)
+        +setTransferability(uint256, bool)
         +balanceOf(address, uint256) uint256
         +safeTransferFrom(address, address, uint256, uint256, bytes)
     }
@@ -464,6 +530,8 @@ classDiagram
         +suspendPrice(uint256)
         +setTreasury(address)
         #_mintPurchasedTokens(address, uint256, uint256)
+        #_afterTokenConfiguration(uint256, TokenConfig)*
+        #_getTokenConfig(uint256) TokenConfig*
     }
     
     EVMAuth1155 <|-- EVMAuth1155P
@@ -479,7 +547,7 @@ classDiagram
         +burn(address, uint256, uint256)
         +setBaseURI(string)
         +setTokenURI(uint256, string)
-        +setNonTransferable(uint256, bool)
+        +setTransferability(uint256, bool)
         +balanceOf(address, uint256) uint256
         +safeTransferFrom(address, address, uint256, uint256, bytes)
     }
@@ -515,13 +583,15 @@ classDiagram
         +burn(address, uint256, uint256)
         +setBaseURI(string)
         +setTokenURI(uint256, string)
-        +setNonTransferable(uint256, bool)
+        +setTransferability(uint256, bool)
         +safeTransferFrom(address, address, uint256, uint256, bytes)
     }
     class TokenTTL{
         +balanceRecordsOf(address, uint256) BalanceRecord[]
         +isTTLSet(uint256) bool
         +ttlOf(uint256) uint256
+        #_configureTokenTTL(uint256, uint256)
+        #_getTokenTTL(uint256) uint256
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
@@ -555,6 +625,8 @@ classDiagram
         +balanceRecordsOf(address, uint256) BalanceRecord[]
         +isTTLSet(uint256) bool
         +ttlOf(uint256) uint256
+        #_configureTokenTTL(uint256, uint256)
+        #_getTokenTTL(uint256) uint256
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
@@ -565,6 +637,8 @@ classDiagram
         +setTTL(uint256, uint256)
         +pruneBalanceRecords(address, uint256)
         #_update(address, address, uint256[], uint256[])
+        #_afterTokenConfiguration(uint256, TokenConfig)*
+        #_getTokenConfig(uint256) TokenConfig*
     }
     
     EVMAuth1155P <|-- EVMAuth1155TP
@@ -591,6 +665,8 @@ classDiagram
         +balanceRecordsOf(address, uint256) BalanceRecord[]
         +isTTLSet(uint256) bool
         +ttlOf(uint256) uint256
+        #_configureTokenTTL(uint256, uint256)
+        #_getTokenTTL(uint256) uint256
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
@@ -661,8 +737,16 @@ classDiagram
         +unfreezeAccount(address)
     }
     class TokenBaseConfig{
+        +TokenConfig struct
+        +tokenExists(uint256) bool
+        +totalTokenTypes() uint256
+        +nextTokenId() uint256
         +isTransferable(uint256) bool
-        #_setNonTransferable(uint256, bool)
+        +getTokenConfigurations(uint256[]) TokenConfig[]
+        #_configureToken(uint256, TokenConfig) uint256
+        #_setTransferability(uint256, bool)
+        #_beforeTokenConfiguration(uint256, TokenConfig)
+        #_afterTokenConfiguration(uint256, TokenConfig)
     }
     class EVMAuth6909{
         +initialize(uint48, address, string)
@@ -671,7 +755,9 @@ classDiagram
         +setContractURI(string)
         +setTokenURI(uint256, string)
         +setTokenMetadata(uint256, string, string, uint8)
-        +setNonTransferable(uint256, bool)
+        +configureToken(uint256, TokenConfig) uint256
+        +batchConfigureTokens(uint256[], TokenConfig[]) uint256[]
+        +setTransferability(uint256, bool)
         #_authorizeUpgrade(address)
         #_update(address, address, uint256, uint256)
     }
@@ -697,7 +783,7 @@ classDiagram
         +setContractURI(string)
         +setTokenURI(uint256, string)
         +setTokenMetadata(uint256, string, string, uint8)
-        +setNonTransferable(uint256, bool)
+        +setTransferability(uint256, bool)
         +balanceOf(address, uint256) uint256
         +transfer(address, uint256, uint256) bool
         +transferFrom(address, address, uint256, uint256) bool
@@ -715,6 +801,8 @@ classDiagram
         +suspendPrice(uint256)
         +setTreasury(address)
         #_mintPurchasedTokens(address, uint256, uint256)
+        #_afterTokenConfiguration(uint256, TokenConfig)*
+        #_getTokenConfig(uint256) TokenConfig*
     }
     
     EVMAuth6909 <|-- EVMAuth6909P
@@ -731,7 +819,7 @@ classDiagram
         +setContractURI(string)
         +setTokenURI(uint256, string)
         +setTokenMetadata(uint256, string, string, uint8)
-        +setNonTransferable(uint256, bool)
+        +setTransferability(uint256, bool)
         +balanceOf(address, uint256) uint256
         +transfer(address, uint256, uint256) bool
         +transferFrom(address, address, uint256, uint256) bool
@@ -769,7 +857,7 @@ classDiagram
         +setContractURI(string)
         +setTokenURI(uint256, string)
         +setTokenMetadata(uint256, string, string, uint8)
-        +setNonTransferable(uint256, bool)
+        +setTransferability(uint256, bool)
         +transfer(address, uint256, uint256) bool
         +transferFrom(address, address, uint256, uint256) bool
     }
@@ -777,6 +865,8 @@ classDiagram
         +balanceRecordsOf(address, uint256) BalanceRecord[]
         +isTTLSet(uint256) bool
         +ttlOf(uint256) uint256
+        #_configureTokenTTL(uint256, uint256)
+        #_getTokenTTL(uint256) uint256
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
@@ -810,6 +900,8 @@ classDiagram
         +balanceRecordsOf(address, uint256) BalanceRecord[]
         +isTTLSet(uint256) bool
         +ttlOf(uint256) uint256
+        #_configureTokenTTL(uint256, uint256)
+        #_getTokenTTL(uint256) uint256
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)
@@ -820,6 +912,8 @@ classDiagram
         +setTTL(uint256, uint256)
         +pruneBalanceRecords(address, uint256)
         #_update(address, address, uint256, uint256)
+        #_afterTokenConfiguration(uint256, TokenConfig)*
+        #_getTokenConfig(uint256) TokenConfig*
     }
     
     EVMAuth6909P <|-- EVMAuth6909TP
@@ -846,6 +940,8 @@ classDiagram
         +balanceRecordsOf(address, uint256) BalanceRecord[]
         +isTTLSet(uint256) bool
         +ttlOf(uint256) uint256
+        #_configureTokenTTL(uint256, uint256)
+        #_getTokenTTL(uint256) uint256
         #_addToBalanceRecord(address, uint256, uint256, uint256)
         #_deductFromBalanceRecords(address, uint256, uint256)
         #_transferBalanceRecords(address, address, uint256, uint256)

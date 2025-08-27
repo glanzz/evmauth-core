@@ -106,4 +106,20 @@ contract EVMAuth1155P is EVMAuth1155, TokenPurchase {
     function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual override {
         _mint(to, id, amount, "");
     }
+
+    /**
+     * @dev Override to configure price when a token is configured.
+     */
+    function _afterTokenConfiguration(uint256 tokenId, TokenConfig memory config) internal virtual override {
+        super._afterTokenConfiguration(tokenId, config);
+        _configureTokenPrice(tokenId, config.price);
+    }
+
+    /**
+     * @dev Override to include price in token configuration.
+     */
+    function _getTokenConfig(uint256 id) internal view virtual override returns (TokenConfig memory config) {
+        config = super._getTokenConfig(id);
+        config.price = _getTokenPrice(id);
+    }
 }

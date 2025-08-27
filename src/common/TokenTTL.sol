@@ -7,7 +7,10 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 /**
  * @dev Mixin that provides time-to-live (TTL) functionality for token contracts.
  * Tokens can be configured to expire after a certain period, and the contract manages balance
- * records with expiration times automatically
+ * records with expiration times automatically.
+ *
+ * With sequential token IDs, we can determine if a TTL has been set by checking if the token exists.
+ * A TTL of 0 means the token never expires.
  */
 abstract contract TokenTTL is ContextUpgradeable {
     // Maximum BalanceRecord array size per address, per token ID
@@ -19,17 +22,14 @@ abstract contract TokenTTL is ContextUpgradeable {
         uint256 expiresAt; // Set to max value to indicate no expiration
     }
 
-    // Data structure that holds the TTL (time-to-live) for a token and whether it has been set
-    struct TTLConfig {
-        bool isSet; // TTL can be 0, so we need a flag to indicate if it was intentionally set to 0
-        uint256 ttl; // Seconds until expiration (if 0, the token never expires)
-    }
-
     // Owner => Token ID => Array of balance records
     mapping(address owner => mapping(uint256 id => BalanceRecord[])) private _balanceRecords;
 
-    // Token ID => token configuration (cannot be changed after being set)
-    mapping(uint256 id => TTLConfig) private _ttlConfigs;
+    // Token ID => TTL in seconds (0 means never expires)
+    mapping(uint256 id => uint256) private _ttls;
+
+    // Token ID => whether TTL is immutable (can only be set once)
+    mapping(uint256 id => bool) private _ttlImmutable;
 
     /**
      * @dev Emitted when the TTL for a token `id` is set by `caller`.
@@ -46,11 +46,6 @@ abstract contract TokenTTL is ContextUpgradeable {
      * Once a TTL is set for a token `id`, it cannot be changed or removed.
      */
     error TokenTTLAlreadySet(uint256 id, uint256 ttl);
-
-    /**
-     * @dev Error thrown when trying to access the TTL of a token `id` that has not been set.
-     */
-    error TokenTLLNotSet(uint256 id);
 
     /**
      * @dev Initializer that calls the parent initializers for upgradeable contracts.
@@ -99,36 +94,28 @@ abstract contract TokenTTL is ContextUpgradeable {
     }
 
     /**
-     * @dev Returns true if the TTL for a specific token `id` has been set.
-     * Once a TTL is set for a token `id`, it cannot be changed or removed. This is necessary because expiring
-     * tokens are grouped into expiration time buckets, to prevent denial-of-service attacks based on unbounded
-     * data storage.
-     *
-     * If the TTL is set to 0, it will still return true, as it indicates that the TTL was intentionally set to 0.
+     * @dev Returns true if the TTL for a specific token `id` is immutable (has been set and cannot be changed).
+     * Once a TTL is set as immutable for a token `id`, it cannot be changed or removed. This is necessary
+     * because expiring tokens are grouped into expiration time buckets, to prevent denial-of-service attacks
+     * based on unbounded data storage.
      *
      * @param id The identifier of the token type to check.
-     * @return bool indicating whether the TTL for the token `id` is set.
+     * @return bool indicating whether the TTL for the token `id` is immutable.
      */
-    function isTTLSet(uint256 id) external view returns (bool) {
-        return _ttlConfigs[id].isSet;
+    function isTTLImmutable(uint256 id) external view returns (bool) {
+        return _ttlImmutable[id];
     }
 
     /**
      * @dev Returns the TTL (time-to-live) of a token `id` (in seconds).
-     * If the TTL is set to 0, it means the token does not expire.
-     *
-     * Reverts if the token TTL has not yet been set.
+     * If the TTL is 0, it means the token does not expire.
+     * Returns 0 for tokens that don't exist or haven't been configured.
      *
      * @param id The identifier of the token type to get the TTL for.
      * @return The TTL in seconds for the token `id`.
      */
     function ttlOf(uint256 id) external view returns (uint256) {
-        if (!_ttlConfigs[id].isSet) {
-            // We need to revert here, to prevent un-configured tokens from being treated as non-expiring
-            revert TokenTLLNotSet(id);
-        }
-
-        return _ttlConfigs[id].ttl;
+        return _ttls[id];
     }
 
     /**
@@ -339,23 +326,49 @@ abstract contract TokenTTL is ContextUpgradeable {
     }
 
     /**
+     * @dev Configures the TTL for a token based on configuration.
+     * This method is designed to be called from the TokenBaseConfig hooks.
+     * TTL can only be set once per token ID if marked as immutable.
+     *
+     * @param id The token ID to configure TTL for.
+     * @param ttl The time-to-live in seconds (0 means never expires).
+     */
+    function _configureTokenTTL(uint256 id, uint256 ttl) internal virtual {
+        // Only set TTL if not already immutable
+        if (!_ttlImmutable[id]) {
+            _setTTL(id, ttl);
+        }
+    }
+
+    /**
+     * @dev Returns the TTL configuration for inclusion in TokenConfig.
+     * This is used when getting the full configuration of a token.
+     *
+     * @param id The token ID to get TTL for.
+     * @return ttl The TTL of the token (0 if never expires).
+     */
+    function _getTokenTTL(uint256 id) internal view virtual returns (uint256 ttl) {
+        return _ttls[id];
+    }
+
+    /**
      * @dev Sets the TTL (time-to-live) for a token `id` (in seconds).
-     * This function can only be called once per token `id`. If the token configuration
-     * already exists, it reverts with an error.
+     * If the TTL is already set as immutable, it reverts with an error.
+     * The TTL is marked as immutable after being set to prevent changes that could
+     * affect the balance record bucket management.
      *
-     * Emits a {EVMAuth6909TTLUpdated} event.
-     *
-     * Revert if the token configuration does not exist.
+     * Emits a {TTLUpdated} event.
      *
      * @param id The identifier of the token type to set the TTL for.
      * @param ttl The time-to-live in seconds for the token. If 0, the token does not expire.
      */
     function _setTTL(uint256 id, uint256 ttl) internal {
-        if (_ttlConfigs[id].isSet) {
-            revert TokenTTLAlreadySet(id, ttl);
+        if (_ttlImmutable[id]) {
+            revert TokenTTLAlreadySet(id, _ttls[id]);
         }
 
-        _ttlConfigs[id] = TTLConfig(true, ttl);
+        _ttls[id] = ttl;
+        _ttlImmutable[id] = true; // Mark as immutable after first set
 
         emit TTLUpdated(_msgSender(), id, ttl);
     }
@@ -373,17 +386,11 @@ abstract contract TokenTTL is ContextUpgradeable {
      * `ttl` is 30 days and `MAX_BALANCE_RECORDS` is 30, the bucket size is 1 day, and the expiration will be
      * rounded up to the next day, giving the recipient at most an additional 23:59:59 to use the token.
      *
-     * Revert if the token configuration does not exist.
-     *
      * @param id The identifier of the token type to get the expiration time for.
      * @return The expiration timestamp for the token `id`.
      */
     function _expiration(uint256 id) internal view returns (uint256) {
-        if (!_ttlConfigs[id].isSet) {
-            revert TokenTLLNotSet(id);
-        }
-
-        uint256 ttl = _ttlConfigs[id].ttl;
+        uint256 ttl = _ttls[id];
 
         if (ttl == 0) {
             return type(uint256).max;
