@@ -20,9 +20,13 @@ contract MockTokenConfiguration is TokenConfiguration, OwnableUpgradeable, UUPSU
 contract TokenConfiguration_Test is BaseTest {
     MockTokenConfiguration internal token;
 
-    function setUp() public virtual {
+    function setUp() public virtual override {
+        super.setUp();
+
         // Deploy the proxy and initialize
-        proxy = deployUUPSProxy("MockTokenConfiguration", abi.encodeCall(MockTokenConfiguration.initialize, ()));
+        proxy = deployUUPSProxy(
+            "TokenConfiguration.t.sol:MockTokenConfiguration", abi.encodeCall(MockTokenConfiguration.initialize, ())
+        );
         token = MockTokenConfiguration(proxy);
     }
 }

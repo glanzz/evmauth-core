@@ -21,9 +21,9 @@ contract MockTokenExpiry is TokenExpiry, OwnableUpgradeable, UUPSUpgradeable {
 contract TokenExpiry_Test is BaseTest {
     MockTokenExpiry internal token;
 
-    function setUp() public virtual {
+    function setUp() public virtual override {
         // Deploy the proxy and initialize
-        proxy = deployUUPSProxy("MockTokenExpiry", abi.encodeCall(MockTokenExpiry.initialize, ()));
+        proxy = deployUUPSProxy("TokenExpiry.t.sol:MockTokenExpiry", abi.encodeCall(MockTokenExpiry.initialize, ()));
         token = MockTokenExpiry(proxy);
     }
 }

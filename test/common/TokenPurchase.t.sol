@@ -29,14 +29,14 @@ contract MockTokenPurchase is TokenPurchase, OwnableUpgradeable, UUPSUpgradeable
 contract TokenPurchase_Test is BaseTest {
     MockTokenPurchase internal token;
 
-    address payable public treasury;
-
-    function setUp() public virtual {
+    function setUp() public virtual override {
         // Set treasury address
         treasury = payable(makeAddr("treasury"));
 
         // Deploy the proxy and initialize
-        proxy = deployUUPSProxy("MockTokenPurchase", abi.encodeCall(MockTokenPurchase.initialize, (treasury)));
+        proxy = deployUUPSProxy(
+            "TokenPurchase.t.sol:MockTokenPurchase", abi.encodeCall(MockTokenPurchase.initialize, (treasury))
+        );
         token = MockTokenPurchase(proxy);
     }
 }

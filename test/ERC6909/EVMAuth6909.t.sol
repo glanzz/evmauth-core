@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { BaseTestWithRoles } from "test/BaseTestWithRoles.sol";
+import { BaseTest } from "test/BaseTest.sol";
 import { EVMAuth6909 } from "src/ERC6909/EVMAuth6909.sol";
 
-contract EVMAuth6909_Test is BaseTestWithRoles {
+contract EVMAuth6909_Test is BaseTest {
     EVMAuth6909 internal token;
 
     function setUp() public virtual override {
@@ -14,7 +14,7 @@ contract EVMAuth6909_Test is BaseTestWithRoles {
 
         // Deploy the proxy and initialize
         proxy = deployUUPSProxy(
-            "EVMAuth6909",
+            "EVMAuth6909.t.sol:EVMAuth6909",
             abi.encodeCall(
                 EVMAuth6909.initialize, (2 days, owner, "https://contract-cdn-domain/contract-metadata.json")
             )

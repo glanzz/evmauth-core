@@ -29,14 +29,15 @@ contract MockTokenPurchaseERC20 is TokenPurchaseERC20, OwnableUpgradeable, UUPSU
 contract TokenPurchaseERC20_Test is BaseTest {
     MockTokenPurchaseERC20 internal token;
 
-    address payable public treasury;
-
-    function setUp() public virtual {
+    function setUp() public virtual override {
         // Set treasury address
         treasury = payable(makeAddr("treasury"));
 
         // Deploy the proxy and initialize
-        proxy = deployUUPSProxy("MockTokenPurchaseERC20", abi.encodeCall(MockTokenPurchaseERC20.initialize, (treasury)));
+        proxy = deployUUPSProxy(
+            "TokenPurchaseERC20.t.sol:MockTokenPurchaseERC20",
+            abi.encodeCall(MockTokenPurchaseERC20.initialize, (treasury))
+        );
         token = MockTokenPurchaseERC20(proxy);
     }
 }

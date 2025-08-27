@@ -150,11 +150,14 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
         if (account == address(0)) {
             revert InvalidAddress(account);
         }
-        if (!_frozenAccounts[account]) {
-            _frozenAccounts[account] = true;
-            _frozenList.push(account);
-            emit AccountStatusUpdated(account, ACCOUNT_FROZEN_STATUS);
+        if (_frozenAccounts[account]) {
+            return; // Account is already frozen, do nothing
         }
+
+        _frozenAccounts[account] = true;
+        _frozenList.push(account);
+
+        emit AccountStatusUpdated(account, ACCOUNT_FROZEN_STATUS);
     }
 
     /**
@@ -169,17 +172,20 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
      * @param account The address of the account to unfreeze.
      */
     function unfreezeAccount(address account) external virtual onlyRole(ACCESS_MANAGER_ROLE) {
-        if (_frozenAccounts[account]) {
-            _frozenAccounts[account] = false;
-            // Remove the account from the frozen list
-            for (uint256 i = 0; i < _frozenList.length; i++) {
-                if (_frozenList[i] == account) {
-                    _frozenList[i] = _frozenList[_frozenList.length - 1]; // Replace with the last element
-                    _frozenList.pop(); // Remove the last element
-                    break;
-                }
-            }
-            emit AccountStatusUpdated(account, ACCOUNT_UNFROZEN_STATUS);
+        if (!_frozenAccounts[account]) {
+            return; // Account is not frozen, do nothing
         }
+
+        _frozenAccounts[account] = false;
+        // Remove the account from the frozen list
+        for (uint256 i = 0; i < _frozenList.length; i++) {
+            if (_frozenList[i] == account) {
+                _frozenList[i] = _frozenList[_frozenList.length - 1]; // Replace with the last element
+                _frozenList.pop(); // Remove the last element
+                break;
+            }
+        }
+
+        emit AccountStatusUpdated(account, ACCOUNT_UNFROZEN_STATUS);
     }
 }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { BaseTestWithRoles } from "test/BaseTestWithRoles.sol";
+import { BaseTest } from "test/BaseTest.sol";
 import { ERC20Mock } from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
 
-abstract contract BaseTestWithRolesAndERC20s is BaseTestWithRoles {
+abstract contract BaseTestWithERC20s is BaseTest {
     ERC20Mock internal usdc;
     ERC20Mock internal usdt;
 
