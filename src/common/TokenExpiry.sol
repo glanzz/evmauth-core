@@ -34,7 +34,7 @@ abstract contract TokenExpiry is TokenConfiguration {
      * @dev Initializer that calls the parent initializers for upgradeable contracts.
      */
     function __TokenExpiry_init() public onlyInitializing {
-        // Nothing to initialize
+        __TokenConfiguration_init();
     }
 
     /**

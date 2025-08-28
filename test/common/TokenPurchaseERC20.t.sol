@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { BaseTest } from "test/BaseTest.sol";
+import { BaseTestWithERC20s } from "test/BaseTest.sol";
 import { TokenPrice } from "src/common/TokenPrice.sol";
 import { TokenPurchaseERC20 } from "src/common/TokenPurchaseERC20.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+/**
+ * @dev Mock contract for testing {TokenPurchaseERC20}.
+ */
 contract MockTokenPurchaseERC20 is TokenPurchaseERC20, OwnableUpgradeable, UUPSUpgradeable {
     event MintPurchasedTokensCalled(address to, uint256 id, uint256 amount);
 
-    function initialize(address payable initialTreasury) public initializer {
+    function initialize(address initialOwner, address payable initialTreasury) public initializer {
+        __Ownable_init(initialOwner);
         __TokenPurchaseERC20_init(initialTreasury);
-        __Ownable_init(_msgSender());
     }
 
     /// @inheritdoc UUPSUpgradeable
@@ -20,24 +23,34 @@ contract MockTokenPurchaseERC20 is TokenPurchaseERC20, OwnableUpgradeable, UUPSU
         // This will revert if the caller is not the owner
     }
 
-    /// @inheritdoc TokenPrice
     function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual override {
         emit MintPurchasedTokensCalled(to, id, amount);
     }
 }
 
-contract TokenPurchaseERC20_Test is BaseTest {
+/**
+ * @dev Test contract for {TokenPurchaseERC20}.
+ */
+contract TokenPurchaseERC20Test is BaseTestWithERC20s {
     MockTokenPurchaseERC20 internal token;
 
-    function setUp() public virtual override {
-        // Set treasury address
-        treasury = payable(makeAddr("treasury"));
+    // =========== Test Setup ============ //
 
-        // Deploy the proxy and initialize
-        proxy = deployUUPSProxy(
-            "TokenPurchaseERC20.t.sol:MockTokenPurchaseERC20",
-            abi.encodeCall(MockTokenPurchaseERC20.initialize, (treasury))
-        );
-        token = MockTokenPurchaseERC20(proxy);
+    function _deployNewImplementation() internal override returns (address) {
+        return address(new MockTokenPurchaseERC20());
     }
+
+    function _getContractName() internal pure override returns (string memory) {
+        return "TokenPurchaseERC20.t.sol:MockTokenPurchaseERC20";
+    }
+
+    function _getInitializerData() internal view override returns (bytes memory) {
+        return abi.encodeCall(MockTokenPurchaseERC20.initialize, (owner, treasury));
+    }
+
+    function _setToken(address proxyAddress) internal override {
+        token = MockTokenPurchaseERC20(proxyAddress);
+    }
+
+    // ============ Unit Tests ============ //
 }

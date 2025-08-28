@@ -1,36 +1,59 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { BaseTestWithERC20s } from "test/BaseTest.sol";
+import { BaseTestWithAccessControlAndERC20s } from "test/BaseTest.sol";
 import { EVMAuth1155XP20 } from "src/ERC1155/EVMAuth1155XP20.sol";
 
-contract EVMAuth1155XP20_Test is BaseTestWithERC20s {
-    EVMAuth1155XP20 internal token;
+/**
+ * @dev Mock contract for testing {EVMAuth1155XP20}.
+ */
+contract MockEVMAuth1155XP20 is EVMAuth1155XP20 {
+    function initialize(
+        uint48 initialDelay,
+        address initialDefaultAdmin,
+        string memory uri_,
+        address payable initialTreasury
+    ) public virtual override initializer {
+        __EVMAuth1155XP20_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+    }
+}
 
-    function setUp() public virtual override {
-        super.setUp();
+/**
+ * @dev Test contract for {EVMAuth1155XP20}.
+ */
+contract EVMAuth1155XP20Test is BaseTestWithAccessControlAndERC20s {
+    MockEVMAuth1155XP20 internal token;
 
-        vm.startPrank(owner);
+    // =========== Test Setup ============ //
 
-        // Deploy the proxy and initialize
-        proxy = deployUUPSProxy(
-            "EVMAuth1155XP20.t.sol:EVMAuth1155XP20",
-            abi.encodeCall(EVMAuth1155XP20.initialize, (2 days, owner, "https://token-cdn-domain/{id}.json", treasury))
+    function _deployNewImplementation() internal override returns (address) {
+        return address(new MockEVMAuth1155XP20());
+    }
+
+    function _getContractName() internal pure override returns (string memory) {
+        return "EVMAuth1155XP20.t.sol:MockEVMAuth1155XP20";
+    }
+
+    function _getInitializerData() internal view override returns (bytes memory) {
+        return abi.encodeCall(
+            MockEVMAuth1155XP20.initialize, (2 days, owner, "https://example.com/api/token/{id}.json", treasury)
         );
-        token = EVMAuth1155XP20(proxy);
+    }
 
-        // Grant roles
+    function _setToken(address proxyAddress) internal override {
+        token = MockEVMAuth1155XP20(proxyAddress);
+    }
+
+    function _grantRoles() internal override {
+        vm.startPrank(owner);
         token.grantRole(token.UPGRADE_MANAGER_ROLE(), owner);
         token.grantRole(token.ACCESS_MANAGER_ROLE(), accessManager);
         token.grantRole(token.TOKEN_MANAGER_ROLE(), tokenManager);
         token.grantRole(token.MINTER_ROLE(), minter);
         token.grantRole(token.BURNER_ROLE(), burner);
         token.grantRole(token.TREASURER_ROLE(), treasurer);
-
-        // Accept USDC and Tether mock ERC-20 tokens as payment
-        token.addERC20PaymentToken(address(usdc));
-        token.addERC20PaymentToken(address(usdt));
-
         vm.stopPrank();
     }
+
+    // ============ Unit Tests ============ //
 }

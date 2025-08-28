@@ -1,42 +1,55 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { BaseTest } from "test/BaseTest.sol";
+import { BaseTestWithTreasury } from "test/BaseTest.sol";
 import { TokenPrice } from "src/common/TokenPrice.sol";
 import { TokenPurchase } from "src/common/TokenPurchase.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+/**
+ * @dev Mock contract for testing {TokenPurchase}.
+ */
 contract MockTokenPurchase is TokenPurchase, OwnableUpgradeable, UUPSUpgradeable {
     event MintPurchasedTokensCalled(address to, uint256 id, uint256 amount);
 
-    function initialize(address payable initialTreasury) public initializer {
+    function initialize(address initialOwner, address payable initialTreasury) public initializer {
+        __Ownable_init(initialOwner);
         __TokenPurchase_init(initialTreasury);
-        __Ownable_init(_msgSender());
     }
 
-    /// @inheritdoc UUPSUpgradeable
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
         // This will revert if the caller is not the owner
     }
 
-    /// @inheritdoc TokenPrice
     function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual override {
         emit MintPurchasedTokensCalled(to, id, amount);
     }
 }
 
-contract TokenPurchase_Test is BaseTest {
+/**
+ * @dev Test contract for {TokenPurchase}.
+ */
+contract TokenPurchaseTest is BaseTestWithTreasury {
     MockTokenPurchase internal token;
 
-    function setUp() public virtual override {
-        // Set treasury address
-        treasury = payable(makeAddr("treasury"));
+    // =========== Test Setup ============ //
 
-        // Deploy the proxy and initialize
-        proxy = deployUUPSProxy(
-            "TokenPurchase.t.sol:MockTokenPurchase", abi.encodeCall(MockTokenPurchase.initialize, (treasury))
-        );
-        token = MockTokenPurchase(proxy);
+    function _deployNewImplementation() internal override returns (address) {
+        return address(new MockTokenPurchase());
     }
+
+    function _getContractName() internal pure override returns (string memory) {
+        return "TokenPurchase.t.sol:MockTokenPurchase";
+    }
+
+    function _getInitializerData() internal view override returns (bytes memory) {
+        return abi.encodeCall(MockTokenPurchase.initialize, (owner, treasury));
+    }
+
+    function _setToken(address proxyAddress) internal override {
+        token = MockTokenPurchase(proxyAddress);
+    }
+
+    // ============ Unit Tests ============ //
 }

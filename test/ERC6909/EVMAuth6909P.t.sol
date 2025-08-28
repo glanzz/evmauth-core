@@ -1,34 +1,59 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { BaseTest } from "test/BaseTest.sol";
+import { BaseTestWithAccessControlAndTreasury } from "test/BaseTest.sol";
 import { EVMAuth6909P } from "src/ERC6909/EVMAuth6909P.sol";
 
-contract EVMAuth6909P_Test is BaseTest {
-    EVMAuth6909P internal token;
+/**
+ * @dev Mock contract for testing {EVMAuth6909P}.
+ */
+contract MockEVMAuth6909P is EVMAuth6909P {
+    function initialize(
+        uint48 initialDelay,
+        address initialDefaultAdmin,
+        string memory uri_,
+        address payable initialTreasury
+    ) public virtual override initializer {
+        __EVMAuth6909P_init(initialDelay, initialDefaultAdmin, uri_, initialTreasury);
+    }
+}
 
-    function setUp() public virtual override {
-        super.setUp();
+/**
+ * @dev Test contract for {EVMAuth6909P}.
+ */
+contract EVMAuth6909Test is BaseTestWithAccessControlAndTreasury {
+    MockEVMAuth6909P internal token;
 
-        vm.startPrank(owner);
+    // =========== Test Setup ============ //
 
-        // Deploy the proxy and initialize
-        proxy = deployUUPSProxy(
-            "EVMAuth6909P.t.sol:EVMAuth6909P",
-            abi.encodeCall(
-                EVMAuth6909P.initialize, (2 days, owner, "https://contract-cdn-domain/contract-metadata.json", treasury)
-            )
+    function _deployNewImplementation() internal override returns (address) {
+        return address(new MockEVMAuth6909P());
+    }
+
+    function _getContractName() internal pure override returns (string memory) {
+        return "EVMAuth6909P.t.sol:MockEVMAuth6909P";
+    }
+
+    function _getInitializerData() internal view override returns (bytes memory) {
+        return abi.encodeCall(
+            MockEVMAuth6909P.initialize, (2 days, owner, "https://example.com/contract-metadata", treasury)
         );
-        token = EVMAuth6909P(proxy);
+    }
 
-        // Grant roles
+    function _setToken(address proxyAddress) internal override {
+        token = MockEVMAuth6909P(proxyAddress);
+    }
+
+    function _grantRoles() internal override {
+        vm.startPrank(owner);
         token.grantRole(token.UPGRADE_MANAGER_ROLE(), owner);
         token.grantRole(token.ACCESS_MANAGER_ROLE(), accessManager);
         token.grantRole(token.TOKEN_MANAGER_ROLE(), tokenManager);
         token.grantRole(token.MINTER_ROLE(), minter);
         token.grantRole(token.BURNER_ROLE(), burner);
         token.grantRole(token.TREASURER_ROLE(), treasurer);
-
         vm.stopPrank();
     }
+
+    // ============ Unit Tests ============ //
 }

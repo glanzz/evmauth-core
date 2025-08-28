@@ -58,6 +58,7 @@ abstract contract TokenPrice is TokenConfiguration, ReentrancyGuardTransientUpgr
      * @param initialTreasury The address where purchase revenues will be sent.
      */
     function __TokenPrice_init(address payable initialTreasury) public onlyInitializing {
+        __TokenConfiguration_init();
         __TokenPrice_init_unchained(initialTreasury);
     }
 

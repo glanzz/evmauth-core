@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Test } from "forge-std/Test.sol";
-import { BaseTest } from "test/BaseTest.sol";
-import { BaseUpgradeTest } from "test/BaseUpgradeTest.sol";
+import { BaseTestWithAccessControl } from "test/BaseTest.sol";
 import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -14,6 +12,9 @@ import { AccessControlDefaultAdminRulesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
+/**
+ * @dev Mock contract for testing {TokenAccessControl}.
+ */
 contract MockTokenAccessControl is TokenAccessControl, UUPSUpgradeable {
     function initialize(uint48 initialDelay, address initialDefaultAdmin) public initializer {
         __TokenAccessControl_init(initialDelay, initialDefaultAdmin);
@@ -21,48 +22,55 @@ contract MockTokenAccessControl is TokenAccessControl, UUPSUpgradeable {
 
     function restrictedForFrozenCaller() public view notFrozen(_msgSender()) {
         // This function will revert if the caller is frozen
+        // Used to test the `notFrozen` modifier with msg.sender
     }
 
     function restrictedForFrozenAccount(address account) public view notFrozen(account) {
         // This function will revert if the `account` is frozen
+        // Used to test the `notFrozen` modifier with a specific account
     }
 
-    /// @inheritdoc UUPSUpgradeable
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADE_MANAGER_ROLE) {
         // This will revert if the caller does not have the UPGRADE_MANAGER_ROLE
     }
 }
 
-abstract contract BaseTokenAccessControlTest is BaseTest {
+/**
+ * @dev Test contract for {TokenAccessControl}.
+ */
+contract TokenAccessControlTest is BaseTestWithAccessControl {
     MockTokenAccessControl internal token;
 
-    function setUp() public virtual override {
-        super.setUp();
+    // =========== Test Setup ============ //
 
+    function _deployNewImplementation() internal override returns (address) {
+        return address(new MockTokenAccessControl());
+    }
+
+    function _getContractName() internal pure override returns (string memory) {
+        return "TokenAccessControl.t.sol:MockTokenAccessControl";
+    }
+
+    function _getInitializerData() internal view override returns (bytes memory) {
+        return abi.encodeCall(MockTokenAccessControl.initialize, (2 days, owner));
+    }
+
+    function _setToken(address proxyAddress) internal override {
+        token = MockTokenAccessControl(proxyAddress);
+    }
+
+    function _grantRoles() internal override {
         vm.startPrank(owner);
-
-        // Deploy the proxy and initialize
-        proxy = deployUUPSProxy(
-            "TokenAccessControl.t.sol:MockTokenAccessControl",
-            abi.encodeCall(MockTokenAccessControl.initialize, (2 days, owner))
-        );
-        token = MockTokenAccessControl(proxy);
-
-        // Grant roles
+        token.grantRole(token.UPGRADE_MANAGER_ROLE(), owner);
         token.grantRole(token.ACCESS_MANAGER_ROLE(), accessManager);
         token.grantRole(token.TOKEN_MANAGER_ROLE(), tokenManager);
         token.grantRole(token.MINTER_ROLE(), minter);
         token.grantRole(token.BURNER_ROLE(), burner);
         token.grantRole(token.TREASURER_ROLE(), treasurer);
-
         vm.stopPrank();
     }
-}
 
-contract TokenAccessControl_UnitTest is BaseTokenAccessControlTest {
-    function setUp() public virtual override {
-        super.setUp();
-    }
+    // ============ Unit Tests ============ //
 
     function testRevert_freezeAccount_ZeroAddress() public {
         // Try to freeze address(0)
@@ -280,32 +288,5 @@ contract TokenAccessControl_UnitTest is BaseTokenAccessControlTest {
         frozenAccounts = token.frozenAccounts();
         assertEq(frozenAccounts.length, 1);
         assertEq(frozenAccounts[0], bob);
-    }
-}
-
-contract TokenAccessControl_UpgradeTest is BaseUpgradeTest {
-    MockTokenAccessControl internal token;
-
-    function setUp() public virtual override {
-        super.setUp();
-        vm.startPrank(owner);
-        token.grantRole(token.UPGRADE_MANAGER_ROLE(), owner);
-        vm.stopPrank();
-    }
-
-    function setToken(address proxyAddress) internal override {
-        token = MockTokenAccessControl(proxyAddress);
-    }
-
-    function deployNewImplementation() internal override returns (address) {
-        return address(new MockTokenAccessControl());
-    }
-
-    function getContractName() internal pure override returns (string memory) {
-        return "TokenAccessControl.t.sol:MockTokenAccessControl";
-    }
-
-    function getInitializerData() internal view override returns (bytes memory) {
-        return abi.encodeCall(MockTokenAccessControl.initialize, (2 days, owner));
     }
 }
