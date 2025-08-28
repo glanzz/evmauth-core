@@ -39,16 +39,8 @@ contract TokenConfiguration_Test is BaseTest {
 contract TokenConfiguration_UpgradeTest is BaseUpgradeTest {
     MockTokenConfiguration internal token;
 
-    function setUp() public override {
-        super.setUp();
-
-        vm.prank(owner);
-        // Deploy the proxy and initialize
-        proxy = Upgrades.deployUUPSProxy(
-            "TokenConfiguration.t.sol:MockTokenConfiguration",
-            abi.encodeCall(MockTokenConfiguration.initialize, (owner))
-        );
-        token = MockTokenConfiguration(proxy);
+    function setToken(address proxyAddress) internal override {
+        token = MockTokenConfiguration(proxyAddress);
     }
 
     function deployNewImplementation() internal override returns (address) {
@@ -61,10 +53,5 @@ contract TokenConfiguration_UpgradeTest is BaseUpgradeTest {
 
     function getInitializerData() internal view override returns (bytes memory) {
         return abi.encodeCall(MockTokenConfiguration.initialize, (owner));
-    }
-
-    // TokenConfiguration uses Ownable instead of AccessControl
-    function hasAccessControl() internal pure override returns (bool) {
-        return false;
     }
 }

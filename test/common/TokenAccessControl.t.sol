@@ -286,21 +286,15 @@ contract TokenAccessControl_UnitTest is BaseTokenAccessControlTest {
 contract TokenAccessControl_UpgradeTest is BaseUpgradeTest {
     MockTokenAccessControl internal token;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         super.setUp();
-
         vm.startPrank(owner);
-
-        // Deploy the proxy and initialize
-        proxy = Upgrades.deployUUPSProxy(
-            getContractName(), abi.encodeCall(MockTokenAccessControl.initialize, (2 days, owner))
-        );
-        token = MockTokenAccessControl(proxy);
-
-        // Grant UPGRADE_MANAGER_ROLE to owner (already has authorization)
         token.grantRole(token.UPGRADE_MANAGER_ROLE(), owner);
-
         vm.stopPrank();
+    }
+
+    function setToken(address proxyAddress) internal override {
+        token = MockTokenAccessControl(proxyAddress);
     }
 
     function deployNewImplementation() internal override returns (address) {
@@ -313,9 +307,5 @@ contract TokenAccessControl_UpgradeTest is BaseUpgradeTest {
 
     function getInitializerData() internal view override returns (bytes memory) {
         return abi.encodeCall(MockTokenAccessControl.initialize, (2 days, owner));
-    }
-
-    function hasAccessControl() internal pure override returns (bool) {
-        return true;
     }
 }

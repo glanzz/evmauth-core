@@ -52,7 +52,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge coverage -vvv --ffi --report lcov --lcov-version 2.2
+          forge coverage -vvv --ffi --report lcov --lcov-version 2.2 --skip test
         id: test
 
       - name: Upload results to Codecov

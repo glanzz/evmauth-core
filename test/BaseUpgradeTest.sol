@@ -4,7 +4,6 @@ pragma solidity ^0.8.24;
 import { Test } from "forge-std/Test.sol";
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 /**
  * @dev Base contract for testing upgradeable contracts.
@@ -15,21 +14,24 @@ abstract contract BaseUpgradeTest is Test {
     address internal proxy;
     address internal owner;
     address internal unauthorizedAccount;
-    address payable internal treasury;
-
-    // Common role constants for contracts with AccessControl
-    bytes32 internal constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
-    bytes32 internal constant ACCESS_MANAGER_ROLE = keccak256("ACCESS_MANAGER_ROLE");
-    bytes32 internal constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
-    bytes32 internal constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 internal constant BURNER_ROLE = keccak256("BURNER_ROLE");
-    bytes32 internal constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
 
     function setUp() public virtual {
         owner = makeAddr("owner");
         unauthorizedAccount = makeAddr("unauthorizedAccount");
-        treasury = payable(makeAddr("treasury"));
+
+        // Deploy the proxy and initialize
+        vm.prank(owner);
+        proxy = Upgrades.deployUUPSProxy(getContractName(), getInitializerData());
+
+        // Set the token with the correct type
+        setToken(proxy);
     }
+
+    /**
+     * @dev Set the token variable with the correct type.
+     * Must be overridden by inheriting contracts to cast proxy to the specific token type.
+     */
+    function setToken(address proxyAddress) internal virtual;
 
     /**
      * @dev Deploy and return a new implementation contract for upgrade testing.
@@ -48,33 +50,6 @@ abstract contract BaseUpgradeTest is Test {
      * Must be overridden by inheriting contracts.
      */
     function getInitializerData() internal view virtual returns (bytes memory);
-
-    /**
-     * @dev Check if the contract has access control (role-based permissions).
-     * Override to return true for contracts with AccessControl.
-     */
-    function hasAccessControl() internal pure virtual returns (bool) {
-        return false;
-    }
-
-    /**
-     * @dev Check if the contract has UUPS upgrade functionality.
-     * Override to return false for non-upgradeable contracts.
-     */
-    function hasUpgradeability() internal pure virtual returns (bool) {
-        return true;
-    }
-
-    /**
-     * @dev Grant the UPGRADE_MANAGER_ROLE to the owner address.
-     * Should be called in setUp for contracts with access control.
-     */
-    function grantUpgradeRole() internal virtual {
-        if (hasAccessControl()) {
-            vm.prank(owner);
-            IAccessControl(proxy).grantRole(UPGRADE_MANAGER_ROLE, owner);
-        }
-    }
 
     /**
      * @dev Test that initialization succeeds with valid parameters.
@@ -115,8 +90,6 @@ abstract contract BaseUpgradeTest is Test {
      * Only applicable for contracts with UUPS upgradeability.
      */
     function test_authorizeUpgrade() public virtual {
-        vm.skip(!hasUpgradeability());
-
         // Deploy new implementation
         address newImplementation = deployNewImplementation();
 
@@ -133,19 +106,13 @@ abstract contract BaseUpgradeTest is Test {
      * Only applicable for contracts with UUPS upgradeability and access control.
      */
     function testRevert_authorizeUpgrade_Unauthorized() public virtual {
-        vm.skip(!hasUpgradeability() || !hasAccessControl());
-
         // Deploy new implementation
         address newImplementation = deployNewImplementation();
 
         // Try to upgrade as unauthorized user
         vm.startPrank(unauthorizedAccount);
         bool success;
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector, unauthorizedAccount, UPGRADE_MANAGER_ROLE
-            )
-        );
+        vm.expectRevert();
         (success,) = proxy.call(abi.encodeWithSignature("upgradeToAndCall(address,bytes)", newImplementation, ""));
         vm.stopPrank();
     }

@@ -48,16 +48,15 @@ contract TokenPrice_Test is BaseTest {
 
 contract TokenPrice_UpgradeTest is BaseUpgradeTest {
     MockTokenPrice internal token;
+    address payable public treasury;
 
-    function setUp() public override {
+    function setUp() public virtual override {
+        treasury = payable(makeAddr("treasury"));
         super.setUp();
+    }
 
-        vm.prank(owner);
-        // Deploy the proxy and initialize
-        proxy = Upgrades.deployUUPSProxy(
-            "TokenPrice.t.sol:MockTokenPrice", abi.encodeCall(MockTokenPrice.initialize, (owner, treasury))
-        );
-        token = MockTokenPrice(proxy);
+    function setToken(address proxyAddress) internal override {
+        token = MockTokenPrice(proxyAddress);
     }
 
     function deployNewImplementation() internal override returns (address) {
@@ -70,10 +69,5 @@ contract TokenPrice_UpgradeTest is BaseUpgradeTest {
 
     function getInitializerData() internal view override returns (bytes memory) {
         return abi.encodeCall(MockTokenPrice.initialize, (owner, treasury));
-    }
-
-    // TokenPrice uses Ownable instead of AccessControl
-    function hasAccessControl() internal pure override returns (bool) {
-        return false;
     }
 }
