@@ -2,14 +2,18 @@
 pragma solidity ^0.8.24;
 
 import { BaseTest } from "test/BaseTest.sol";
+import { BaseUpgradeTest } from "test/BaseUpgradeTest.sol";
 import { TokenExpiry } from "src/common/TokenExpiry.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract MockTokenExpiry is TokenExpiry, OwnableUpgradeable, UUPSUpgradeable {
-    function initialize() public initializer {
+    function initialize(address initialOwner) public initializer {
+        __TokenConfiguration_init();
         __TokenExpiry_init();
-        __Ownable_init(_msgSender());
+        __Ownable_init(initialOwner);
     }
 
     /// @inheritdoc UUPSUpgradeable
@@ -22,8 +26,65 @@ contract TokenExpiry_Test is BaseTest {
     MockTokenExpiry internal token;
 
     function setUp() public virtual override {
+        super.setUp();
+
         // Deploy the proxy and initialize
-        proxy = deployUUPSProxy("TokenExpiry.t.sol:MockTokenExpiry", abi.encodeCall(MockTokenExpiry.initialize, ()));
+        proxy =
+            deployUUPSProxy("TokenExpiry.t.sol:MockTokenExpiry", abi.encodeCall(MockTokenExpiry.initialize, (owner)));
         token = MockTokenExpiry(proxy);
+    }
+}
+
+contract TokenExpiry_UpgradeTest is BaseUpgradeTest {
+    MockTokenExpiry internal token;
+
+    function setUp() public override {
+        super.setUp();
+
+        vm.prank(owner);
+        // Deploy the proxy and initialize
+        proxy = Upgrades.deployUUPSProxy(
+            "TokenExpiry.t.sol:MockTokenExpiry", abi.encodeCall(MockTokenExpiry.initialize, (owner))
+        );
+        token = MockTokenExpiry(proxy);
+    }
+
+    function deployNewImplementation() internal override returns (address) {
+        return address(new MockTokenExpiry());
+    }
+
+    function getContractName() internal pure override returns (string memory) {
+        return "TokenExpiry.t.sol:MockTokenExpiry";
+    }
+
+    function getInitializerData() internal view override returns (bytes memory) {
+        return abi.encodeCall(MockTokenExpiry.initialize, (owner));
+    }
+
+    // TokenExpiry uses Ownable instead of AccessControl
+    function hasAccessControl() internal pure override returns (bool) {
+        return false;
+    }
+
+    // Override the authorization test for Ownable pattern
+    function test_authorizeUpgrade_revertIfNotOwner() public {
+        address newImplementation = deployNewImplementation();
+
+        // Try to upgrade as non-owner
+        vm.startPrank(unauthorizedAccount);
+        vm.expectRevert(
+            abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, unauthorizedAccount)
+        );
+        token.upgradeToAndCall(newImplementation, "");
+        vm.stopPrank();
+    }
+
+    // Test successful upgrade as owner
+    function test_authorizeUpgrade_successAsOwner() public {
+        address newImplementation = deployNewImplementation();
+
+        // Upgrade as owner
+        vm.prank(owner);
+        token.upgradeToAndCall(newImplementation, "");
     }
 }

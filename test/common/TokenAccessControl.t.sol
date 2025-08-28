@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import { Test } from "forge-std/Test.sol";
 import { BaseTest } from "test/BaseTest.sol";
+import { BaseUpgradeTest } from "test/BaseUpgradeTest.sol";
 import { TokenAccessControl } from "src/common/TokenAccessControl.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -292,63 +293,54 @@ contract TokenAccessControl_UnitTest is BaseTokenAccessControlTest {
     }
 }
 
-contract TokenAccessControl_UpgradeTest is Test {
-    MockTokenAccessControl internal implementation;
+contract TokenAccessControl_UpgradeTest is BaseUpgradeTest {
     MockTokenAccessControl internal token;
 
-    address internal proxy;
-    address internal owner;
-    address internal upgradeManager;
-    address internal notUpgradeManager;
-
-    function setUp() public virtual {
-        owner = makeAddr("owner");
-        upgradeManager = makeAddr("upgradeManager");
-        notUpgradeManager = makeAddr("notUpgradeManager");
+    function setUp() public override {
+        super.setUp();
 
         vm.startPrank(owner);
 
         // Deploy the proxy and initialize
         proxy = Upgrades.deployUUPSProxy(
-            "TokenAccessControl.t.sol:MockTokenAccessControl",
-            abi.encodeCall(MockTokenAccessControl.initialize, (2 days, owner))
+            getContractName(), abi.encodeCall(MockTokenAccessControl.initialize, (2 days, owner))
         );
         token = MockTokenAccessControl(proxy);
 
-        // Grant UPGRADE_MANAGER_ROLE to upgradeManager
-        token.grantRole(token.UPGRADE_MANAGER_ROLE(), upgradeManager);
+        // Grant UPGRADE_MANAGER_ROLE to owner (already has authorization)
+        token.grantRole(token.UPGRADE_MANAGER_ROLE(), owner);
 
         vm.stopPrank();
     }
 
-    function test_initialize_success() public {
-        // Deploy a new uninitialized implementation
-        implementation = new MockTokenAccessControl();
+    function deployNewImplementation() internal override returns (address) {
+        return address(new MockTokenAccessControl());
+    }
 
-        // Initialize it successfully
+    function getContractName() internal pure override returns (string memory) {
+        return "TokenAccessControl.t.sol:MockTokenAccessControl";
+    }
+
+    function getInitializerData() internal view override returns (bytes memory) {
+        return abi.encodeCall(MockTokenAccessControl.initialize, (2 days, owner));
+    }
+
+    function hasAccessControl() internal pure override returns (bool) {
+        return true;
+    }
+
+    // Contract-specific initialization tests
+    function test_initialize_withDefaultAdminDelay() public {
+        // Deploy a new uninitialized implementation
+        MockTokenAccessControl implementation = new MockTokenAccessControl();
+
+        // Initialize it successfully with custom delay
         implementation.initialize(3 days, owner);
 
-        // Verify it was initialized correctly
+        // Verify it was initialized correctly with the delay
         assertEq(implementation.defaultAdminDelay(), 3 days);
         assertEq(implementation.defaultAdmin(), owner);
         assertTrue(implementation.hasRole(implementation.DEFAULT_ADMIN_ROLE(), owner));
-    }
-
-    function test_initialize_revertWhenCalledTwice() public {
-        // Try to call the initializer again on the already initialized proxy
-        vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(Initializable.InvalidInitialization.selector));
-        token.initialize(2 days, owner);
-    }
-
-    function test_init_success() public {
-        // Deploy a new MockTokenAccessControl and call init directly
-        MockTokenAccessControl customToken = new MockTokenAccessControl();
-        customToken.initialize(3 days, owner);
-
-        // Verify it was initialized
-        assertEq(customToken.defaultAdmin(), owner);
-        assertTrue(customToken.hasRole(customToken.DEFAULT_ADMIN_ROLE(), owner));
     }
 
     function test_init_revertWhenNotInitializing() public {
@@ -358,44 +350,10 @@ contract TokenAccessControl_UpgradeTest is Test {
         token.init(2 days, owner);
     }
 
-    function test_initUnchained_success() public {
-        // Deploy a new MockTokenAccessControl and initialize it
-        MockTokenAccessControl customToken = new MockTokenAccessControl();
-        customToken.initialize(3 days, owner);
-
-        // The init_unchained doesn't do anything, but we verify the contract is functional
-        assertTrue(customToken.hasRole(customToken.DEFAULT_ADMIN_ROLE(), owner));
-    }
-
     function test_initUnchained_revertWhenNotInitializing() public {
         // Try to call the unchained init function when not initializing
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSelector(Initializable.NotInitializing.selector));
         token.init_unchained();
-    }
-
-    function test_authorizeUpgrade_success() public {
-        // Test that upgrade manager can authorize upgrades
-        address newImplementation = address(new MockTokenAccessControl());
-
-        // This should succeed without reverting
-        vm.prank(upgradeManager);
-        token.upgradeToAndCall(newImplementation, "");
-    }
-
-    function test_authorizeUpgrade_revertIfNotUpgradeManager() public {
-        // Test that non-upgrade manager cannot authorize upgrades
-        address newImplementation = address(new MockTokenAccessControl());
-
-        vm.startPrank(notUpgradeManager);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector,
-                notUpgradeManager,
-                token.UPGRADE_MANAGER_ROLE()
-            )
-        );
-        token.upgradeToAndCall(newImplementation, "");
-        vm.stopPrank();
     }
 }
