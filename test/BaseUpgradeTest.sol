@@ -79,7 +79,7 @@ abstract contract BaseUpgradeTest is Test {
     /**
      * @dev Test that initialization succeeds with valid parameters.
      */
-    function test_initialize_success() public virtual {
+    function test_initialize() public virtual {
         // Deploy a new uninitialized implementation
         address implementation = deployNewImplementation();
 
@@ -96,9 +96,9 @@ abstract contract BaseUpgradeTest is Test {
     }
 
     /**
-     * @dev Test that initialization reverts when called twice.
+     * @dev Test that initializer reverts when called after initialization.
      */
-    function test_initialize_revertWhenCalledTwice() public virtual {
+    function testRevert_initialize_InvalidInitialization() public virtual {
         // Try to call the initializer again on the already initialized proxy
         bytes memory initData = getInitializerData();
 
@@ -114,7 +114,7 @@ abstract contract BaseUpgradeTest is Test {
      * @dev Test that authorized upgrade succeeds.
      * Only applicable for contracts with UUPS upgradeability.
      */
-    function test_authorizeUpgrade_success() public virtual {
+    function test_authorizeUpgrade() public virtual {
         vm.skip(!hasUpgradeability());
 
         // Deploy new implementation
@@ -132,7 +132,7 @@ abstract contract BaseUpgradeTest is Test {
      * @dev Test that unauthorized upgrade reverts.
      * Only applicable for contracts with UUPS upgradeability and access control.
      */
-    function test_authorizeUpgrade_revertIfNotAuthorized() public virtual {
+    function testRevert_authorizeUpgrade_Unauthorized() public virtual {
         vm.skip(!hasUpgradeability() || !hasAccessControl());
 
         // Deploy new implementation

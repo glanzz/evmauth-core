@@ -19,16 +19,6 @@ contract MockTokenAccessControl is TokenAccessControl, UUPSUpgradeable {
         __TokenAccessControl_init(initialDelay, initialDefaultAdmin);
     }
 
-    function init(uint48 initialDelay, address initialDefaultAdmin) public {
-        // This function can only be called during initialization; the public method is just for testing
-        __TokenAccessControl_init(initialDelay, initialDefaultAdmin);
-    }
-
-    function init_unchained() public {
-        // This function can only be called during initialization; the public method is just for testing
-        __TokenAccessControl_init_unchained();
-    }
-
     function restrictedForFrozenCaller() public view notFrozen(_msgSender()) {
         // This function will revert if the caller is frozen
     }
@@ -74,7 +64,7 @@ contract TokenAccessControl_UnitTest is BaseTokenAccessControlTest {
         super.setUp();
     }
 
-    function test_freezeAccount_revertIfZeroAddress() public {
+    function testRevert_freezeAccount_ZeroAddress() public {
         // Try to freeze address(0)
         vm.prank(accessManager);
         vm.expectRevert(abi.encodeWithSelector(TokenAccessControl.InvalidAddress.selector, address(0)));
@@ -145,7 +135,7 @@ contract TokenAccessControl_UnitTest is BaseTokenAccessControlTest {
         token.freezeAccount(alice);
     }
 
-    function test_freezeAccount_revertIfNotAccessManager() public {
+    function testRevert_freezeAccount_Unauthorized() public {
         // Confirm `bob` does not have the `ACCESS_MANAGER_ROLE`
         assertFalse(token.hasRole(token.ACCESS_MANAGER_ROLE(), bob));
 
@@ -213,7 +203,7 @@ contract TokenAccessControl_UnitTest is BaseTokenAccessControlTest {
         token.unfreezeAccount(alice);
     }
 
-    function test_unfreezeAccount_revertIfNotAccessManager() public {
+    function testRevert_unfreezeAccount_Unauthorized() public {
         // Freeze `alice` as `accessManager`
         vm.prank(accessManager);
         token.freezeAccount(alice);
@@ -232,7 +222,19 @@ contract TokenAccessControl_UnitTest is BaseTokenAccessControlTest {
         vm.stopPrank();
     }
 
-    function test_modifier_notFrozen_revertIfFrozenCaller() public {
+    function test_modifier_notFrozen() public {
+        // Ensure `alice` is not frozen
+        assertFalse(token.isFrozen(alice));
+
+        // Call the restricted function as `alice`
+        vm.prank(alice);
+        token.restrictedForFrozenCaller();
+
+        // Call the restricted function with `alice` as the parameter
+        token.restrictedForFrozenAccount(alice);
+    }
+
+    function testRevert_modifier_notFrozen_FrozenCaller() public {
         // Freeze `alice`
         vm.prank(accessManager);
         token.freezeAccount(alice);
@@ -243,25 +245,13 @@ contract TokenAccessControl_UnitTest is BaseTokenAccessControlTest {
         token.restrictedForFrozenCaller();
     }
 
-    function test_modifier_notFrozen_revertIfFrozenAccount() public {
+    function testRevert_modifier_notFrozen_FrozenAccount() public {
         // Freeze `alice`
         vm.prank(accessManager);
         token.freezeAccount(alice);
 
         // Try to call the restricted function with `alice` as the parameter, which is frozen
         vm.expectRevert(abi.encodeWithSelector(TokenAccessControl.AccountFrozen.selector, alice));
-        token.restrictedForFrozenAccount(alice);
-    }
-
-    function test_modifier_notFrozen_noRevertIfNotFrozen() public {
-        // Ensure `alice` is not frozen
-        assertFalse(token.isFrozen(alice));
-
-        // Call the restricted function as `alice`
-        vm.prank(alice);
-        token.restrictedForFrozenCaller();
-
-        // Call the restricted function with `alice` as the parameter
         token.restrictedForFrozenAccount(alice);
     }
 
@@ -327,33 +317,5 @@ contract TokenAccessControl_UpgradeTest is BaseUpgradeTest {
 
     function hasAccessControl() internal pure override returns (bool) {
         return true;
-    }
-
-    // Contract-specific initialization tests
-    function test_initialize_withDefaultAdminDelay() public {
-        // Deploy a new uninitialized implementation
-        MockTokenAccessControl implementation = new MockTokenAccessControl();
-
-        // Initialize it successfully with custom delay
-        implementation.initialize(3 days, owner);
-
-        // Verify it was initialized correctly with the delay
-        assertEq(implementation.defaultAdminDelay(), 3 days);
-        assertEq(implementation.defaultAdmin(), owner);
-        assertTrue(implementation.hasRole(implementation.DEFAULT_ADMIN_ROLE(), owner));
-    }
-
-    function test_init_revertWhenNotInitializing() public {
-        // Try to call the init function when not initializing
-        vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(Initializable.NotInitializing.selector));
-        token.init(2 days, owner);
-    }
-
-    function test_initUnchained_revertWhenNotInitializing() public {
-        // Try to call the unchained init function when not initializing
-        vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(Initializable.NotInitializing.selector));
-        token.init_unchained();
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { BaseTestWithERC20s } from "test/BaseTestWithERC20s.sol";
+import { BaseTestWithERC20s } from "test/BaseTest.sol";
 import { EVMAuth6909XP20 } from "src/ERC6909/EVMAuth6909XP20.sol";
 
 contract EVMAuth6909XP20_Test is BaseTestWithERC20s {

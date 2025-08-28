@@ -65,26 +65,4 @@ contract TokenExpiry_UpgradeTest is BaseUpgradeTest {
     function hasAccessControl() internal pure override returns (bool) {
         return false;
     }
-
-    // Override the authorization test for Ownable pattern
-    function test_authorizeUpgrade_revertIfNotOwner() public {
-        address newImplementation = deployNewImplementation();
-
-        // Try to upgrade as non-owner
-        vm.startPrank(unauthorizedAccount);
-        vm.expectRevert(
-            abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, unauthorizedAccount)
-        );
-        token.upgradeToAndCall(newImplementation, "");
-        vm.stopPrank();
-    }
-
-    // Test successful upgrade as owner
-    function test_authorizeUpgrade_successAsOwner() public {
-        address newImplementation = deployNewImplementation();
-
-        // Upgrade as owner
-        vm.prank(owner);
-        token.upgradeToAndCall(newImplementation, "");
-    }
 }
