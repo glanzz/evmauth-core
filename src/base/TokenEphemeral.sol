@@ -2,28 +2,37 @@
 
 pragma solidity ^0.8.24;
 
-import { TokenConfiguration } from "src/common/TokenConfiguration.sol";
+import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 /**
- * @dev Mixin that provides automatic expiration functionality for token contracts.
- * Tokens can be configured to expire after a certain period, and the contract manages balance
- * records with expiration times automatically.
- *
- * With sequential token IDs, we can determine if a TTL has been set by checking if the token exists.
- * A TTL of 0 means the token never expires.
+ * @dev Abstract contract that provides configurable time-to-live (TTL) and expiring token balances with
+ * first-in-first-out (FIFO) spending and transfer logic.
  */
-abstract contract TokenExpiry is TokenConfiguration {
-    // Maximum BalanceRecord array size per address, per token ID
+abstract contract TokenEphemeral is ContextUpgradeable {
+    /**
+     * @dev Default maximum number of balance records per address, per token ID.
+     *
+     * This can be overridden by inheriting contracts that override the `_maxBalanceRecords` function.
+     */
     uint256 public constant DEFAULT_MAX_BALANCE_RECORDS = 30;
 
-    // Balance record data structure that ties an amount to an expiration time
+    /**
+     * @dev A record of a balance amount and its expiration time.
+     */
     struct BalanceRecord {
         uint256 amount; // Balance that expires at `expiresAt`
         uint256 expiresAt; // Set to max value to indicate no expiration
     }
 
-    // Owner => Token ID => Array of balance records
-    mapping(address owner => mapping(uint256 id => BalanceRecord[])) private _balanceRecords;
+    /**
+     * @dev Mapping from `account` address to token `id`, to an array of balance records for that token.
+     */
+    mapping(address account => mapping(uint256 id => BalanceRecord[])) private _balanceRecords;
+
+    /**
+     * @dev Mapping from token `id` to its time-to-live (TTL) in seconds. A TTL of 0 means the token never expires.
+     */
+    mapping(uint256 => uint256) internal _ttls;
 
     /**
      * @dev Error thrown when deducting or transferring tokens from an account with insufficient funds.
@@ -33,19 +42,15 @@ abstract contract TokenExpiry is TokenConfiguration {
     /**
      * @dev Initializer that calls the parent initializers for upgradeable contracts.
      */
-    function __TokenExpiry_init() public onlyInitializing {
-        __TokenConfiguration_init();
-    }
+    function __TokenEphemeral_init() internal onlyInitializing { }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __TokenExpiry_init_unchained() public onlyInitializing {
-        // Nothing to initialize
-    }
+    function __TokenEphemeral_init_unchained() internal onlyInitializing { }
 
     /**
-     * @dev Returns the balance of a specific token `id` for a given `account`, excluding expired tokens.
+     * @dev Returns the balance of a given token `id` for a given `account`, excluding expired tokens.
      *
      * @param account The address of the account to check the balance for.
      * @param id The identifier of the token type to check the balance for.
@@ -66,7 +71,7 @@ abstract contract TokenExpiry is TokenConfiguration {
     }
 
     /**
-     * @dev Returns the balance records array for a given account and token ID.
+     * @dev Returns the balance records array for a given `account` and token `id`.
      *
      * @param account The address of the account.
      * @param id The identifier of the token type.
@@ -74,6 +79,107 @@ abstract contract TokenExpiry is TokenConfiguration {
      */
     function balanceRecordsOf(address account, uint256 id) external view returns (BalanceRecord[] memory) {
         return _balanceRecords[account][id];
+    }
+
+    /**
+     * @dev Returns the time-to-live (TTL) in seconds for a given token `id`.
+     * A TTL of 0 means the token never expires.
+     *
+     * @param id The identifier of the token type to get the TTL for.
+     * @return The TTL in seconds for the given token `id`.
+     */
+    function tokenTTL(uint256 id) public view virtual returns (uint256) {
+        return _ttls[id];
+    }
+
+    /**
+     * @dev Prunes balance records for a specific account, removing entries that are expired or
+     * have a zero balances. This is handled automatically during transfers and minting, but can
+     * be manually invoked to clean up storage.
+     *
+     * @param account The address of the account to prune.
+     * @param id The identifier of the token type to prune.
+     */
+    function pruneBalanceRecords(address account, uint256 id) public virtual {
+        BalanceRecord[] storage records = _balanceRecords[account][id];
+        uint256 currentTime = block.timestamp;
+        uint256 writeIndex = 0;
+        uint256 currentLength = records.length;
+
+        // Compact valid records to the front
+        for (uint256 i = 0; i < currentLength; i++) {
+            bool isValid = records[i].amount > 0 && records[i].expiresAt > currentTime;
+            if (isValid) {
+                if (i != writeIndex) {
+                    records[writeIndex] = records[i];
+                }
+                writeIndex++;
+            }
+        }
+
+        // Clear remaining slots
+        for (uint256 i = writeIndex; i < currentLength; i++) {
+            records[i] = BalanceRecord(0, 0);
+        }
+
+        // Optionally shrink the array if many slots are empty
+        // This helps keep storage costs down
+        if (writeIndex == 0 && currentLength > 0) {
+            // All records are invalid, clear the array
+            while (records.length > 0) {
+                records.pop();
+            }
+        } else if (currentLength > writeIndex * 2 && currentLength > 10) {
+            // If less than half the array is used and array is large, shrink it
+            while (records.length > writeIndex) {
+                records.pop();
+            }
+        }
+    }
+
+    /**
+     * @dev Sets the time-to-live (TTL) in seconds for a given token `id`.
+     * A TTL of 0 means the token never expires.
+     *
+     * @param id The identifier of the token type to set the TTL for.
+     * @param ttlSeconds The TTL in seconds for the given token `id`.
+     */
+    function _setTTL(uint256 id, uint256 ttlSeconds) internal virtual {
+        _ttls[id] = ttlSeconds;
+    }
+
+    /**
+     * @dev Calculates the expiration time for a token `id` based on its TTL.
+     * If the TTL is 0, the token does not expire and returns the maximum value for `uint256`.
+     * Otherwise, it calculates the expiration time rounded up to the next bucket size.
+     *
+     * To avoid unbounded storage growth, we limit the number of balance records per address, per token `id`.
+     * We lose some precision in the expiration time, but this helps ensure we can store balance records and
+     * clean up expired records without running out of gas or hitting storage limits.
+     *
+     * We round UP to the next expiry bucket to guarantee AT LEAST the full `ttl` of the token. For example, if
+     * `ttl` is 30 days and `MAX_BALANCE_RECORDS` is 30, the bucket size is 1 day, and the expiration will be
+     * rounded up to the next day, giving the recipient at most an additional 23:59:59 to use the token.
+     *
+     * @param id The identifier of the token type to get the expiration time for.
+     * @return The expiration timestamp for the token `id`.
+     */
+    function _expiresAt(uint256 id) internal view returns (uint256) {
+        uint256 _ttl = tokenTTL(id);
+
+        if (_ttl == 0) {
+            return type(uint256).max;
+        }
+
+        uint256 exactExpiration = block.timestamp + _ttl;
+        uint256 arraySize = _maxBalanceRecords();
+        uint256 bucketSize = _ttl / arraySize;
+
+        if (bucketSize == 0) {
+            bucketSize = 1;
+        }
+
+        return ((exactExpiration + bucketSize - 1) / bucketSize) * bucketSize;
     }
 
     /**
@@ -238,84 +344,5 @@ abstract contract TokenExpiry is TokenConfiguration {
 
         // Prune expired records from the `from` account
         pruneBalanceRecords(from, id);
-    }
-
-    /**
-     * @dev Prunes balance records for a specific account, removing entries that are expired or
-     * have a zero balances. This is handled automatically during transfers and minting, but can
-     * be manually invoked to clean up storage.
-     *
-     * @param account The address of the account to prune.
-     * @param id The identifier of the token type to prune.
-     */
-    function pruneBalanceRecords(address account, uint256 id) public virtual {
-        BalanceRecord[] storage records = _balanceRecords[account][id];
-        uint256 currentTime = block.timestamp;
-        uint256 writeIndex = 0;
-        uint256 currentLength = records.length;
-
-        // Compact valid records to the front
-        for (uint256 i = 0; i < currentLength; i++) {
-            bool isValid = records[i].amount > 0 && records[i].expiresAt > currentTime;
-            if (isValid) {
-                if (i != writeIndex) {
-                    records[writeIndex] = records[i];
-                }
-                writeIndex++;
-            }
-        }
-
-        // Clear remaining slots
-        for (uint256 i = writeIndex; i < currentLength; i++) {
-            records[i] = BalanceRecord(0, 0);
-        }
-
-        // Optionally shrink the array if many slots are empty
-        // This helps keep storage costs down
-        if (writeIndex == 0 && currentLength > 0) {
-            // All records are invalid, clear the array
-            while (records.length > 0) {
-                records.pop();
-            }
-        } else if (currentLength > writeIndex * 2 && currentLength > 10) {
-            // If less than half the array is used and array is large, shrink it
-            while (records.length > writeIndex) {
-                records.pop();
-            }
-        }
-    }
-
-    /**
-     * @dev Calculates the expiration time for a token `id` based on its TTL.
-     * If the TTL is 0, the token does not expire and returns the maximum value for `uint256`.
-     * Otherwise, it calculates the expiration time rounded up to the next bucket size.
-     *
-     * To avoid unbounded storage growth, we limit the number of balance records per address, per token `id`.
-     * We lose some precision in the expiration time, but this helps ensure we can store balance records and
-     * clean up expired records without running out of gas or hitting storage limits.
-     *
-     * We round UP to the next expiry bucket to guarantee AT LEAST the full `ttl` of the token. For example, if
-     * `ttl` is 30 days and `MAX_BALANCE_RECORDS` is 30, the bucket size is 1 day, and the expiration will be
-     * rounded up to the next day, giving the recipient at most an additional 23:59:59 to use the token.
-     *
-     * @param id The identifier of the token type to get the expiration time for.
-     * @return The expiration timestamp for the token `id`.
-     */
-    function _expiration(uint256 id) internal view returns (uint256) {
-        uint256 ttl = ttlOf(id);
-
-        if (ttl == 0) {
-            return type(uint256).max;
-        }
-
-        uint256 exactExpiration = block.timestamp + ttl;
-        uint256 arraySize = _maxBalanceRecords();
-        uint256 bucketSize = ttl / arraySize;
-
-        if (bucketSize == 0) {
-            bucketSize = 1;
-        }
-
-        return ((exactExpiration + bucketSize - 1) / bucketSize) * bucketSize;
     }
 }

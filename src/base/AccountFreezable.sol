@@ -1,49 +1,13 @@
 // SPDX-License-Identifier: MIT
 
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 pragma solidity ^0.8.24;
 
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import { AccessControlDefaultAdminRulesUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
-
 /**
- * @dev Mixin providing role-based access control and pausability for token contracts.
- * This contract extends OpenZeppelin's AccessControlDefaultAdminRulesUpgradeable to manage roles with a
- * time-delayed admin role transfer mechanism. It also integrates pausability features to allow
- * authorized accounts to pause and unpause contract operations.
+ * @dev Abstract contract that allows freezing and unfreezing of accounts.
  */
-abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeable, PausableUpgradeable {
-    /**
-     * @dev Role required to upgrade the contract.
-     */
-    bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
-
-    /**
-     * @dev Role required to pause/un-pause the contract and freeze/un-freeze accounts.
-     */
-    bytes32 public constant ACCESS_MANAGER_ROLE = keccak256("ACCESS_MANAGER_ROLE");
-
-    /**
-     * @dev Role required to manage token configuration, metadata, and content URIs.
-     */
-    bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
-
-    /**
-     * @dev Role required to mint new tokens.
-     */
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-
-    /**
-     * @dev Role required to burn tokens.
-     */
-    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
-
-    /**
-     * @dev Role required to modify the treasury address.
-     */
-    bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
-
+abstract contract AccountFreezable is Initializable {
     /**
      * @dev Status indicating an account should not be allowed to purchase, transfer, or receive tokens.
      */
@@ -76,8 +40,7 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
     error InvalidAddress(address account);
 
     /**
-     * @dev Modifier to check if an `account` is not frozen.
-     * If the account is frozen, it reverts with an `ERC6909AccessControlAccountFrozen` error.
+     * @dev Modifier to revert if `account` is frozen.
      */
     modifier notFrozen(address account) {
         if (_frozenAccounts[account]) {
@@ -88,31 +51,13 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
 
     /**
      * @dev Initializer that calls the parent initializers for upgradeable contracts.
-     *
-     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
-     * @param initialDefaultAdmin The address to be granted the initial default admin role.
      */
-    function __TokenAccessControl_init(uint48 initialDelay, address initialDefaultAdmin) public onlyInitializing {
-        __AccessControlDefaultAdminRules_init(initialDelay, initialDefaultAdmin);
-    }
+    function __AccountFreezable_init() internal onlyInitializing { }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __TokenAccessControl_init_unchained() public onlyInitializing {
-        // Nothing to initialize
-    }
-
-    /// @inheritdoc IERC165
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(AccessControlDefaultAdminRulesUpgradeable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
+    function __AccountFreezable_init_unchained() internal onlyInitializing { }
 
     /**
      * @dev Check if an `account` address is frozen.
@@ -138,15 +83,13 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
      * @dev Freezes an `account`, preventing it from purchasing, transferring, or receiving tokens.
      * If the account is already frozen, this function does nothing.
      *
-     * Emits a {AccountStatusUpdate} event with `ACCOUNT_FROZEN_STATUS`.
+     * Reverts with {InvalidAddress} if the `account` is the zero address.
      *
-     * Requirements:
-     * - The `account` cannot be the zero address.
-     * - The caller must have the `ACCESS_MANAGER_ROLE`.
+     * Emits a {AccountStatusUpdate} event with `ACCOUNT_FROZEN_STATUS`.
      *
      * @param account The address of the account to freeze.
      */
-    function freezeAccount(address account) external virtual onlyRole(ACCESS_MANAGER_ROLE) {
+    function _freezeAccount(address account) internal virtual {
         if (account == address(0)) {
             revert InvalidAddress(account);
         }
@@ -166,12 +109,9 @@ abstract contract TokenAccessControl is AccessControlDefaultAdminRulesUpgradeabl
      *
      * Emits a {AccountStatusUpdate} event with `ACCOUNT_UNFROZEN_STATUS`.
      *
-     * Requirements:
-     * - The caller must have the `ACCESS_MANAGER_ROLE`.
-     *
      * @param account The address of the account to unfreeze.
      */
-    function unfreezeAccount(address account) external virtual onlyRole(ACCESS_MANAGER_ROLE) {
+    function _unfreezeAccount(address account) internal virtual {
         if (!_frozenAccounts[account]) {
             return; // Account is not frozen, do nothing
         }

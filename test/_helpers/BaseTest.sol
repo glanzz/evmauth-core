@@ -38,6 +38,14 @@ abstract contract WithAccessControl is Test {
     address public burner;
     address public treasurer;
 
+    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+    bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
+    bytes32 public constant ACCESS_MANAGER_ROLE = keccak256("ACCESS_MANAGER_ROLE");
+    bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
+
     function _setUpAccessControl() internal {
         accessManager = makeAddr("accessManager");
         tokenManager = makeAddr("tokenManager");
@@ -90,9 +98,18 @@ abstract contract WithUpgrades is WithUsers {
      * Should be called in the `setUp` function of inheriting contracts.
      */
     function _deployContract() public virtual {
-        vm.prank(owner);
         proxy = Upgrades.deployUUPSProxy(_getContractName(), _getInitializerData());
         _setToken(proxy);
+    }
+
+    /**
+     * @dev Upgrade the contract to a new implementation.
+     * @param newImplementation The address of the new implementation contract.
+     * @return success True if the upgrade was successful, false otherwise.
+     */
+    function _upgradeContract(address newImplementation) internal returns (bool) {
+        (bool success,) = proxy.call(abi.encodeWithSignature("upgradeToAndCall(address,bytes)", newImplementation, ""));
+        return success;
     }
 
     // ========== Abstract Methods To Be Implemented ==========
@@ -126,7 +143,7 @@ abstract contract WithUpgrades is WithUsers {
     /**
      * @dev Test that initialization succeeds with valid parameters.
      */
-    function test_initialize() public virtual {
+    function test_BaseTest_initialize() public virtual {
         // Deploy a new uninitialized implementation
         address implementation = _deployNewImplementation();
 
@@ -145,7 +162,7 @@ abstract contract WithUpgrades is WithUsers {
     /**
      * @dev Test that initializer reverts when called after initialization.
      */
-    function testRevert_initialize_InvalidInitialization() public virtual {
+    function testRevert_BaseTest_initialize_InvalidInitialization() public virtual {
         // Try to call the initializer again on the already initialized proxy
         bytes memory initData = _getInitializerData();
 
@@ -161,15 +178,15 @@ abstract contract WithUpgrades is WithUsers {
      * @dev Test that authorized upgrade succeeds.
      * Only applicable for contracts with UUPS upgradeability.
      */
-    function test_authorizeUpgrade() public virtual {
+    function test_BaseTest_authorizeUpgrade() public virtual {
         // Deploy new implementation
         address newImplementation = _deployNewImplementation();
 
         // Perform upgrade as owner (who has authorization)
-        vm.prank(owner);
+        vm.startPrank(owner);
+        bool success = _upgradeContract(newImplementation);
+        vm.stopPrank();
 
-        // Verify upgrade succeeds
-        (bool success,) = proxy.call(abi.encodeWithSignature("upgradeToAndCall(address,bytes)", newImplementation, ""));
         assertTrue(success, "Upgrade should succeed with proper authorization");
     }
 
@@ -177,7 +194,7 @@ abstract contract WithUpgrades is WithUsers {
      * @dev Test that unauthorized upgrade reverts.
      * Only applicable for contracts with UUPS upgradeability and access control.
      */
-    function testRevert_authorizeUpgrade_Unauthorized() public virtual {
+    function testRevert_BaseTest_authorizeUpgrade_Unauthorized() public virtual {
         // Deploy new implementation
         address newImplementation = _deployNewImplementation();
 
@@ -185,7 +202,7 @@ abstract contract WithUpgrades is WithUsers {
         vm.startPrank(unauthorizedAccount);
         bool success;
         vm.expectRevert();
-        (success,) = proxy.call(abi.encodeWithSignature("upgradeToAndCall(address,bytes)", newImplementation, ""));
+        success = _upgradeContract(newImplementation);
         vm.stopPrank();
     }
 }
@@ -196,6 +213,8 @@ abstract contract WithUpgrades is WithUsers {
 abstract contract BaseTest is WithUpgrades {
     function setUp() public virtual {
         _setUpUsers();
+
+        vm.prank(owner);
         _deployContract();
     }
 }
@@ -207,8 +226,11 @@ abstract contract BaseTestWithAccessControl is WithUpgrades, WithAccessControl {
     function setUp() public virtual {
         _setUpUsers();
         _setUpAccessControl();
+
+        vm.startPrank(owner);
         _deployContract();
         _grantRoles();
+        vm.stopPrank();
     }
 }
 
@@ -219,6 +241,8 @@ abstract contract BaseTestWithTreasury is WithUpgrades, WithTreasury {
     function setUp() public virtual {
         _setUpUsers();
         _setUpTreasury();
+
+        vm.prank(owner);
         _deployContract();
     }
 }
@@ -231,8 +255,11 @@ abstract contract BaseTestWithAccessControlAndTreasury is WithUpgrades, WithAcce
         _setUpUsers();
         _setUpAccessControl();
         _setUpTreasury();
+
+        vm.startPrank(owner);
         _deployContract();
         _grantRoles();
+        vm.stopPrank();
     }
 }
 
@@ -244,6 +271,8 @@ abstract contract BaseTestWithERC20s is WithUpgrades, WithTreasury, WithERC20s {
         _setUpUsers();
         _setUpTreasury();
         _setUpERC20s();
+
+        vm.prank(owner);
         _deployContract();
     }
 }
@@ -257,7 +286,10 @@ abstract contract BaseTestWithAccessControlAndERC20s is WithUpgrades, WithAccess
         _setUpAccessControl();
         _setUpTreasury();
         _setUpERC20s();
+
+        vm.startPrank(owner);
         _deployContract();
         _grantRoles();
+        vm.stopPrank();
     }
 }

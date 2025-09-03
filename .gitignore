@@ -15,5 +15,8 @@ docs/
 # JetBrains IDEs
 .idea/
 
+# Dependencies
+lib/
+
 # Coverage reports
 lcov.info
