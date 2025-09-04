@@ -32,7 +32,7 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     /**
      * @dev Mapping from token `id` to its time-to-live (TTL) in seconds. A TTL of 0 means the token never expires.
      */
-    mapping(uint256 => uint256) internal _ttls;
+    mapping(uint256 => uint256) private _ttls;
 
     /**
      * @dev Error thrown when deducting or transferring tokens from an account with insufficient funds.

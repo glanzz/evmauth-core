@@ -11,7 +11,7 @@ abstract contract TokenEnumerable is ContextUpgradeable {
     /**
      * @dev The next token ID to be assigned.
      */
-    uint256 public nextTokenID;
+    uint256 private _nextTokenID;
 
     /**
      * @dev Error thrown when an operation is attempted on a non-existent ID.
@@ -60,28 +60,37 @@ abstract contract TokenEnumerable is ContextUpgradeable {
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
     function __TokenEnumerable_init_unchained() internal onlyInitializing {
-        nextTokenID = 1; // Start token IDs at 1
+        _nextTokenID = 1; // Start token IDs at 1
     }
 
     /**
-     * @dev Checks if an ID exists (i.e. has been claimed).
+     * @dev Returns the next token ID to be assigned.
+     *
+     * @return uint256 The next token ID.
+     */
+    function nextTokenID() public view returns (uint256) {
+        return _nextTokenID;
+    }
+
+    /**
+     * @dev Checks if an `id` exists (i.e. has been claimed).
      *
      * @param id The token ID to check.
      * @return bool indicating whether the token exists.
      */
     function isValid(uint256 id) public view virtual returns (bool) {
-        return id > 0 && id < nextTokenID;
+        return id > 0 && id < _nextTokenID;
     }
 
     /**
-     * @dev Claims the next sequential token ID. The value of `nextTokenID` is incremented after assignment.
+     * @dev Claims the next sequential token ID. The value of `_nextTokenID` is incremented after assignment.
      *
      * @return tokenId The ID of the configured token.
      */
     function _claimNextTokenID() internal virtual returns (uint256) {
-        uint256 id = nextTokenID;
+        uint256 id = _nextTokenID;
 
-        nextTokenID++;
+        _nextTokenID++;
 
         return id;
     }

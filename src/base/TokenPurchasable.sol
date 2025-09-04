@@ -25,7 +25,7 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     /**
      * @dev Mapping from token `id` to its `price` (in whichever currency is used for purchases).
      */
-    mapping(uint256 id => uint256 price) internal _prices;
+    mapping(uint256 id => uint256 price) private _prices;
 
     /**
      * @dev Mapping to track ERC-20 token contract addresses accepted for purchases.

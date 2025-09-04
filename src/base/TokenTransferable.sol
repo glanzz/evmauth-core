@@ -13,7 +13,7 @@ abstract contract TokenTransferable is ContextUpgradeable {
      * @dev Token transferability mapping.
      * true = transferable, false = non-transferable
      */
-    mapping(uint256 => bool) internal _transferable;
+    mapping(uint256 => bool) private _transferable;
 
     /**
      * @dev Error thrown when a transfer is attempted for a non-transferable token `id`.
