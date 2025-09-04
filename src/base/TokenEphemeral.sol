@@ -24,15 +24,38 @@ abstract contract TokenEphemeral is ContextUpgradeable {
         uint256 expiresAt; // Set to max value to indicate no expiration
     }
 
-    /**
-     * @dev Mapping from `account` address to token `id`, to an array of balance records for that token.
-     */
-    mapping(address account => mapping(uint256 id => BalanceRecord[])) private _balanceRecords;
+    /// @custom:storage-location erc7201:tokenephemeral.storage.TokenEphemeral
+    struct TokenEphemeralStorage {
+        /**
+         * @dev Mapping from `account` to token `id`, to an array of balance records for that token.
+         */
+        mapping(address account => mapping(uint256 id => BalanceRecord[])) balanceRecords;
+        /**
+         * @dev Mapping from token `id` to its time-to-live (TTL) in seconds. A TTL of 0 means the token never expires.
+         */
+        mapping(uint256 => uint256) ttls;
+    }
 
     /**
-     * @dev Mapping from token `id` to its time-to-live (TTL) in seconds. A TTL of 0 means the token never expires.
+     * @dev Storage location for the `TokenEphemeral` contract, as defined by EIP-7201.
+     *
+     * This is a keccak-256 hash of a unique string, minus 1, and then rounded down to the nearest
+     * multiple of 256 bits (32 bytes) to avoid potential storage slot collisions with other
+     * upgradeable contracts that may be added to the same deployment.
+     *
+     * keccak256(abi.encode(uint256(keccak256("tokenephemeral.storage.TokenEphemeral")) - 1)) & ~bytes32(uint256(0xff));
      */
-    mapping(uint256 => uint256) private _ttls;
+    bytes32 private constant TokenEphemeralStorageLocation =
+        0xec3c1253ecdf88a29ff53024f0721fc3faa1b42abcff612deb5b22d1f94e2d00;
+
+    /**
+     * @dev Returns the storage struct for the `TokenEphemeral` contract.
+     */
+    function _getTokenEphemeralStorage() private pure returns (TokenEphemeralStorage storage $) {
+        assembly {
+            $.slot := TokenEphemeralStorageLocation
+        }
+    }
 
     /**
      * @dev Error thrown when deducting or transferring tokens from an account with insufficient funds.
@@ -57,7 +80,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @return The balance of the token `id` for the specified `account`, excluding expired tokens.
      */
     function balanceOf(address account, uint256 id) public view virtual returns (uint256) {
-        BalanceRecord[] storage records = _balanceRecords[account][id];
+        TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
+        BalanceRecord[] storage records = $.balanceRecords[account][id];
         uint256 balance = 0;
         uint256 currentLength = records.length;
 
@@ -78,7 +102,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @return The array of balance records.
      */
     function balanceRecordsOf(address account, uint256 id) external view returns (BalanceRecord[] memory) {
-        return _balanceRecords[account][id];
+        TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
+        return $.balanceRecords[account][id];
     }
 
     /**
@@ -89,7 +114,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @return The TTL in seconds for the given token `id`.
      */
     function tokenTTL(uint256 id) public view virtual returns (uint256) {
-        return _ttls[id];
+        TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
+        return $.ttls[id];
     }
 
     /**
@@ -101,7 +127,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @param id The identifier of the token type to prune.
      */
     function pruneBalanceRecords(address account, uint256 id) public virtual {
-        BalanceRecord[] storage records = _balanceRecords[account][id];
+        TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
+        BalanceRecord[] storage records = $.balanceRecords[account][id];
         uint256 currentTime = block.timestamp;
         uint256 writeIndex = 0;
         uint256 currentLength = records.length;
@@ -145,7 +172,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @param ttlSeconds The TTL in seconds for the given token `id`.
      */
     function _setTTL(uint256 id, uint256 ttlSeconds) internal virtual {
-        _ttls[id] = ttlSeconds;
+        TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
+        $.ttls[id] = ttlSeconds;
     }
 
     /**
@@ -213,7 +241,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
         // First, prune expired records to free up space
         pruneBalanceRecords(account, id);
 
-        BalanceRecord[] storage records = _balanceRecords[account][id];
+        TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
+        BalanceRecord[] storage records = $.balanceRecords[account][id];
         uint256 currentLength = records.length;
         uint256 insertIndex = currentLength;
 
@@ -268,7 +297,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @param amount The amount to deduct from the balance records.
      */
     function _deductFromBalanceRecords(address account, uint256 id, uint256 amount) internal {
-        BalanceRecord[] storage records = _balanceRecords[account][id];
+        TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
+        BalanceRecord[] storage records = $.balanceRecords[account][id];
         uint256 debt = amount;
         uint256 currentTime = block.timestamp;
         uint256 currentLength = records.length;
@@ -314,7 +344,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     function _transferBalanceRecords(address from, address to, uint256 id, uint256 amount) internal {
         if (from == to || amount == 0) return;
 
-        BalanceRecord[] storage fromRecords = _balanceRecords[from][id];
+        TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
+        BalanceRecord[] storage fromRecords = $.balanceRecords[from][id];
         uint256 debt = amount;
         uint256 currentTime = block.timestamp;
         uint256 currentLength = fromRecords.length;

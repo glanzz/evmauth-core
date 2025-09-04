@@ -84,5 +84,10 @@ contract EVMAuthTest is BaseTestWithAccessControlAndERC20s {
 
     function test_initialize() public view {
         assertEq(v1.nextTokenID(), 1);
+        assertEq(
+            keccak256(abi.encode(uint256(keccak256("tokenephemeral.storage.TokenEphemeral")) - 1))
+                & ~bytes32(uint256(0xff)),
+            0xec3c1253ecdf88a29ff53024f0721fc3faa1b42abcff612deb5b22d1f94e2d00
+        );
     }
 }

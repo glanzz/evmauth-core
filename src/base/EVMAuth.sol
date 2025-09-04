@@ -301,6 +301,6 @@ abstract contract EVMAuth is
 
     /// @inheritdoc UUPSUpgradeable
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADE_MANAGER_ROLE) {
-        // This will revert if the caller does not have the UPGRADE_MANAGER_ROLE
+        // This will revert if the caller is not authorized.
     }
 }

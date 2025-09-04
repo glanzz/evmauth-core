@@ -41,31 +41,31 @@ Learn more about how EVMAuth works [here](src/README.md).
 To run the tests, use the following command:
 
 ```sh
-forge test --ffi
+forge fmt && forge test --ffi
 ```
 
 Use the `--force` flag to recompile the contracts before running the tests:
 
 ```sh
-forge test --ffi --force
+forge fmt && forge test --ffi --force
 ```
 
 To run tests with detailed output, use the `-vv`, `-vvv`, or `-vvvv` flag:
 
 ```sh
-forge test --ffi -vvv
+forge fmt && forge test --ffi -vvv
 ```
 
 To specify a particular test file, use the `--match-path` option:
 
 ```sh
-forge test --ffi --match-path test/YourTestFile.t.sol
+forge fmt && forge test --ffi --match-path test/YourTestFile.t.sol
 ```
 
 To specify a particular test function, use the `--match-test` option:
 
 ```sh
-forge test --ffi --match-test testFunctionName
+forge fmt && forge test --ffi --match-test testFunctionName
 ```
 
 ## Generate Coverage Report
@@ -73,7 +73,7 @@ forge test --ffi --match-test testFunctionName
 To generate a coverage report, use:
 
 ```sh
-forge coverage --ffi
+forge fmt && forge coverage --ffi
 ```
 
 You can use the same flags as in the test command to customize the coverage report.
@@ -83,13 +83,15 @@ You can use the same flags as in the test command to customize the coverage repo
 1. Generate EVMAuth contract ABI:
 
 ```sh
-forge inspect src/EVMAuth.sol:EVMAuth abi --json > src/EVMAuth.abi
+forge inspect src/EVMAuth1155.sol:EVMAuth1155 abi --json > src/EVMAuth1155.abi
+forge inspect src/EVMAuth6909.sol:EVMAuth6909 abi --json > src/EVMAuth6909.abi
 ```
 
 2. Generate EVMAuth contract bytecode:
 
 ```sh
-forge inspect src/EVMAuth.sol:EVMAuth bytecode > src/EVMAuth.bin
+forge inspect src/EVMAuth1155.sol:EVMAuth1155 bytecode > src/EVMAuth1155.bin
+forge inspect src/EVMAuth6909.sol:EVMAuth6909 bytecode > src/EVMAuth6909.bin
 ```
 
 ## SDKs & Libraries
