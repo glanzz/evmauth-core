@@ -6,7 +6,7 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 
 /**
  * @dev Abstract contract that provides configurable time-to-live (TTL) and expiring token balances with
- * first-in-first-out (FIFO) spending and transfer logic.
+ * first-in-first-out (FIFO) spending and transfer logic and automatic pruning of expired balances.
  */
 abstract contract TokenEphemeral is ContextUpgradeable {
     /**

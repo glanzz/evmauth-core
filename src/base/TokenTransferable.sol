@@ -5,15 +5,38 @@ pragma solidity ^0.8.24;
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 /**
- * @dev Provides sequential token ID tracking, transferability management, and a unified configuration interface
- * with hooks for extensibility.
+ * @dev Abstract contract that provides token transferability management.
  */
 abstract contract TokenTransferable is ContextUpgradeable {
+    /// @custom:storage-location erc7201:tokentransferable.storage.TokenTransferable
+    struct TokenTransferableStorage {
+        /**
+         * @dev Token transferability mapping.
+         * true = transferable, false = non-transferable
+         */
+        mapping(uint256 => bool) transferable;
+    }
+
     /**
-     * @dev Token transferability mapping.
-     * true = transferable, false = non-transferable
+     * @dev Storage location for the `TokenTransferable` contract, as defined by EIP-7201.
+     *
+     * This is a keccak-256 hash of a unique string, minus 1, and then rounded down to the nearest
+     * multiple of 256 bits (32 bytes) to avoid potential storage slot collisions with other
+     * upgradeable contracts that may be added to the same deployment.
+     *
+     * keccak256(abi.encode(uint256(keccak256("tokentransferable.storage.TokenTransferable")) - 1)) & ~bytes32(uint256(0xff));
      */
-    mapping(uint256 => bool) private _transferable;
+    bytes32 private constant TokenTransferableStorageLocation =
+        0xdaa3d1cf82c71b982a9e24ff7dadd71a10e8c3e82a219c0e60ca5c6b8e617700;
+
+    /**
+     * @dev Returns the the storage struct for the `TokenTransferable` contract.
+     */
+    function _getTokenTransferableStorage() private pure returns (TokenTransferableStorage storage $) {
+        assembly {
+            $.slot := TokenTransferableStorageLocation
+        }
+    }
 
     /**
      * @dev Error thrown when a transfer is attempted for a non-transferable token `id`.
@@ -33,7 +56,8 @@ abstract contract TokenTransferable is ContextUpgradeable {
      * like the `_update` method in OpenZeppelin's {ERC6909} contract.
      */
     modifier tokenTransferable(address from, address to, uint256 id) {
-        if (from != address(0) && to != address(0) && _transferable[id] == false) {
+        TokenTransferableStorage storage $ = _getTokenTransferableStorage();
+        if (from != address(0) && to != address(0) && $.transferable[id] == false) {
             revert TokenIsNonTransferable(id);
         }
         _;
@@ -53,8 +77,9 @@ abstract contract TokenTransferable is ContextUpgradeable {
      */
     modifier allTokensTransferable(address from, address to, uint256[] memory ids) {
         if (from != address(0) && to != address(0)) {
+            TokenTransferableStorage storage $ = _getTokenTransferableStorage();
             for (uint256 i = 0; i < ids.length; i++) {
-                if (from != address(0) && to != address(0) && _transferable[ids[i]] == false) {
+                if ($.transferable[ids[i]] == false) {
                     revert TokenIsNonTransferable(ids[i]);
                 }
             }
@@ -79,7 +104,8 @@ abstract contract TokenTransferable is ContextUpgradeable {
      * @return bool indicating whether the token `id` is transferable.
      */
     function isTransferable(uint256 id) public view virtual returns (bool) {
-        return _transferable[id];
+        TokenTransferableStorage storage $ = _getTokenTransferableStorage();
+        return $.transferable[id];
     }
 
     /**
@@ -89,6 +115,7 @@ abstract contract TokenTransferable is ContextUpgradeable {
      * @param transferable True if the token should be transferable, false otherwise.
      */
     function _setTransferable(uint256 id, bool transferable) internal virtual {
-        _transferable[id] = transferable;
+        TokenTransferableStorage storage $ = _getTokenTransferableStorage();
+        $.transferable[id] = transferable;
     }
 }

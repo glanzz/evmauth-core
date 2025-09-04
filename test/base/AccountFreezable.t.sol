@@ -2,22 +2,19 @@
 
 pragma solidity ^0.8.24;
 
-import { TokenEphemeral } from "src/base/TokenEphemeral.sol";
+import { AccountFreezable } from "src/base/AccountFreezable.sol";
 import { BaseTest } from "test/_helpers/BaseTest.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgradeable {
-    // For testing only; in a real implementation, use a token standard like ERC-1155 or ERC-6909.
-    mapping(address => mapping(uint256 => uint256)) public balances;
-
+contract MockAccountFreezableV1 is AccountFreezable, OwnableUpgradeable, UUPSUpgradeable {
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
      * @param initialOwner The address to be set as the owner of the contract.
      */
     function initialize(address initialOwner) public initializer {
-        __MockTokenEphemeralV1_init(initialOwner);
+        __MockAccountFreezableV1_init(initialOwner);
     }
 
     /**
@@ -25,16 +22,16 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
      *
      * @param initialOwner The address to be set as the owner of the contract.
      */
-    function __MockTokenEphemeralV1_init(address initialOwner) internal onlyInitializing {
+    function __MockAccountFreezableV1_init(address initialOwner) internal onlyInitializing {
         __Ownable_init(initialOwner);
-        __TokenEphemeral_init();
-        __MockTokenEphemeralV1_init_unchained();
+        __AccountFreezable_init();
+        __MockAccountFreezableV1_init_unchained();
     }
 
     /**
      * @dev Unchained initializer that only initializes THIS contract's storage.
      */
-    function __MockTokenEphemeralV1_init_unchained() internal onlyInitializing { }
+    function __MockAccountFreezableV1_init_unchained() internal onlyInitializing { }
 
     /// @inheritdoc UUPSUpgradeable
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
@@ -42,36 +39,36 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
     }
 }
 
-contract TokenEphemeralTest is BaseTest {
-    MockTokenEphemeralV1 internal v1;
+contract AccountFreezableTest is BaseTest {
+    MockAccountFreezableV1 internal v1;
 
     // =========== Test Setup ============ //
 
     function _deployNewImplementation() internal override returns (address) {
-        return address(new MockTokenEphemeralV1());
+        return address(new MockAccountFreezableV1());
     }
 
     function _getContractName() internal pure override returns (string memory) {
-        return "TokenEphemeral.t.sol:MockTokenEphemeralV1";
+        return "AccountFreezable.t.sol:MockAccountFreezableV1";
     }
 
     function _getInitializerData() internal view override returns (bytes memory) {
-        return abi.encodeCall(MockTokenEphemeralV1.initialize, (owner));
+        return abi.encodeCall(MockAccountFreezableV1.initialize, (owner));
     }
 
     function _setToken(address proxyAddress) internal override {
-        v1 = MockTokenEphemeralV1(proxyAddress);
+        v1 = MockAccountFreezableV1(proxyAddress);
     }
 
     // ============ Tests ============= //
 
     function test_initialize() public view {
-        assertEq(v1.tokenTTL(1), 0);
+        assertEq(v1.isFrozen(owner), false);
 
-        // Check that the storage slot for TokenEphemeral is correctly calculated to avoid storage collisions.
+        // Check that the storage slot for AccountFreezable is correctly calculated to avoid storage collisions.
         assertEq(
-            0xec3c1253ecdf88a29ff53024f0721fc3faa1b42abcff612deb5b22d1f94e2d00,
-            keccak256(abi.encode(uint256(keccak256("tokenephemeral.storage.TokenEphemeral")) - 1))
+            0xa095fe5a3c31691ae0832631cef3701285d36b2af1972f4c23463476b0353a00,
+            keccak256(abi.encode(uint256(keccak256("accountfreezable.storage.AccountFreezable")) - 1))
                 & ~bytes32(uint256(0xff))
         );
     }

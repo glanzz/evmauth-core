@@ -9,14 +9,10 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/P
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
- * @dev Abstract contract that extends multiple functionalities for token contracts, including:
- * - Role-based access control with default admin rules.
- * - Account freezing capabilities.
- * - Token transferability management.
- * - Pausing and unpausing of contract operations.
- *
- * This contract is designed to be inherited by token contracts to provide a comprehensive access control
- * and management system.
+ * @dev Abstract contract that provides a standardized access control mechanism for token contracts,
+ * including roles for upgrade management, access management, token management, minting, burning,
+ * and treasury management. It also includes account freezing and token pausing capabilities via the
+ * {AccountFreezable} and {PausableUpgradeable} extensions.
  */
 abstract contract TokenAccessControl is
     AccessControlDefaultAdminRulesUpgradeable,
@@ -52,16 +48,6 @@ abstract contract TokenAccessControl is
      * @dev Role required to modify the treasury address (if applicable).
      */
     bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
-
-    /**
-     * @dev Initializer used when deployed directly as an upgradeable contract.
-     *
-     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
-     * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     */
-    function initialize(uint48 initialDelay, address initialDefaultAdmin) public virtual initializer {
-        __TokenAccessControl_init(initialDelay, initialDefaultAdmin);
-    }
 
     /**
      * @dev Initializer that calls the parent initializers for upgradeable contracts.

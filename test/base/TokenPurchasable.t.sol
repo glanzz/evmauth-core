@@ -3,7 +3,7 @@
 pragma solidity ^0.8.24;
 
 import { TokenPurchasable } from "src/base/TokenPurchasable.sol";
-import { BaseTestWithTreasury } from "test/_helpers/BaseTest.sol";
+import { BaseTestWithERC20s } from "test/_helpers/BaseTest.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
@@ -52,7 +52,7 @@ contract MockTokenPurchasableV1 is TokenPurchasable, OwnableUpgradeable, UUPSUpg
     }
 }
 
-contract TokenPurchasableTest is BaseTestWithTreasury {
+contract TokenPurchasableTest is BaseTestWithERC20s {
     MockTokenPurchasableV1 internal v1;
 
     // =========== Test Setup ============ //

@@ -18,11 +18,34 @@ abstract contract AccountFreezable is Initializable {
      */
     bytes32 public constant ACCOUNT_UNFROZEN_STATUS = keccak256("ACCOUNT_UNFROZEN_STATUS");
 
-    // Account => AccountStatus mapping (to track frozen accounts)
-    mapping(address => bool) private _frozenAccounts;
+    /// @custom:storage-location erc7201:accountfreezable.storage.AccountFreezable
+    struct AccountFreezableStorage {
+        // Account => AccountStatus mapping (to track frozen accounts)
+        mapping(address => bool) frozenAccounts;
+        // Array of frozen accounts (to track all frozen accounts)
+        address[] frozenList;
+    }
 
-    // Array of frozen accounts (to track all frozen accounts)
-    address[] private _frozenList;
+    /**
+     * @dev Storage location for the `AccountFreezable` contract, as defined by EIP-7201.
+     *
+     * This is a keccak-256 hash of a unique string, minus 1, and then rounded down to the nearest
+     * multiple of 256 bits (32 bytes) to avoid potential storage slot collisions with other
+     * upgradeable contracts that may be added to the same deployment.
+     *
+     * keccak256(abi.encode(uint256(keccak256("accountfreezable.storage.AccountFreezable")) - 1)) & ~bytes32(uint256(0xff));
+     */
+    bytes32 private constant AccountFreezableStorageLocation =
+        0xa095fe5a3c31691ae0832631cef3701285d36b2af1972f4c23463476b0353a00;
+
+    /**
+     * @dev Returns the the storage struct for the `AccountFreezable` contract.
+     */
+    function _getAccountFreezableStorage() private pure returns (AccountFreezableStorage storage $) {
+        assembly {
+            $.slot := AccountFreezableStorageLocation
+        }
+    }
 
     /**
      * @dev Emitted when an address is frozen, unfrozen, added to, or removed from the allowlist.
@@ -43,9 +66,8 @@ abstract contract AccountFreezable is Initializable {
      * @dev Modifier to revert if `account` is frozen.
      */
     modifier notFrozen(address account) {
-        if (_frozenAccounts[account]) {
-            revert AccountFrozen(account);
-        }
+        AccountFreezableStorage storage $ = _getAccountFreezableStorage();
+        if ($.frozenAccounts[account]) revert AccountFrozen(account);
         _;
     }
 
@@ -67,7 +89,8 @@ abstract contract AccountFreezable is Initializable {
      * @return bool indicating whether the account is frozen.
      */
     function isFrozen(address account) external view virtual returns (bool) {
-        return _frozenAccounts[account];
+        AccountFreezableStorage storage $ = _getAccountFreezableStorage();
+        return $.frozenAccounts[account];
     }
 
     /**
@@ -76,7 +99,8 @@ abstract contract AccountFreezable is Initializable {
      * @return address[] An array of addresses that are frozen.
      */
     function frozenAccounts() external view virtual returns (address[] memory) {
-        return _frozenList;
+        AccountFreezableStorage storage $ = _getAccountFreezableStorage();
+        return $.frozenList;
     }
 
     /**
@@ -90,15 +114,14 @@ abstract contract AccountFreezable is Initializable {
      * @param account The address of the account to freeze.
      */
     function _freezeAccount(address account) internal virtual {
-        if (account == address(0)) {
-            revert InvalidAddress(account);
-        }
-        if (_frozenAccounts[account]) {
-            return; // Account is already frozen, do nothing
-        }
+        if (account == address(0)) revert InvalidAddress(account);
 
-        _frozenAccounts[account] = true;
-        _frozenList.push(account);
+        AccountFreezableStorage storage $ = _getAccountFreezableStorage();
+
+        if ($.frozenAccounts[account]) return; // Account is already frozen, do nothing
+
+        $.frozenAccounts[account] = true;
+        $.frozenList.push(account);
 
         emit AccountStatusUpdated(account, ACCOUNT_FROZEN_STATUS);
     }
@@ -112,16 +135,17 @@ abstract contract AccountFreezable is Initializable {
      * @param account The address of the account to unfreeze.
      */
     function _unfreezeAccount(address account) internal virtual {
-        if (!_frozenAccounts[account]) {
-            return; // Account is not frozen, do nothing
-        }
+        AccountFreezableStorage storage $ = _getAccountFreezableStorage();
 
-        _frozenAccounts[account] = false;
+        if (!$.frozenAccounts[account]) return; // Account is not frozen, do nothing
+
+        $.frozenAccounts[account] = false;
+
         // Remove the account from the frozen list
-        for (uint256 i = 0; i < _frozenList.length; i++) {
-            if (_frozenList[i] == account) {
-                _frozenList[i] = _frozenList[_frozenList.length - 1]; // Replace with the last element
-                _frozenList.pop(); // Remove the last element
+        for (uint256 i = 0; i < $.frozenList.length; i++) {
+            if ($.frozenList[i] == account) {
+                $.frozenList[i] = $.frozenList[$.frozenList.length - 1]; // Replace with the last element
+                $.frozenList.pop(); // Remove the last element
                 break;
             }
         }
