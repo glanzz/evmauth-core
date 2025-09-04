@@ -49,7 +49,7 @@ classDiagram
         -nextTokenId
         -tokenExists mapping
         +nextTokenID()
-        +isValid(id)
+        +exists(id)
         #_claimNextTokenID()
     }
     
@@ -152,12 +152,6 @@ classDiagram
         +safeBatchTransferFrom(from, to, ids[], amounts[], data)
     }
     
-    class ERC1155SupplyUpgradeable {
-        +totalSupply(id)
-        +totalSupply()
-        +exists(id)
-    }
-    
     class ERC1155URIStorageUpgradeable {
         +uri(id)
         #_setURI(id, uri)
@@ -176,7 +170,7 @@ classDiagram
         +purchaseWithERC20For(token, recipient, id, amount)
         +balanceRecordsOf(account, id)
         +pruneBalanceRecords(account, id)
-        +isValid(account, id)
+        +exists(id)
         +supportsInterface(interfaceId)
         #_update(from, to, ids[], amounts[])
         #_mintPurchasedTokens(to, id, amount)
@@ -225,10 +219,6 @@ classDiagram
         +setOperator(operator, approved)
     }
     
-    class ERC6909TokenSupplyUpgradeable {
-        +totalSupply(id)
-    }
-    
     class ERC6909MetadataUpgradeable {
         +name(id)
         +symbol(id)
@@ -254,16 +244,14 @@ classDiagram
         +purchaseWithERC20For(token, recipient, id, amount)
         +balanceRecordsOf(account, id)
         +pruneBalanceRecords(account, id)
-        +isValid(account, id)
+        +exists(id)
         +supportsInterface(interfaceId)
         #_update(from, to, id, amount)
         #_mintPurchasedTokens(to, id, amount)
     }
     
-    ERC6909Upgradeable <|-- ERC6909TokenSupplyUpgradeable
     ERC6909Upgradeable <|-- ERC6909MetadataUpgradeable
     ERC6909Upgradeable <|-- ERC6909ContentURIUpgradeable
-    ERC6909TokenSupplyUpgradeable <|-- EVMAuth6909
     ERC6909MetadataUpgradeable <|-- EVMAuth6909
     ERC6909ContentURIUpgradeable <|-- EVMAuth6909
     EVMAuth <|-- EVMAuth6909

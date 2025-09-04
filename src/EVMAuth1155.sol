@@ -8,13 +8,11 @@ import { TokenPurchasable } from "src/base/TokenPurchasable.sol";
 import { AccessControlDefaultAdminRulesUpgradeable } from
     "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlDefaultAdminRulesUpgradeable.sol";
 import { ERC1155Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import { ERC1155SupplyUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import { ERC1155URIStorageUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-contract EVMAuth1155 is ERC1155SupplyUpgradeable, ERC1155URIStorageUpgradeable, EVMAuth {
+contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
@@ -69,13 +67,7 @@ contract EVMAuth1155 is ERC1155SupplyUpgradeable, ERC1155URIStorageUpgradeable, 
     }
 
     /// @inheritdoc ERC1155URIStorageUpgradeable
-    function uri(uint256 tokenId)
-        public
-        view
-        virtual
-        override(ERC1155Upgradeable, ERC1155URIStorageUpgradeable)
-        returns (string memory)
-    {
+    function uri(uint256 tokenId) public view virtual override returns (string memory) {
         return ERC1155URIStorageUpgradeable.uri(tokenId);
     }
 
@@ -184,7 +176,7 @@ contract EVMAuth1155 is ERC1155SupplyUpgradeable, ERC1155URIStorageUpgradeable, 
     function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
         internal
         virtual
-        override(ERC1155Upgradeable, ERC1155SupplyUpgradeable)
+        override
         whenNotPaused
         allTokensExist(ids)
         allTokensTransferable(from, to, ids)

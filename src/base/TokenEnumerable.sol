@@ -50,7 +50,7 @@ abstract contract TokenEnumerable is ContextUpgradeable {
      * @param id The token ID to check.
      */
     modifier tokenExists(uint256 id) {
-        if (!isValid(id)) {
+        if (!exists(id)) {
             revert InvalidTokenID(id);
         }
         _;
@@ -65,7 +65,7 @@ abstract contract TokenEnumerable is ContextUpgradeable {
      */
     modifier allTokensExist(uint256[] memory ids) {
         for (uint256 i = 0; i < ids.length; i++) {
-            if (!isValid(ids[i])) {
+            if (!exists(ids[i])) {
                 revert InvalidTokenID(ids[i]);
             }
         }
@@ -104,7 +104,7 @@ abstract contract TokenEnumerable is ContextUpgradeable {
      * @param id The token ID to check.
      * @return bool indicating whether the token exists.
      */
-    function isValid(uint256 id) public view virtual returns (bool) {
+    function exists(uint256 id) public view virtual returns (bool) {
         TokenEnumerableStorage storage $ = _getTokenEnumerableStorage();
         return id > 0 && id < $.nextTokenID;
     }

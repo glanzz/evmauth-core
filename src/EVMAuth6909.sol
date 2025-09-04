@@ -12,17 +12,10 @@ import { ERC6909ContentURIUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC6909/extensions/draft-ERC6909ContentURIUpgradeable.sol";
 import { ERC6909MetadataUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC6909/extensions/draft-ERC6909MetadataUpgradeable.sol";
-import { ERC6909TokenSupplyUpgradeable } from
-    "@openzeppelin/contracts-upgradeable/token/ERC6909/extensions/draft-ERC6909TokenSupplyUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC6909 } from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 
-contract EVMAuth6909 is
-    ERC6909TokenSupplyUpgradeable,
-    ERC6909MetadataUpgradeable,
-    ERC6909ContentURIUpgradeable,
-    EVMAuth
-{
+contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable, EVMAuth {
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
@@ -168,12 +161,7 @@ contract EVMAuth6909 is
      * @param id The identifier of the token type to transfer.
      * @param amount The number of tokens to transfer.
      */
-    function _update(address from, address to, uint256 id, uint256 amount)
-        internal
-        virtual
-        override(ERC6909Upgradeable, ERC6909TokenSupplyUpgradeable)
-        whenNotPaused
-    {
+    function _update(address from, address to, uint256 id, uint256 amount) internal virtual override whenNotPaused {
         // Check if the sender and receiver are the same
         if (from == to) {
             revert InvalidSelfTransfer(from);

@@ -63,7 +63,7 @@ contract TokenEnumerableTest is BaseTest {
     // ============ Tests ============= //
 
     function test_initialize() public view {
-        assertEq(v1.nextTokenID(), 1);
+        assertFalse(v1.exists(1));
 
         // Check that the storage slot for TokenEnumerable is correctly calculated to avoid storage collisions.
         assertEq(
