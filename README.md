@@ -3,113 +3,107 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/evmauth/evmauth-core/test.yml?label=Tests)
 ![GitHub Repo stars](https://img.shields.io/github/stars/evmauth/evmauth-core)
 
+## Overview
+
 EVMAuth is an authorization state management system for token-gating, built on top of [ERC-1155] and [ERC-6909] token standards.
 
-There are several variations of EVMAuth for each token standard, combining features like upgrade-ability, role-based access control, account freezing, and token configuration (transferability, price, TTL) with optional token expiry and direct token purchasing via native currency or ERC-20 tokens.
+A detailed overview of the contract architecture can be found here: [EVMAuth Contract Architecture](src/README.md).
 
-Learn more about how EVMAuth works [here](src/README.md).
+### Deployment
 
-## Prerequisites
+EVMAuth can be deployed on any EVM-compatible network (e.g. Ethereum, Base, Radius) using the scripts provided in the `scripts/` directory.
 
-- [Foundry](https://getfoundry.sh/)
-- [Solidity](https://docs.soliditylang.org/en/v0.8.0/installing-solidity.html)
+When deploying the contract, you will need to specify the following parameters:
 
-## Setup
+- Initial [transfer delay] for the default admin role
+- Initial default admin address, [for role management]
+- Initial treasury address, for receiving revenue from direct purchases
+- Base token metadata URI ([for ERC-1155]) or contract URI ([for ERC-6909]) (optional, can be updated later)
 
-1. Clone the repository:
+### Access Control
 
-   ```sh
-   git clone git@github.com:evmauth/evmauth-core.git
-   ```
+Once you've deployed the contract, the default admin will need to grant various access roles:
 
-2. Navigate to the project directory:
+- `grantRole(TOKEN_MANAGER_ROLE, address)` for accounts that can configure tokens and token metadata
+- `grantRole(ACCESS_MANAGER_ROLE, address)` for accounts that can pause/unpause the contract and freeze accounts
+- `grantRole(TREASURER_ROLE, address)` for accounts that can modify the treasury address where funds are collected
+- `grantRole(MINTER_ROLE, address)`for accounts that can issue tokens to addresses
+- `grantRole(BURNER_ROLE, address)`for accounts that can deduct tokens from addresses
 
-   ```sh
-   cd evmauth-core
-   ```
+### Token Configuration
 
-3. Install the dependencies:
+An account with the `TOKEN_MANAGER_ROLE` should then create one or more new tokens by calling `createToken` with the desired configuration:
 
-   ```sh
-   forge install foundry-rs/forge-std
-   forge install OpenZeppelin/openzeppelin-contracts-upgradeable
-   forge install OpenZeppelin/openzeppelin-foundry-upgrades
-   ```
+- `uint256 price`: The cost to purchase one unit of the token; 0 means the token cannot be purchased directly; set to `0` to disable native currency purchases
+- `PaymentToken[] erc20Prices`: Array of `PaymentToken` structs, each containing ERC-20 `token` address and `price`; pass an empty array to disable ERC-20 token purchases
+- `uint256 ttl`: Time-to-live in seconds; 0 means the token never expires; set to 0 for non-expiring tokens
+- `bool transferable`: Whether the token can be transferred between accounts
 
-## Run Tests
+An account with the `TOKEN_MANAGER_ROLE` can modify an existing token by calling `updateToken(id, EVMAuthTokenConfig)`, or any of the individual property setter functions:
 
-To run the tests, use the following command:
+- `setTokenPrice(id, uint256 price)`
+- `setERC20Price(uint256 id, address token, uint256 price)`
+- `setTokenERC20Prices(id, PaymentToken[] erc20Prices)`
+- `setTokenTTL(id, uint256 ttl)`
+- `setTokenTransferable(id, bool transferable)`
 
-```sh
-forge fmt && forge test --ffi
-```
+## Token Standards
 
-Use the `--force` flag to recompile the contracts before running the tests:
+### ERC-1155 vs ERC-6909
 
-```sh
-forge fmt && forge test --ffi --force
-```
+| Feature                | ERC-1155                                                                     | ERC-6909                                                                    |
+|------------------------|------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| Callbacks              | Required for each transfer to contract accounts; must return specific values | Removed entirely; no callbacks required                                     |
+| Batch Operations       | Included in specification (batch transfers)                                  | Excluded from specification to allow custom implementations                 |
+| Permission System      | Single operator scheme: operators get unlimited allowance on all token IDs   | Hybrid scheme: allowances for specific token IDs + operators for all tokens |
+| Transfer Methods       | Both transferFrom and safeTransferFrom required; no opt-out for callbacks    | Simplified transfers without mandatory recipient validation                 |
+| Transfer Semantics     | Safe transfers with data parameter and receiver hooks                        | Simple transfers without hooks                                              |
+| Interface Complexity   | Includes multiple features (callbacks, batching, etc.)                       | Minimized to bare essentials for multi-token management                     |
+| Recipient Requirements | Contract recipients must implement callback functions with return values     | No special requirements for contract recipients                             |
+| Approval Granularity   | Operators only (all-or-nothing for entire contract)                          | Granular allowances per token ID + full operators                           |
+| Metadata Handling      | URI-based metadata (typically off-chain JSON)                                | On-chain name/symbol/decimals per token ID                                  |
+| Supply Tracking        | Global `totalSupply()` plus per-token supply                                 | Only per-token `totalSupply(id)`                                            |
 
-To run tests with detailed output, use the `-vv`, `-vvv`, or `-vvvv` flag:
+### When to Choose Which
 
-```sh
-forge fmt && forge test --ffi -vvv
-```
+Choose [ERC-1155] when you:
+- Need NFT marketplace compatibility
+- Batch operations are important
+- Want receiver hook notifications
+- Prefer URI-based metadata
 
-To specify a particular test file, use the `--match-path` option:
+Choose [ERC-6909] when you:
+- Need ERC-20-like semantics per token
+- Want granular approval control
+- Need on-chain token metadata
+- Prefer a simpler token transfer model
 
-```sh
-forge fmt && forge test --ffi --match-path test/YourTestFile.t.sol
-```
+## Key Architectural Decisions
 
-To specify a particular test function, use the `--match-test` option:
+1. **Upgradability**: All contracts use the Universal Upgradeable Proxy Standard ([UUPS]) pattern for future improvements
 
-```sh
-forge fmt && forge test --ffi --match-test testFunctionName
-```
+2. **Security**:
+   - Role-based access control with time-delayed admin transfers
+   - Pausable operations for emergency situations
+   - Account freezing capabilities
+   - Reentrancy protection on purchase functions
 
-## Generate Coverage Report
+3. **Gas Optimization**:
+   - TTL implementation uses bounded arrays and time buckets for balance records
+   - Automatic pruning of expired records, with manual pruning methods available
+   - Efficient storage patterns for token properties, as defined in [ERC-7201]
 
-To generate a coverage report, use:
-
-```sh
-forge fmt && forge coverage --ffi
-```
-
-You can use the same flags as in the test command to customize the coverage report.
-
-## Generate ABI & Bytecode
-
-1. Generate EVMAuth contract ABI:
-
-```sh
-forge inspect src/EVMAuth1155.sol:EVMAuth1155 abi --json > src/EVMAuth1155.abi
-forge inspect src/EVMAuth6909.sol:EVMAuth6909 abi --json > src/EVMAuth6909.abi
-```
-
-2. Generate EVMAuth contract bytecode:
-
-```sh
-forge inspect src/EVMAuth1155.sol:EVMAuth1155 bytecode > src/EVMAuth1155.bin
-forge inspect src/EVMAuth6909.sol:EVMAuth6909 bytecode > src/EVMAuth6909.bin
-```
+4. **Flexibility**:
+   - Alternative purchase options (native and/or ERC-20 tokens)
+   - Configurable token properties (price, TTL, transferability)
+   - Support for both [ERC-1155] and [ERC-6909] token standards
 
 ## SDKs & Libraries
 
 EVMAuth provides the following SDKs and libraries for easy integration with applications and frameworks:
 
 - [TypeScript SDK](https://github.com/evmauth/evmauth-ts)
-
-To request additional SDKs or libraries, create a new issue with the `question` label.
-
-## Additional Resources
-
-- [Intro to Smart Contracts](https://docs.soliditylang.org/en/v0.8.0/introduction-to-smart-contracts.html)
-- [Solidity Docs](https://docs.soliditylang.org/en/v0.8.0/)
-- [Forge Docs](https://getfoundry.sh/forge/overview)
-- [Forge Tests](https://getfoundry.sh/forge/tests/overview)
-- [OpenZeppelin Upgrades](https://docs.openzeppelin.com/contracts/5.x/upgradeable)
-- [OpenZeppelin Foundry Upgrades](https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades)
+- Python SDK (coming soon)
 
 ## Contributing
 
