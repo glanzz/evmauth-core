@@ -22,17 +22,24 @@ classDiagram
         +MINTER_ROLE
         +BURNER_ROLE
         +TREASURER_ROLE
+        +freezeAccount(account)
+        +unfreezeAccount(account)
+        <<inherited from Pausable>>
         +pause()
         +unpause()
-        +freezeAccount()
-        +unfreezeAccount()
+        +paused()
+        <<inherited from AccessControl>>
+        +hasRole(role, account)
+        +grantRole(role, account)
+        +revokeRole(role, account)
+        +renounceRole(role, account)
     }
     
     class AccountFreezable {
         <<abstract>>
         -frozenAccounts mapping
         +isFrozen(address)
-        +frozenAccountsList()
+        +frozenAccounts()
         #_freezeAccount(address)
         #_unfreezeAccount(address)
     }
@@ -41,7 +48,8 @@ classDiagram
         <<abstract>>
         -nextTokenId
         -tokenExists mapping
-        +tokenExists(id)
+        +nextTokenID()
+        +isValid(id)
         #_claimNextTokenID()
     }
     
@@ -56,6 +64,7 @@ classDiagram
         <<abstract>>
         -ttl mapping
         -balanceRecords mapping
+        +balanceOf(account, id)
         +tokenTTL(id)
         +balanceRecordsOf(account, id)
         +pruneBalanceRecords(account, id)
@@ -67,13 +76,19 @@ classDiagram
         -treasury address
         -prices mapping
         -erc20Prices mapping
+        +treasury()
         +tokenPrice(id)
         +tokenERC20Price(id, token)
         +tokenERC20Prices(id)
+        +isAcceptedERC20PaymentToken(id, token)
         +purchase(id, amount)
+        +purchaseFor(receiver, id, amount)
         +purchaseWithERC20(token, id, amount)
+        +purchaseWithERC20For(receiver, token, id, amount)
         #_setPrice(id, price)
         #_setERC20Price(id, token, price)
+        #_setERC20Prices(id, prices[])
+        #_mintPurchasedTokens(to, id, amount)
     }
     
     class EVMAuth {
@@ -81,10 +96,14 @@ classDiagram
         +EVMAuthTokenConfig struct
         +createToken(config)
         +updateToken(id, config)
+        +tokenConfig(id)
+        +tokenConfigs(ids[])
         +setPrice(id, price)
         +setERC20Price(id, token, price)
+        +setERC20Prices(id, prices[])
         +setTTL(id, ttl)
         +setTransferable(id, bool)
+        #_authorizeUpgrade(newImplementation)
     }
     
     AccessControlDefaultAdminRulesUpgradeable <|-- TokenAccessControl
@@ -108,6 +127,20 @@ classDiagram
         +updateToken(id, config)
         +tokenConfig(id)
         +tokenConfigs(ids[])
+        +setPrice(id, price)
+        +setERC20Price(id, token, price)
+        +setERC20Prices(id, prices[])
+        +setTTL(id, ttl)
+        +setTransferable(id, bool)
+        +tokenPrice(id)
+        +tokenERC20Price(id, token)
+        +tokenERC20Prices(id)
+        +tokenTTL(id)
+        +isTransferable(id)
+        +purchase(id, amount)
+        +purchaseWithERC20(token, id, amount)
+        +freezeAccount(account)
+        +unfreezeAccount(account)
     }
     
     class ERC1155Upgradeable {
@@ -139,7 +172,14 @@ classDiagram
         +burnBatch(from, ids[], amounts[])
         +setBaseURI(uri)
         +setTokenURI(id, uri)
+        +purchaseFor(recipient, id, amount)
+        +purchaseWithERC20For(token, recipient, id, amount)
+        +balanceRecordsOf(account, id)
+        +pruneBalanceRecords(account, id)
+        +isValid(account, id)
+        +supportsInterface(interfaceId)
         #_update(from, to, ids[], amounts[])
+        #_mintPurchasedTokens(to, id, amount)
     }
     
     ERC1155Upgradeable <|-- ERC1155SupplyUpgradeable
@@ -159,6 +199,20 @@ classDiagram
         +updateToken(id, config)
         +tokenConfig(id)
         +tokenConfigs(ids[])
+        +setPrice(id, price)
+        +setERC20Price(id, token, price)
+        +setERC20Prices(id, prices[])
+        +setTTL(id, ttl)
+        +setTransferable(id, bool)
+        +tokenPrice(id)
+        +tokenERC20Price(id, token)
+        +tokenERC20Prices(id)
+        +tokenTTL(id)
+        +isTransferable(id)
+        +purchase(id, amount)
+        +purchaseWithERC20(token, id, amount)
+        +freezeAccount(account)
+        +unfreezeAccount(account)
     }
     
     class ERC6909Upgradeable {
@@ -196,7 +250,14 @@ classDiagram
         +setContractURI(uri)
         +setTokenURI(id, uri)
         +setTokenMetadata(id, name, symbol, decimals)
+        +purchaseFor(recipient, id, amount)
+        +purchaseWithERC20For(token, recipient, id, amount)
+        +balanceRecordsOf(account, id)
+        +pruneBalanceRecords(account, id)
+        +isValid(account, id)
+        +supportsInterface(interfaceId)
         #_update(from, to, id, amount)
+        #_mintPurchasedTokens(to, id, amount)
     }
     
     ERC6909Upgradeable <|-- ERC6909TokenSupplyUpgradeable
