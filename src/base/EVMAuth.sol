@@ -21,11 +21,13 @@ abstract contract EVMAuth is
      * @dev Configuration for an EVM authentication token type.
      *
      * @param price The price of the token, in whichever currency the contract is configured to use.
+     * @param erc20Prices An array of {PaymentToken} structs, each containing an ERC-20 token address and price.
      * @param ttl The time-to-live (TTL) of the token, in seconds.
      * @param transferable Whether the token is transferable between addresses.
      */
     struct EVMAuthTokenConfig {
         uint256 price;
+        PaymentToken[] erc20Prices;
         uint256 ttl;
         bool transferable;
     }
@@ -82,12 +84,17 @@ abstract contract EVMAuth is
      * @dev Returns the configuration of a given token `id`.
      *
      * @param id The ID of the token to query.
-     * @return The configuration of the token, including its price, TTL, and transferability
+     * @return The configuration of the token, including its price, ERC-20 prices, TTL, and transferability.
      */
-    function tokenConfig(uint256 id) external view virtual tokenExists(id) returns (EVMAuthToken memory) {
+    function tokenConfig(uint256 id) public view virtual tokenExists(id) returns (EVMAuthToken memory) {
         return EVMAuthToken({
             id: id,
-            config: EVMAuthTokenConfig({ price: tokenPrice(id), ttl: tokenTTL(id), transferable: isTransferable(id) })
+            config: EVMAuthTokenConfig({
+                price: tokenPrice(id),
+                erc20Prices: tokenERC20Prices(id),
+                ttl: tokenTTL(id),
+                transferable: isTransferable(id)
+            })
         });
     }
 
@@ -95,29 +102,16 @@ abstract contract EVMAuth is
      * @dev Returns the configurations of multiple token `ids`.
      *
      * @param ids The IDs of the tokens to query.
-     * @return configs An array of token configurations, each including its ID, price, TTL, and transferability
+     * @return configs An array of token configurations, each including its ID, price, ERC-20 prices, TTL, and transferability.
      */
-    function tokenConfigs(uint256[] calldata ids)
-        external
-        view
-        virtual
-        allTokensExist(ids)
-        returns (EVMAuthToken[] memory configs)
-    {
+    function tokenConfigs(uint256[] calldata ids) external view virtual returns (EVMAuthToken[] memory configs) {
         configs = new EVMAuthToken[](ids.length);
         if (ids.length == 0) {
             return configs;
         }
 
         for (uint256 i = 0; i < ids.length; i++) {
-            configs[i] = EVMAuthToken({
-                id: ids[i],
-                config: EVMAuthTokenConfig({
-                    price: tokenPrice(ids[i]),
-                    ttl: tokenTTL(ids[i]),
-                    transferable: isTransferable(ids[i])
-                })
-            });
+            configs[i] = tokenConfig(ids[i]);
         }
 
         return configs;
@@ -133,6 +127,45 @@ abstract contract EVMAuth is
      */
     function tokenPrice(uint256 id) public view virtual override tokenExists(id) returns (uint256) {
         return TokenPurchasable.tokenPrice(id);
+    }
+
+    /**
+     * @dev Returns the ERC-20 price of a given token `id`.
+     *
+     * Reverts if the token `id` does has not been created yet.
+     *
+     * @param id The ID of the token to query.
+     * @param token The address of the ERC-20 token to query the price in.
+     * @return The price of the token, in ERC-20 tokens.
+     */
+    function tokenERC20Price(uint256 id, address token)
+        public
+        view
+        virtual
+        override
+        tokenExists(id)
+        returns (uint256)
+    {
+        return TokenPurchasable.tokenERC20Price(id, token);
+    }
+
+    /**
+     * @dev Returns the list of accepted ERC-20 payment tokens and their prices for a given token `id`.
+     *
+     * Reverts if the token `id` does has not been created yet.
+     *
+     * @param id The ID of the token to query.
+     * @return prices An array of {PaymentToken} structs, each containing an ERC-20 token address and price.
+     */
+    function tokenERC20Prices(uint256 id)
+        public
+        view
+        virtual
+        override
+        tokenExists(id)
+        returns (PaymentToken[] memory)
+    {
+        return TokenPurchasable.tokenERC20Prices(id);
     }
 
     /**
@@ -164,7 +197,7 @@ abstract contract EVMAuth is
      *
      * Emits an {EVMAuthTokenConfigured} event upon successful creation.
      *
-     * @param config The configuration for the new token type, including price, TTL, and transferability.
+     * @param config The configuration for the new token type, including price, ERC-20 prices, TTL, and transferability.
      * @return id The ID of the newly created token type.
      */
     function createToken(EVMAuthTokenConfig calldata config)
@@ -184,7 +217,7 @@ abstract contract EVMAuth is
      * Emits an {EVMAuthTokenConfigured} event upon successful update.
      *
      * @param id The ID of the token type to update.
-     * @param config The new configuration for the token type, including price, TTL, and transferability.
+     * @param config The new configuration for the token type, including price, ERC-20 prices, TTL, and transferability.
      */
     function updateToken(uint256 id, EVMAuthTokenConfig calldata config)
         external
@@ -208,7 +241,62 @@ abstract contract EVMAuth is
         _setPrice(id, price);
 
         emit EVMAuthTokenConfigured(
-            id, EVMAuthTokenConfig({ price: price, ttl: tokenTTL(id), transferable: isTransferable(id) })
+            id,
+            EVMAuthTokenConfig({
+                price: price,
+                erc20Prices: tokenERC20Prices(id),
+                ttl: tokenTTL(id),
+                transferable: isTransferable(id)
+            })
+        );
+    }
+
+    /**
+     * @dev Sets the ERC-20 price of a given token `id` for a specific ERC-20 `token`.
+     *
+     * Reverts if the token `id` does has not been created yet.
+     *
+     * Emits an {EVMAuthTokenConfigured} event upon successful update.
+     *
+     * @param id The token ID to configure.
+     * @param token The address of the ERC-20 token to set the price in.
+     * @param price The new price for the token, in ERC-20 tokens.
+     */
+    function setERC20Price(uint256 id, address token, uint256 price) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
+        _setERC20Price(id, token, price);
+
+        emit EVMAuthTokenConfigured(
+            id,
+            EVMAuthTokenConfig({
+                price: tokenPrice(id),
+                erc20Prices: tokenERC20Prices(id),
+                ttl: tokenTTL(id),
+                transferable: isTransferable(id)
+            })
+        );
+    }
+
+    /**
+     * @dev Sets the list of accepted ERC-20 payment tokens and their prices for a given token `id`.
+     *
+     * Reverts if the token `id` does has not been created yet.
+     *
+     * Emits an {EVMAuthTokenConfigured} event upon successful update.
+     *
+     * @param id The token ID to configure.
+     * @param prices An array of {PaymentToken} structs, each containing an ERC-20 token address and price.
+     */
+    function setERC20Prices(uint256 id, PaymentToken[] calldata prices) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
+        _setERC20Prices(id, prices);
+
+        emit EVMAuthTokenConfigured(
+            id,
+            EVMAuthTokenConfig({
+                price: tokenPrice(id),
+                erc20Prices: tokenERC20Prices(id),
+                ttl: tokenTTL(id),
+                transferable: isTransferable(id)
+            })
         );
     }
 
@@ -226,7 +314,13 @@ abstract contract EVMAuth is
         _setTTL(id, ttl);
 
         emit EVMAuthTokenConfigured(
-            id, EVMAuthTokenConfig({ price: tokenPrice(id), ttl: ttl, transferable: isTransferable(id) })
+            id,
+            EVMAuthTokenConfig({
+                price: tokenPrice(id),
+                erc20Prices: tokenERC20Prices(id),
+                ttl: ttl,
+                transferable: isTransferable(id)
+            })
         );
     }
 
@@ -242,7 +336,13 @@ abstract contract EVMAuth is
         _setTransferable(id, transferable);
 
         emit EVMAuthTokenConfigured(
-            id, EVMAuthTokenConfig({ price: tokenPrice(id), ttl: tokenTTL(id), transferable: transferable })
+            id,
+            EVMAuthTokenConfig({
+                price: tokenPrice(id),
+                erc20Prices: tokenERC20Prices(id),
+                ttl: tokenTTL(id),
+                transferable: transferable
+            })
         );
     }
 
@@ -258,6 +358,7 @@ abstract contract EVMAuth is
         id = _claimNextTokenID();
 
         _setPrice(id, config.price);
+        _setERC20Prices(id, config.erc20Prices);
         _setTTL(id, config.ttl);
         _setTransferable(id, config.transferable);
 
@@ -278,6 +379,7 @@ abstract contract EVMAuth is
      */
     function _updateToken(uint256 id, EVMAuthTokenConfig calldata config) internal virtual tokenExists(id) {
         _setPrice(id, config.price);
+        _setERC20Prices(id, config.erc20Prices);
         _setTTL(id, config.ttl);
         _setTransferable(id, config.transferable);
 
@@ -287,6 +389,16 @@ abstract contract EVMAuth is
     // @inheritdoc TokenPurchasable
     function _setPrice(uint256 id, uint256 price) internal virtual override tokenExists(id) {
         TokenPurchasable._setPrice(id, price);
+    }
+
+    // @inheritdoc TokenPurchasable
+    function _setERC20Price(uint256 id, address token, uint256 price) internal virtual override tokenExists(id) {
+        TokenPurchasable._setERC20Price(id, token, price);
+    }
+
+    // @inheritdoc TokenPurchasable
+    function _setERC20Prices(uint256 id, PaymentToken[] calldata prices) internal virtual override tokenExists(id) {
+        TokenPurchasable._setERC20Prices(id, prices);
     }
 
     // @inheritdoc TokenEphemeral

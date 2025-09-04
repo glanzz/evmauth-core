@@ -66,6 +66,8 @@ contract TokenEphemeralTest is BaseTest {
     // ============ Tests ============= //
 
     function test_initialize() public view {
+        assertEq(0, v1.tokenTTL(1));
+
         // Check that the storage slot for TokenEphemeral is correctly calculated to avoid storage collisions.
         assertEq(
             0xec3c1253ecdf88a29ff53024f0721fc3faa1b42abcff612deb5b22d1f94e2d00,
