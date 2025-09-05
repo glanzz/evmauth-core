@@ -9,11 +9,13 @@ Thank you for your interest in contributing to EVMAuth! This document provides g
 - [Development Workflow](#development-workflow)
 - [Commit Messages](#commit-messages)
 - [Pull Requests](#pull-requests)
-- [Prerequisites](#prerequisites)
-- [Setup](#setup)
-- [Run Tests](#run-tests)
-- [Generate Coverage Report](#generate-coverage-report)
-- [Generate ABI & Bytecode](#generate-abi--bytecode)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+- [Running Tests](#running-tests)
+- [Coverage Reports](#coverage-reports)
+- [Documentation](#documentation)
+- [ABI & Bytecode](#abi--bytecode)
 - [Additional Resources](#additional-resources)
 - [Questions?](#questions)
 - [License](#license)
@@ -42,7 +44,7 @@ These structured templates help us gather the information we need to address you
 2. Clone your fork: `git clone https://github.com/your-username/evmauth-core.git`
 3. Create a new branch: `git checkout -b my-feature`
 4. Make your changes
-5. Run `forge fmt` and `forge test --ffi` to ensure code is formatted and tests pass
+5. Run `forge fmt` and `forge test` to ensure code is formatted and tests pass
 6. Push to your fork and submit a pull request
 
 ## Commit Messages
@@ -88,34 +90,36 @@ All pull requests should include:
 6. Update CHANGELOG.md
 7. Ensure CI checks pass
 
-## Prerequisites
+## Getting Started
+
+### Prerequisites
 
 - [Solidity](https://docs.soliditylang.org/en/v0.8.0/installing-solidity.html)
 - [Foundry](https://getfoundry.sh/)
 
-## Setup
+### Setup
 
 1. Clone the repository:
 
-   ```sh
-   git clone git@github.com:evmauth/evmauth-core.git
-   ```
+```sh
+git clone git@github.com:evmauth/evmauth-core.git
+```
 
 2. Navigate to the project directory:
 
-   ```sh
-   cd evmauth-core
-   ```
+```sh
+cd evmauth-core
+```
 
 3. Install the dependencies:
 
-   ```sh
-   forge install foundry-rs/forge-std
-   forge install OpenZeppelin/openzeppelin-contracts-upgradeable
-   forge install OpenZeppelin/openzeppelin-foundry-upgrades
-   ```
+```sh
+forge install foundry-rs/forge-std
+forge install OpenZeppelin/openzeppelin-contracts-upgradeable
+forge install OpenZeppelin/openzeppelin-foundry-upgrades
+```
 
-## Run Tests
+## Running Tests
 
 To run the tests, use the following command:
 
@@ -155,19 +159,19 @@ forge fmt && forge test --match-test testFunctionName
 
 More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/test).
 
-## Generate Coverage Report
+## Coverage Reports
 
 To generate a coverage report, use:
 
 ```sh
-forge fmt && forge coverage --ffi
+forge fmt && forge coverage
 ```
 
 You can use the same flags as in the test command to customize the coverage report.
 
 More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/coverage).
 
-## Generate Documentation Site
+## Documentation
 
 To generate the documentation site, use:
 
@@ -191,7 +195,7 @@ forge doc -i -s --open
 
 More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/doc).
 
-## Generate ABI & Bytecode
+## ABI & Bytecode
 
 To generate the full ABI for a contract, use:
 
@@ -227,9 +231,6 @@ If you have questions:
 3. Ask in your PR if you're working on code
 
 Thank you for your contributions!
-
-[ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155
-[ERC-2470]: https://eips.ethereum.org/EIPS/eip-2470
 
 ## License
 
