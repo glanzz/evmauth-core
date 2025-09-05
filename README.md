@@ -51,6 +51,19 @@ An account with the `TOKEN_MANAGER_ROLE` can modify an existing token by calling
 
 ### ERC-1155 vs ERC-6909
 
+<style>
+.table-3col-20-40-40 .table-wrapper table {
+   th:first-of-type {
+      width: 20%;
+   }
+   th:nth-of-type(2), th:nth-of-type(3) {
+      width: 40%;
+   }
+}
+</style>
+
+<div class="table-3col-20-40-40">
+
 | Feature                | ERC-1155                                                                     | ERC-6909                                                                    |
 |------------------------|------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
 | Callbacks              | Required for each transfer to contract accounts; must return specific values | Removed entirely; no callbacks required                                     |
@@ -63,6 +76,8 @@ An account with the `TOKEN_MANAGER_ROLE` can modify an existing token by calling
 | Approval Granularity   | Operators only (all-or-nothing for entire contract)                          | Granular allowances per token ID + full operators                           |
 | Metadata Handling      | URI-based metadata (typically off-chain JSON)                                | On-chain name/symbol/decimals per token ID                                  |
 | Supply Tracking        | Global `totalSupply()` plus per-token supply                                 | Only per-token `totalSupply(id)`                                            |
+
+</div>
 
 ### When to Choose Which
 

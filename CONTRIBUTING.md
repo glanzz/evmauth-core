@@ -120,31 +120,37 @@ All pull requests should include:
 To run the tests, use the following command:
 
 ```sh
-forge fmt && forge test --ffi
+forge test
+```
+
+It is a good practice to format the code before running tests:
+
+```sh
+forge fmt && forge test
 ```
 
 Use the `--force` flag to recompile the contracts before running the tests:
 
 ```sh
-forge fmt && forge test --ffi --force
+forge fmt && forge test --force
 ```
 
 To run tests with detailed output, use the `-vv`, `-vvv`, or `-vvvv` flag:
 
 ```sh
-forge fmt && forge test --ffi -vvv
+forge fmt && forge test -vvv
 ```
 
 To specify a particular test file, use the `--match-path` option:
 
 ```sh
-forge fmt && forge test --ffi --match-path test/YourTestFile.t.sol
+forge fmt && forge test --match-path test/YourTestFile.t.sol
 ```
 
 To specify a particular test function, use the `--match-test` option:
 
 ```sh
-forge fmt && forge test --ffi --match-test testFunctionName
+forge fmt && forge test --match-test testFunctionName
 ```
 
 More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/test).
@@ -171,10 +177,16 @@ forge doc --serve --open
 
 This will create a `docs` directory with the generated documentation and open it in your default web browser.
 
-To watch for changes and automatically regenerate the documentation, use:
+To watch for changes and automatically regenerate the documentation, use the `--watch` (or `-w`) option:
 
 ```sh
-forge doc --watch --serve --open
+forge doc -w -s --open
+```
+
+To include external libraries in the documentation, use the `--include` (or `-i`) option:
+
+```sh
+forge doc -i -s --open
 ```
 
 More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/doc).
