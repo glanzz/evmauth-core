@@ -147,6 +147,8 @@ To specify a particular test function, use the `--match-test` option:
 forge fmt && forge test --ffi --match-test testFunctionName
 ```
 
+More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/test).
+
 ## Generate Coverage Report
 
 To generate a coverage report, use:
@@ -156,6 +158,26 @@ forge fmt && forge coverage --ffi
 ```
 
 You can use the same flags as in the test command to customize the coverage report.
+
+More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/coverage).
+
+## Generate Documentation Site
+
+To generate the documentation site, use:
+
+```sh
+forge doc --serve --open
+```
+
+This will create a `docs` directory with the generated documentation and open it in your default web browser.
+
+To watch for changes and automatically regenerate the documentation, use:
+
+```sh
+forge doc --watch --serve --open
+```
+
+More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/doc).
 
 ## Generate ABI & Bytecode
 
@@ -173,7 +195,7 @@ forge inspect src/EVMAuth1155.sol:EVMAuth1155 bytecode > src/EVMAuth1155.bin
 forge inspect src/EVMAuth6909.sol:EVMAuth6909 bytecode > src/EVMAuth6909.bin
 ```
 
-To request additional SDKs or libraries, create a new issue with the `question` label.
+More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/inspect).
 
 ## Additional Resources
 

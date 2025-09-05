@@ -105,6 +105,8 @@ EVMAuth provides the following SDKs and libraries for easy integration with appl
 - [TypeScript SDK](https://github.com/evmauth/evmauth-ts)
 - Python SDK (coming soon)
 
+To request additional SDKs or libraries, create a new issue with the `question` label.
+
 ## Contributing
 
 To contribute to this open source project, please follow the guidelines in the [CONTRIBUTING.md](CONTRIBUTING.md) file.
