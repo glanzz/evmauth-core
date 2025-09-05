@@ -9,15 +9,21 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @dev Abstract contract that provides a framework for token purchase functionality with multi-currency support.
- * Each token ID can have a native currency price and/or multiple ERC-20 token prices.
+ * @title TokenPurchasable
+ * @author EVMAuth
+ * @notice Enables token purchases with native and ERC-20 currency support
+ * @dev Abstract contract implementing multi-currency purchasing with reentrancy protection.
+ * Each token type can be configured with independent pricing in native currency and/or multiple
+ * ERC-20 tokens. Uses EIP-7201 storage pattern for upgrade safety.
  */
 abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransientUpgradeable {
     // Import SafeERC20 to revert if a transfer returns false
     using SafeERC20 for IERC20;
 
     /**
-     * @dev Struct representing a payment token and its associated price.
+     * @notice Payment option with token address and price
+     * @param token ERC-20 contract address
+     * @param price Cost in token units
      */
     struct PaymentToken {
         address token;
@@ -27,40 +33,39 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     /// @custom:storage-location erc7201:tokenpurchasable.storage.TokenPurchasable
     struct TokenPurchasableStorage {
         /**
-         * @dev Wallet address where token purchase revenues will be sent.
+         * @notice Treasury address for revenue collection
+         * @dev Receives all purchase payments
          */
         address payable treasury;
         /**
-         * @dev Mapping from token `id` to its native currency price.
-         * If price is 0, the token cannot be purchased with native currency.
+         * @notice Native currency pricing per token type
+         * @dev Price of 0 disables native currency purchases
          */
         mapping(uint256 => uint256) nativePrices;
         /**
-         * @dev Mapping from token `id` to ERC-20 token address to price.
-         * If price is 0, the token cannot be purchased with that ERC-20 token.
+         * @notice ERC-20 pricing per token type and payment token
+         * @dev Nested mapping: tokenId -> ERC20 address -> price (0 = disabled)
          */
         mapping(uint256 => mapping(address => uint256)) erc20Prices;
         /**
-         * @dev Mapping from token `id` to list of accepted ERC-20 payment tokens.
-         * This is used to enumerate accepted tokens for a given token ID.
+         * @notice List of accepted ERC-20 tokens per token type
+         * @dev Used for enumerating payment options
          */
         mapping(uint256 => address[]) erc20TokensAccepted;
     }
 
     /**
-     * @dev Storage location for the `TokenPurchasable` contract, as defined by EIP-7201.
-     *
-     * This is a keccak-256 hash of a unique string, minus 1, and then rounded down to the nearest
-     * multiple of 256 bits (32 bytes) to avoid potential storage slot collisions with other
-     * upgradeable contracts that may be added to the same deployment.
-     *
-     * keccak256(abi.encode(uint256(keccak256("tokenpurchasable.storage.TokenPurchasable")) - 1)) & ~bytes32(uint256(0xff));
+     * @notice EIP-7201 storage slot for TokenPurchasable state
+     * @dev Computed as: keccak256(abi.encode(uint256(keccak256("tokenpurchasable.storage.TokenPurchasable")) - 1))
+     * & ~bytes32(uint256(0xff)). Prevents storage collisions in upgradeable contracts.
      */
     bytes32 private constant TokenPurchasableStorageLocation =
         0x54c84cf2875b53587e3bd1a41cdb4ae126fe9184d0b1bd9183d4f9005d2ff600;
 
     /**
-     * @dev Returns the storage struct for the `TokenPurchasable` contract.
+     * @notice Retrieves the storage struct for TokenPurchasable
+     * @dev Internal function using inline assembly for direct storage access
+     * @return $ Storage pointer to TokenPurchasableStorage struct
      */
     function _getTokenPurchasableStorage() private pure returns (TokenPurchasableStorage storage $) {
         assembly {
@@ -69,93 +74,123 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Emitted when `amount` tokens of type `id` are purchased by `caller` for `receiver`.
+     * @notice Emitted when tokens are purchased
+     * @param caller Address initiating the purchase
+     * @param receiver Address receiving the tokens
+     * @param id Token type identifier
+     * @param amount Quantity purchased
+     * @param price Total payment amount
      */
     event TokenPurchased(address caller, address indexed receiver, uint256 indexed id, uint256 amount, uint256 price);
 
     /**
-     * @dev Emitted when the treasury address is set by `caller`.
+     * @notice Emitted when treasury address changes
+     * @param caller Address making the change
+     * @param account New treasury address
      */
     event TreasuryUpdated(address caller, address indexed account);
 
     /**
-     * @dev Emitted when a native currency price is set for a token.
+     * @notice Emitted when native currency price is updated
+     * @param id Token type identifier
+     * @param price New price in native currency
      */
     event NativePriceSet(uint256 indexed id, uint256 price);
 
     /**
-     * @dev Emitted when an ERC-20 price is set for a token.
+     * @notice Emitted when ERC-20 price is updated
+     * @param id Token type identifier
+     * @param token ERC-20 contract address
+     * @param price New price in token units
      */
     event ERC20PriceSet(uint256 indexed id, address indexed token, uint256 price);
 
     /**
-     * @dev Error thrown when the payer has insufficient allowance for the ERC-20 token payment.
+     * @notice Error for insufficient ERC-20 approval
+     * @param token ERC-20 contract address
+     * @param required Amount needed
+     * @param allowance Current approval amount
      */
     error InsufficientERC20Allowance(address token, uint256 required, uint256 allowance);
 
     /**
-     * @dev Error thrown when the payer has insufficient balance of the ERC-20 token for the payment.
+     * @notice Error for insufficient ERC-20 balance
+     * @param token ERC-20 contract address
+     * @param required Amount needed
+     * @param balance Current balance
      */
     error InsufficientERC20Balance(address token, uint256 required, uint256 balance);
 
     /**
-     * @dev Error thrown when the payment made for a purchase is insufficient.
+     * @notice Error for underpayment during purchase
+     * @param id Token type identifier
+     * @param amount Quantity attempted to purchase
+     * @param price Total price required
+     * @param paid Amount actually paid
      */
     error InsufficientPayment(uint256 id, uint256 amount, uint256 price, uint256 paid);
 
     /**
-     * @dev Error thrown when the ERC-20 token being used for payment is not accepted for the specific token ID.
+     * @notice Error for unaccepted ERC-20 payment token
+     * @param token ERC-20 contract address
      */
     error InvalidERC20PaymentToken(address token);
 
     /**
-     * @dev Error thrown when a purchase is attempted with an invalid amount.
+     * @notice Error for invalid purchase quantity
+     * @param amount The invalid amount specified
      */
     error InvalidTokenQuantity(uint256 amount);
 
     /**
-     * @dev Error thrown when a purchase is attempted with an invalid receiver address.
+     * @notice Error for invalid recipient address
+     * @param receiver The invalid address specified
      */
     error InvalidReceiverAddress(address receiver);
 
     /**
-     * @dev Error thrown when the treasury address being set is invalid.
+     * @notice Error for invalid treasury address
+     * @param treasury The invalid address specified
      */
     error InvalidTreasuryAddress(address treasury);
 
     /**
-     * @dev Error thrown when a native currency purchase is attempted for a token that doesn't have a native price.
+     * @notice Error when token cannot be purchased with native currency
+     * @param id Token type identifier
      */
     error TokenNotForSaleWithNativeCurrency(uint256 id);
 
     /**
-     * @dev Error thrown when an ERC-20 purchase is attempted for a token that doesn't accept that payment token.
+     * @notice Error when token cannot be purchased with specific ERC-20
+     * @param id Token type identifier
+     * @param token ERC-20 contract address
      */
     error TokenNotForSaleWithERC20(uint256 id, address token);
 
     /**
-     * @dev Initializer that calls the parent initializers for upgradeable contracts.
-     *
-     * @param initialTreasury The address where purchase revenues will be sent.
+     * @notice Internal initializer for TokenPurchasable setup
+     * @dev Sets initial treasury address
+     * @param initialTreasury Address to receive purchase revenues
      */
     function __TokenPurchasable_init(address payable initialTreasury) internal onlyInitializing {
         __TokenPurchasable_init_unchained(initialTreasury);
     }
 
     /**
-     * @dev Unchained initializer that only initializes THIS contract's storage.
-     *
-     * @param initialTreasury The address where purchase revenues will be sent.
+     * @notice Unchained initializer for contract-specific storage
+     * @dev Validates and sets treasury address
+     * @param initialTreasury Address to receive purchase revenues
      */
     function __TokenPurchasable_init_unchained(address payable initialTreasury) internal onlyInitializing {
         _setTreasury(initialTreasury);
     }
 
     /**
-     * @dev Returns the native currency price of a given token `id`.
-     *
-     * @param id The identifier of the token type to get the price for.
-     * @return price The native currency price of the given token `id` (0 if not for sale with native currency).
+     * @notice Gets native currency price for a token type
+     * @dev Reverts if price is 0 (not for sale)
+     * @param id Token type identifier
+     * @return price Native currency price
+     * @custom:throws TokenNotForSaleWithNativeCurrency When price is 0
      */
     function tokenPrice(uint256 id) public view virtual returns (uint256 price) {
         TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
@@ -169,11 +204,12 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Returns the price of a given token `id` for a given ERC-20 token.
-     *
-     * @param id The identifier of the token type to get the price for.
-     * @param paymentToken The address of the ERC-20 token.
-     * @return price The price in the specified ERC-20 token (0 if not accepted).
+     * @notice Gets price in specific ERC-20 token
+     * @dev Reverts if token not accepted (price is 0)
+     * @param id Token type identifier
+     * @param paymentToken ERC-20 contract address
+     * @return price Price in ERC-20 token units
+     * @custom:throws TokenNotForSaleWithERC20 When token not accepted
      */
     function tokenERC20Price(uint256 id, address paymentToken) public view virtual returns (uint256 price) {
         TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
@@ -187,10 +223,10 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Returns the list of prices for a given token `id` in all accepted ERC-20 payment tokens.
-     *
-     * @param id The identifier of the token type to get the prices for.
-     * @return prices An array of {PaymentToken} structs, each containing an ERC-20 token address and price.
+     * @notice Gets all accepted ERC-20 payment options
+     * @dev Returns array of payment tokens and their prices
+     * @param id Token type identifier
+     * @return prices Array of PaymentToken structs
      */
     function tokenERC20Prices(uint256 id) public view virtual returns (PaymentToken[] memory prices) {
         TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
@@ -205,11 +241,11 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Checks if a given ERC-20 token is accepted for payment for a specific token `id`.
-     *
-     * @param id The identifier of the token type to check.
-     * @param paymentToken The address of the ERC-20 token to check.
-     * @return True if the ERC-20 token is accepted for payment, false otherwise.
+     * @notice Checks if ERC-20 token is accepted for payment
+     * @dev Returns true if price > 0
+     * @param id Token type identifier
+     * @param paymentToken ERC-20 contract address to check
+     * @return True if accepted, false otherwise
      */
     function isAcceptedERC20PaymentToken(uint256 id, address paymentToken) public view virtual returns (bool) {
         TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
@@ -217,9 +253,9 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Returns the address of the current treasury account where funds are collected.
-     *
-     * @return The address of the treasury account.
+     * @notice Gets current treasury address
+     * @dev All purchase revenues are sent to this address
+     * @return Treasury address
      */
     function treasury() public view virtual returns (address) {
         TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
@@ -227,31 +263,22 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Allows the caller to purchase a specific `amount` of tokens of type `id`
-     * using native currency. The caller must send sufficient payment with the transaction.
-     *
-     * Emits a {TokenPurchased} event where the `caller` and `receiver` are the same.
-     *
-     * Requirements:
-     * - The contract must not be paused.
-     * - The amount must be greater than zero.
-     * - The token `id` must have a native currency price set.
-     * - The payment sent with the transaction must be sufficient.
-     *
-     * @param id The identifier of the token type to purchase.
-     * @param amount The number of tokens to purchase.
+     * @notice Purchase tokens for caller using native currency
+     * @dev Requires exact or excess payment. Excess is refunded
+     * @param id Token type identifier to purchase
+     * @param amount Quantity to purchase
+     * @custom:emits TokenPurchased
      */
     function purchase(uint256 id, uint256 amount) external payable virtual whenNotPaused nonReentrant {
         _purchaseFor(_msgSender(), id, amount);
     }
 
     /**
-     * @dev Allows the caller to purchase a specific `amount` of tokens of type `id`
-     * for a designated `receiver` using native currency.
-     *
-     * @param receiver The address of the receiver who will receive the purchased tokens.
-     * @param id The identifier of the token type to purchase.
-     * @param amount The number of tokens to purchase.
+     * @notice Purchase tokens for specified recipient using native currency
+     * @dev Caller pays, receiver gets tokens. Excess payment refunded to caller
+     * @param receiver Address to receive purchased tokens
+     * @param id Token type identifier to purchase
+     * @param amount Quantity to purchase
      */
     function purchaseFor(address receiver, uint256 id, uint256 amount)
         external
@@ -264,11 +291,11 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Allows the caller to purchase tokens using an ERC-20 token.
-     *
-     * @param paymentToken The address of the ERC-20 token to use for payment.
-     * @param id The identifier of the token type to purchase.
-     * @param amount The number of tokens to purchase.
+     * @notice Purchase tokens for caller using ERC-20 payment
+     * @dev Requires sufficient balance and approval
+     * @param paymentToken ERC-20 contract address for payment
+     * @param id Token type identifier to purchase
+     * @param amount Quantity to purchase
      */
     function purchaseWithERC20(address paymentToken, uint256 id, uint256 amount)
         external
@@ -280,12 +307,12 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Allows the caller to purchase tokens for a designated `receiver` using an ERC-20 token.
-     *
-     * @param receiver The address of the receiver who will receive the purchased tokens.
-     * @param paymentToken The address of the ERC-20 token to use for payment.
-     * @param id The identifier of the token type to purchase.
-     * @param amount The number of tokens to purchase.
+     * @notice Purchase tokens for specified recipient using ERC-20 payment
+     * @dev Caller pays with ERC-20, receiver gets tokens
+     * @param receiver Address to receive purchased tokens
+     * @param paymentToken ERC-20 contract address for payment
+     * @param id Token type identifier to purchase
+     * @param amount Quantity to purchase
      */
     function purchaseWithERC20For(address receiver, address paymentToken, uint256 id, uint256 amount)
         external
@@ -297,11 +324,11 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Internal function to handle the purchase logic with native currency.
-     *
-     * @param receiver The address of the receiver who will receive the purchased tokens.
-     * @param id The identifier of the token type to purchase.
-     * @param amount The number of tokens to purchase.
+     * @notice Internal native currency purchase handler
+     * @dev Validates, collects payment, refunds excess, mints tokens
+     * @param receiver Address to receive tokens
+     * @param id Token type identifier
+     * @param amount Quantity to purchase
      */
     function _purchaseFor(address receiver, uint256 id, uint256 amount) internal virtual {
         TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
@@ -327,12 +354,12 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Internal function to handle the purchase logic with ERC-20 tokens.
-     *
-     * @param receiver The address of the receiver who will receive the purchased tokens.
-     * @param paymentToken The address of the ERC-20 token to use for payment.
-     * @param id The identifier of the token type to purchase.
-     * @param amount The number of tokens to purchase.
+     * @notice Internal ERC-20 purchase handler
+     * @dev Validates, checks balance/approval, transfers payment, mints tokens
+     * @param receiver Address to receive tokens
+     * @param paymentToken ERC-20 contract address
+     * @param id Token type identifier
+     * @param amount Quantity to purchase
      */
     function _purchaseWithERC20For(address receiver, address paymentToken, uint256 id, uint256 amount)
         internal
@@ -366,11 +393,11 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Sets the native currency price for a given token `id`.
-     * Set to 0 to disable native currency purchases.
-     *
-     * @param id The identifier of the token type.
-     * @param price The native currency price to set.
+     * @notice Internal function to set native currency price
+     * @dev Price of 0 disables native currency purchases
+     * @param id Token type identifier
+     * @param price Native currency price
+     * @custom:emits NativePriceSet
      */
     function _setPrice(uint256 id, uint256 price) internal virtual {
         TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
@@ -379,13 +406,12 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Sets the price for a given token `id` in a specific ERC-20 token.
-     * Set price to 0 to disable purchases with that ERC-20 token.
-     * Automatically adds the token to the global accepted list if price > 0.
-     *
-     * @param id The identifier of the token type.
-     * @param token The address of the ERC-20 token.
-     * @param price The price in the specified ERC-20 token to set.
+     * @notice Internal function to set ERC-20 token price
+     * @dev Price > 0 adds to accepted list, price = 0 removes from list
+     * @param id Token type identifier
+     * @param token ERC-20 contract address
+     * @param price Price in token units (0 to disable)
+     * @custom:emits ERC20PriceSet
      */
     function _setERC20Price(uint256 id, address token, uint256 price) internal virtual {
         if (token == address(0)) {
@@ -424,10 +450,10 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Sets multiple ERC-20 prices for a token ID at once.
-     *
-     * @param id The identifier of the token type.
-     * @param configs An array of payment token configurations.
+     * @notice Internal function to batch set ERC-20 prices
+     * @dev Iterates through configs and sets each price
+     * @param id Token type identifier
+     * @param configs Array of PaymentToken structs
      */
     function _setERC20Prices(uint256 id, PaymentToken[] calldata configs) internal virtual {
         for (uint256 i = 0; i < configs.length; i++) {
@@ -436,9 +462,10 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Sets the treasury address where purchase revenues will be sent.
-     *
-     * @param account The address where purchase revenues will be sent.
+     * @notice Internal function to update treasury address
+     * @dev Validates address is not zero
+     * @param account New treasury address
+     * @custom:emits TreasuryUpdated
      */
     function _setTreasury(address payable account) internal virtual {
         TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
@@ -450,32 +477,33 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Validates the receiver address.
-     *
-     * @param receiver The address to validate.
+     * @notice Validates recipient address is not zero
+     * @dev Pure function for address validation
+     * @param receiver Address to validate
+     * @custom:throws InvalidReceiverAddress When receiver is zero
      */
     function _validateReceiver(address receiver) internal pure virtual {
         if (receiver == address(0)) revert InvalidReceiverAddress(receiver);
     }
 
     /**
-     * @dev Validates the purchase amount.
-     *
-     * @param amount The amount to validate.
+     * @notice Validates purchase quantity is not zero
+     * @dev Pure function for amount validation
+     * @param amount Quantity to validate
+     * @custom:throws InvalidTokenQuantity When amount is zero
      */
     function _validateAmount(uint256 amount) internal pure virtual {
         if (amount == 0) revert InvalidTokenQuantity(amount);
     }
 
     /**
-     * @dev Internal function to mint tokens after successful purchase.
-     *
-     * Emits a {TokenPurchased} event.
-     *
-     * @param receiver The address of the receiver who will receive the purchased tokens.
-     * @param id The identifier of the token type to purchase.
-     * @param amount The number of tokens to purchase.
-     * @param totalPrice The total price paid for the tokens.
+     * @notice Finalizes purchase by minting tokens and emitting event
+     * @dev Calls abstract _mintPurchasedTokens function
+     * @param receiver Address receiving tokens
+     * @param id Token type identifier
+     * @param amount Quantity purchased
+     * @param totalPrice Total payment collected
+     * @custom:emits TokenPurchased
      */
     function _completePurchase(address receiver, uint256 id, uint256 amount, uint256 totalPrice) internal virtual {
         _mintPurchasedTokens(receiver, id, amount);
@@ -483,13 +511,11 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @dev Internal function to mint the purchased tokens.
-     *
-     * This function must be implemented by the inheriting contract.
-     *
-     * @param to The address to mint tokens to.
-     * @param id The token ID to mint.
-     * @param amount The amount of tokens to mint.
+     * @notice Abstract function to mint purchased tokens
+     * @dev Must be implemented by inheriting contracts
+     * @param to Address to receive minted tokens
+     * @param id Token type identifier
+     * @param amount Quantity to mint
      */
     function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual;
 }

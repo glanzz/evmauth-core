@@ -15,14 +15,21 @@ import { ERC6909MetadataUpgradeable } from
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC6909 } from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
 
+/**
+ * @title EVMAuth6909
+ * @author EVMAuth
+ * @notice Multi-token authentication contract implementing ERC-6909 with time-based access control
+ * @dev Extends ERC-6909 with authorization features including time-to-live tokens, role-based access,
+ * and configurable purchasing mechanisms. Implements UUPS upgradeable pattern for future enhancements.
+ */
 contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable, EVMAuth {
     /**
-     * @dev Initializer used when deployed directly as an upgradeable contract.
-     *
-     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
-     * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     * @param initialTreasury The address where purchase revenues will be sent.
-     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+     * @notice Initializes the EVMAuth6909 contract with admin and treasury configuration
+     * @dev Initializer used when deployed directly as an upgradeable contract
+     * @param initialDelay Delay in seconds before a new default admin can exercise their role
+     * @param initialDefaultAdmin Address to be granted the initial default admin role
+     * @param initialTreasury Address where purchase revenues will be sent
+     * @param uri_ Contract URI per EIP-6909 content URI extension
      */
     function initialize(
         uint48 initialDelay,
@@ -34,12 +41,12 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @dev Initializer that calls the parent initializers for upgradeable contracts.
-     *
-     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
-     * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     * @param initialTreasury The address where purchase revenues will be sent.
-     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+     * @notice Internal initializer that sets up all parent contracts
+     * @dev Calls parent initializers in correct order for upgradeable contracts
+     * @param initialDelay Delay in seconds before a new default admin can exercise their role
+     * @param initialDefaultAdmin Address to be granted the initial default admin role
+     * @param initialTreasury Address where purchase revenues will be sent
+     * @param uri_ Contract URI per EIP-6909 content URI extension
      */
     function __EVMAuth6909_init(
         uint48 initialDelay,
@@ -52,9 +59,9 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @dev Unchained initializer that only initializes THIS contract's storage.
-     *
-     * @param uri_ The URI for the contract; see also: https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension
+     * @notice Unchained initializer for contract-specific storage
+     * @dev Sets the contract URI for ERC-6909 content URI support
+     * @param uri_ Contract URI per EIP-6909 content URI extension
      */
     function __EVMAuth6909_init_unchained(string memory uri_) internal onlyInitializing {
         _setContractURI(uri_);
@@ -71,7 +78,7 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
         return super.supportsInterface(interfaceId);
     }
 
-    // @inheritdoc TokenEphemeral
+    /// @inheritdoc TokenEphemeral
     function balanceOf(address account, uint256 id)
         public
         view
@@ -83,53 +90,53 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @dev Mints `amount` tokens of token type `id` to account `to`.
-     *
-     * @param to The address to mint tokens to.
-     * @param id The token ID to mint.
-     * @param amount The amount of tokens to mint.
+     * @notice Mints new tokens of a specific type to an account
+     * @dev Restricted to addresses with MINTER_ROLE
+     * @param to Recipient address for minted tokens
+     * @param id Token type identifier to mint
+     * @param amount Quantity of tokens to mint
      */
     function mint(address to, uint256 id, uint256 amount) external onlyRole(MINTER_ROLE) {
         _mint(to, id, amount);
     }
 
     /**
-     * @dev Burns `amount` tokens of token type `id` from account `from`.
-     *
-     * @param from The address to burn tokens from.
-     * @param id The token ID to burn.
-     * @param amount The amount of tokens to burn.
+     * @notice Burns tokens of a specific type from an account
+     * @dev Restricted to addresses with BURNER_ROLE
+     * @param from Address to burn tokens from
+     * @param id Token type identifier to burn
+     * @param amount Quantity of tokens to burn
      */
     function burn(address from, uint256 id, uint256 amount) external onlyRole(BURNER_ROLE) {
         _burn(from, id, amount);
     }
 
     /**
-     * @dev Sets the contract URI.
-     *
-     * @param contractURI The contract URI to set.
+     * @notice Updates the contract-level metadata URI
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE
+     * @param contractURI New contract metadata URI
      */
     function setContractURI(string memory contractURI) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setContractURI(contractURI);
     }
 
     /**
-     * @dev Sets the content URI for a given token `id`.
-     *
-     * @param id The token ID to set the content URI for.
-     * @param contentURI The content URI to set.
+     * @notice Updates the metadata URI for a specific token type
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE
+     * @param id Token type identifier to update
+     * @param contentURI New metadata URI for this token type
      */
     function setTokenURI(uint256 id, string memory contentURI) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setTokenURI(id, contentURI);
     }
 
     /**
-     * @dev Sets the metadata for a given token `id`.
-     *
-     * @param id The token ID to set metadata for.
-     * @param name The name of the token.
-     * @param symbol The symbol of the token.
-     * @param decimals The decimals of the token.
+     * @notice Updates the on-chain metadata for a specific token type
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE. Sets name, symbol, and decimals
+     * @param id Token type identifier to update
+     * @param name Display name for the token type
+     * @param symbol Trading symbol for the token type
+     * @param decimals Number of decimal places for token amounts
      */
     function setTokenMetadata(uint256 id, string memory name, string memory symbol, uint8 decimals)
         external
@@ -147,19 +154,14 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @dev Transfers `amount` of token `id` from `from` to `to`, or alternatively mints (or burns) if `from`
-     * (or `to`) is the zero address. All customizations to transfers, mints, and burns should be done by overriding
-     * this function.
-     *
-     * Reverts with {InvalidSelfTransfer} if `from` and `to` are the same address.
-     * Reverts with {InvalidZeroValueTransfer} if any of the `values` is zero.
-     *
-     * Emits a {Transfer} event.
-     *
-     * @param from The address to transfer tokens from. If zero, it mints tokens to `to`.
-     * @param to The address to transfer tokens to. If zero, it burns tokens from `from`.
-     * @param id The identifier of the token type to transfer.
-     * @param amount The number of tokens to transfer.
+     * @notice Internal function handling token transfers, mints, and burns
+     * @dev Enforces pause state and validates transfers. No receiver callbacks in ERC-6909
+     * @param from Source address (zero address for minting)
+     * @param to Destination address (zero address for burning)
+     * @param id Token type identifier
+     * @param amount Quantity to transfer
+     * @custom:throws InvalidSelfTransfer When from equals to
+     * @custom:throws InvalidZeroValueTransfer When amount is zero
      */
     function _update(address from, address to, uint256 id, uint256 amount) internal virtual override whenNotPaused {
         // Check if the sender and receiver are the same

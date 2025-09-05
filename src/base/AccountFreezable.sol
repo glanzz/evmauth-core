@@ -5,16 +5,22 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 pragma solidity ^0.8.24;
 
 /**
- * @dev Abstract contract that allows freezing and unfreezing of accounts.
+ * @title AccountFreezable
+ * @author EVMAuth
+ * @notice Provides account freezing functionality for access control
+ * @dev Abstract contract implementing account-level restrictions. Frozen accounts should be
+ * prevented from purchasing, transferring, or receiving tokens. Uses EIP-7201 storage pattern.
  */
 abstract contract AccountFreezable is Initializable {
     /**
-     * @dev Status indicating an account should not be allowed to purchase, transfer, or receive tokens.
+     * @notice Status constant for frozen accounts
+     * @dev Emitted in events when an account is frozen
      */
     bytes32 public constant ACCOUNT_FROZEN_STATUS = keccak256("ACCOUNT_FROZEN_STATUS");
 
     /**
-     * @dev Status indicating an account is no longer frozen.
+     * @notice Status constant for unfrozen accounts
+     * @dev Emitted in events when an account is unfrozen
      */
     bytes32 public constant ACCOUNT_UNFROZEN_STATUS = keccak256("ACCOUNT_UNFROZEN_STATUS");
 
@@ -27,19 +33,17 @@ abstract contract AccountFreezable is Initializable {
     }
 
     /**
-     * @dev Storage location for the `AccountFreezable` contract, as defined by EIP-7201.
-     *
-     * This is a keccak-256 hash of a unique string, minus 1, and then rounded down to the nearest
-     * multiple of 256 bits (32 bytes) to avoid potential storage slot collisions with other
-     * upgradeable contracts that may be added to the same deployment.
-     *
-     * keccak256(abi.encode(uint256(keccak256("accountfreezable.storage.AccountFreezable")) - 1)) & ~bytes32(uint256(0xff));
+     * @notice EIP-7201 storage slot for AccountFreezable state
+     * @dev Computed as: keccak256(abi.encode(uint256(keccak256("accountfreezable.storage.AccountFreezable")) - 1))
+     * & ~bytes32(uint256(0xff)). Prevents storage collisions in upgradeable contracts.
      */
     bytes32 private constant AccountFreezableStorageLocation =
         0xa095fe5a3c31691ae0832631cef3701285d36b2af1972f4c23463476b0353a00;
 
     /**
-     * @dev Returns the the storage struct for the `AccountFreezable` contract.
+     * @notice Retrieves the storage struct for AccountFreezable
+     * @dev Internal function using inline assembly for direct storage access
+     * @return $ Storage pointer to AccountFreezableStorage struct
      */
     function _getAccountFreezableStorage() private pure returns (AccountFreezableStorage storage $) {
         assembly {
@@ -48,22 +52,28 @@ abstract contract AccountFreezable is Initializable {
     }
 
     /**
-     * @dev Emitted when an address is frozen, unfrozen, added to, or removed from the allowlist.
+     * @notice Emitted when account status changes
+     * @param account Address whose status changed
+     * @param status New status (ACCOUNT_FROZEN_STATUS or ACCOUNT_UNFROZEN_STATUS)
      */
     event AccountStatusUpdated(address indexed account, bytes32 indexed status);
 
     /**
-     * @dev Error indicating an account is frozen and cannot perform the requested operation.
+     * @notice Error for operations attempted by frozen accounts
+     * @param account The frozen account address
      */
     error AccountFrozen(address account);
 
     /**
-     * @dev Error indicating an invalid address was provided for access control operations.
+     * @notice Error for invalid address in access control operations
+     * @param account The invalid address provided
      */
     error InvalidAddress(address account);
 
     /**
-     * @dev Modifier to revert if `account` is frozen.
+     * @notice Validates account is not frozen before proceeding
+     * @dev Modifier reverting with AccountFrozen if account is frozen
+     * @param account Address to check freeze status
      */
     modifier notFrozen(address account) {
         AccountFreezableStorage storage $ = _getAccountFreezableStorage();
@@ -72,21 +82,22 @@ abstract contract AccountFreezable is Initializable {
     }
 
     /**
-     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     * @notice Internal initializer for AccountFreezable setup
+     * @dev Currently empty as no initialization needed
      */
     function __AccountFreezable_init() internal onlyInitializing { }
 
     /**
-     * @dev Unchained initializer that only initializes THIS contract's storage.
+     * @notice Unchained initializer for contract-specific storage
+     * @dev Currently empty but reserved for future initialization
      */
     function __AccountFreezable_init_unchained() internal onlyInitializing { }
 
     /**
-     * @dev Check if an `account` address is frozen.
-     * A frozen account cannot purchase, transfer, or receive tokens.
-     *
-     * @param account The address of the account to check.
-     * @return bool indicating whether the account is frozen.
+     * @notice Checks if an account is frozen
+     * @dev Frozen accounts cannot perform token operations
+     * @param account Address to check
+     * @return True if account is frozen, false otherwise
      */
     function isFrozen(address account) external view virtual returns (bool) {
         AccountFreezableStorage storage $ = _getAccountFreezableStorage();
@@ -94,9 +105,9 @@ abstract contract AccountFreezable is Initializable {
     }
 
     /**
-     * @dev Get the full list of frozen accounts.
-     *
-     * @return address[] An array of addresses that are frozen.
+     * @notice Retrieves all currently frozen accounts
+     * @dev Returns the complete frozen accounts list
+     * @return Array of frozen account addresses
      */
     function frozenAccounts() external view virtual returns (address[] memory) {
         AccountFreezableStorage storage $ = _getAccountFreezableStorage();
@@ -104,14 +115,11 @@ abstract contract AccountFreezable is Initializable {
     }
 
     /**
-     * @dev Freezes an `account`, preventing it from purchasing, transferring, or receiving tokens.
-     * If the account is already frozen, this function does nothing.
-     *
-     * Reverts with {InvalidAddress} if the `account` is the zero address.
-     *
-     * Emits a {AccountStatusUpdate} event with `ACCOUNT_FROZEN_STATUS`.
-     *
-     * @param account The address of the account to freeze.
+     * @notice Internal function to freeze an account
+     * @dev Idempotent operation. Adds account to frozen list if not already frozen
+     * @param account Address to freeze (cannot be zero address)
+     * @custom:throws InvalidAddress When account is zero address
+     * @custom:emits AccountStatusUpdated With ACCOUNT_FROZEN_STATUS
      */
     function _freezeAccount(address account) internal virtual {
         if (account == address(0)) revert InvalidAddress(account);
@@ -127,12 +135,10 @@ abstract contract AccountFreezable is Initializable {
     }
 
     /**
-     * @dev Unfreezes an `account`, allowing it to purchase, transfer, and receive tokens again.
-     * If the account is not frozen, this function does nothing.
-     *
-     * Emits a {AccountStatusUpdate} event with `ACCOUNT_UNFROZEN_STATUS`.
-     *
-     * @param account The address of the account to unfreeze.
+     * @notice Internal function to unfreeze an account
+     * @dev Idempotent operation. Removes account from frozen list if frozen
+     * @param account Address to unfreeze
+     * @custom:emits AccountStatusUpdated With ACCOUNT_UNFROZEN_STATUS
      */
     function _unfreezeAccount(address account) internal virtual {
         AccountFreezableStorage storage $ = _getAccountFreezableStorage();

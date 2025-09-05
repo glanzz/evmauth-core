@@ -9,6 +9,13 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 
 pragma solidity ^0.8.24;
 
+/**
+ * @title EVMAuth
+ * @author EVMAuth
+ * @notice Core abstract contract for EVM-based authentication tokens
+ * @dev Combines access control, sequential token IDs, token expiry, direct purchasing, and token transfer
+ * restriction into a unified token management system. Implements UUPS upgradeable pattern.
+ */
 abstract contract EVMAuth is
     TokenAccessControl,
     TokenEnumerable,
@@ -18,12 +25,11 @@ abstract contract EVMAuth is
     UUPSUpgradeable
 {
     /**
-     * @dev Configuration for an EVM authentication token type.
-     *
-     * @param price The price of the token, in whichever currency the contract is configured to use.
-     * @param erc20Prices An array of {PaymentToken} structs, each containing an ERC-20 token address and price.
-     * @param ttl The time-to-live (TTL) of the token, in seconds.
-     * @param transferable Whether the token is transferable between addresses.
+     * @notice Configuration parameters for a token type
+     * @param price Native currency price for purchasing this token
+     * @param erc20Prices Array of accepted ERC-20 tokens and their prices
+     * @param ttl Time-to-live in seconds (0 for permanent tokens)
+     * @param transferable Whether token can be transferred between accounts
      */
     struct EVMAuthTokenConfig {
         uint256 price;
@@ -33,10 +39,9 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Details about an EVM authentication token type, including its ID and configuration.
-     *
-     * @param id The ID of the token type.
-     * @param config The configuration of the token type, including its price, TTL, and transferability.
+     * @notice Complete token type information including ID and configuration
+     * @param id Unique identifier for the token type
+     * @param config Full configuration settings for the token
      */
     struct EVMAuthToken {
         uint256 id;
@@ -44,26 +49,29 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Emitted when a token's configuration is created or updated.
+     * @notice Emitted when a token type is created or reconfigured
+     * @param id Token type identifier
+     * @param config New configuration settings
      */
     event EVMAuthTokenConfigured(uint256 indexed id, EVMAuthTokenConfig config);
 
     /**
-     * @dev Error thrown when a transfer is attempted with the same sender and recipient addresses.
+     * @notice Error for self-transfer attempts
+     * @param sender Address attempting self-transfer
      */
     error InvalidSelfTransfer(address sender);
 
     /**
-     * @dev Error thrown when a transfer is attempted with a zero value `amount`.
+     * @notice Error for zero-amount transfer attempts
      */
     error InvalidZeroValueTransfer();
 
     /**
-     * @dev Initializer that calls the parent initializers for upgradeable contracts.
-     *
-     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
-     * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     * @param initialTreasury The address where purchase revenues will be sent.
+     * @notice Internal initializer for EVMAuth contract setup
+     * @dev Initializes all parent contracts in correct order
+     * @param initialDelay Security delay for admin role transfers
+     * @param initialDefaultAdmin Initial admin address
+     * @param initialTreasury Treasury address for revenue collection
      */
     function __EVMAuth_init(uint48 initialDelay, address initialDefaultAdmin, address payable initialTreasury)
         internal
@@ -76,15 +84,16 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Unchained initializer that only initializes THIS contract's storage.
+     * @notice Unchained initializer for contract-specific storage
+     * @dev Currently empty but reserved for future EVMAuth-specific initialization
      */
     function __EVMAuth_init_unchained() internal onlyInitializing { }
 
     /**
-     * @dev Returns the configuration of a given token `id`.
-     *
-     * @param id The ID of the token to query.
-     * @return The configuration of the token, including its price, ERC-20 prices, TTL, and transferability.
+     * @notice Retrieves complete configuration for a token type
+     * @dev Aggregates settings from all parent contracts
+     * @param id Token type identifier
+     * @return Complete token configuration with ID
      */
     function tokenConfig(uint256 id) public view virtual tokenExists(id) returns (EVMAuthToken memory) {
         return EVMAuthToken({
@@ -99,10 +108,10 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Returns the configurations of multiple token `ids`.
-     *
-     * @param ids The IDs of the tokens to query.
-     * @return configs An array of token configurations, each including its ID, price, ERC-20 prices, TTL, and transferability.
+     * @notice Batch retrieves configurations for multiple token types
+     * @dev Gas-efficient bulk configuration query
+     * @param ids Array of token type identifiers
+     * @return configs Array of complete token configurations
      */
     function tokenConfigs(uint256[] calldata ids) external view virtual returns (EVMAuthToken[] memory configs) {
         configs = new EVMAuthToken[](ids.length);
@@ -118,25 +127,21 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Returns the price of a given token `id`.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * @param id The ID of the token to query.
-     * @return The price of the token, in whichever currency the contract is configured to use.
+     * @notice Gets native currency price for a token type
+     * @dev Overrides TokenPurchasable with existence check
+     * @param id Token type identifier
+     * @return Native currency price (wei for ETH chains)
      */
     function tokenPrice(uint256 id) public view virtual override tokenExists(id) returns (uint256) {
         return TokenPurchasable.tokenPrice(id);
     }
 
     /**
-     * @dev Returns the ERC-20 price of a given token `id`.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * @param id The ID of the token to query.
-     * @param token The address of the ERC-20 token to query the price in.
-     * @return The price of the token, in ERC-20 tokens.
+     * @notice Gets price in specific ERC-20 token
+     * @dev Returns 0 if token not accepted as payment
+     * @param id Token type identifier
+     * @param token ERC-20 contract address
+     * @return Price in ERC-20 token units
      */
     function tokenERC20Price(uint256 id, address token)
         public
@@ -150,12 +155,10 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Returns the list of accepted ERC-20 payment tokens and their prices for a given token `id`.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * @param id The ID of the token to query.
-     * @return prices An array of {PaymentToken} structs, each containing an ERC-20 token address and price.
+     * @notice Gets all accepted ERC-20 payment options
+     * @dev Returns array of payment token addresses and prices
+     * @param id Token type identifier
+     * @return Array of PaymentToken structs
      */
     function tokenERC20Prices(uint256 id)
         public
@@ -169,36 +172,31 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Returns the time-to-live (TTL) of a given token `id`, in seconds.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * @param id The ID of the token to query.
-     * @return The TTL of the token, in seconds.
+     * @notice Gets time-to-live for a token type
+     * @dev 0 indicates permanent tokens
+     * @param id Token type identifier
+     * @return TTL in seconds
      */
     function tokenTTL(uint256 id) public view virtual override tokenExists(id) returns (uint256) {
         return TokenEphemeral.tokenTTL(id);
     }
 
     /**
-     * @dev Returns whether a given token `id` is transferable.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * @param id The ID of the token to query.
-     * @return True if the token is transferable, false otherwise.
+     * @notice Checks if token type allows transfers
+     * @dev Non-transferable tokens are soulbound to original recipient
+     * @param id Token type identifier
+     * @return True if transferable, false if soulbound
      */
     function isTransferable(uint256 id) public view virtual override tokenExists(id) returns (bool) {
         return TokenTransferable.isTransferable(id);
     }
 
     /**
-     * @dev Creates a new token type with the given configuration.
-     *
-     * Emits an {EVMAuthTokenConfigured} event upon successful creation.
-     *
-     * @param config The configuration for the new token type, including price, ERC-20 prices, TTL, and transferability.
-     * @return id The ID of the newly created token type.
+     * @notice Creates a new token type with specified configuration
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Claims next sequential ID
+     * @param config Complete configuration for the new token type
+     * @return id Newly created token type identifier
+     * @custom:emits EVMAuthTokenConfigured
      */
     function createToken(EVMAuthTokenConfig calldata config)
         external
@@ -210,14 +208,11 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Updates the configuration of an existing token type.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * Emits an {EVMAuthTokenConfigured} event upon successful update.
-     *
-     * @param id The ID of the token type to update.
-     * @param config The new configuration for the token type, including price, ERC-20 prices, TTL, and transferability.
+     * @notice Updates complete configuration for an existing token type
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist
+     * @param id Token type identifier to update
+     * @param config New complete configuration
+     * @custom:emits EVMAuthTokenConfigured
      */
     function updateToken(uint256 id, EVMAuthTokenConfig calldata config)
         external
@@ -228,14 +223,11 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Sets the price of a given token `id`.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * Emits an {EVMAuthTokenConfigured} event upon successful update.
-     *
-     * @param id The token ID to configure.
-     * @param price The new price for the token.
+     * @notice Updates native currency price for a token type
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist
+     * @param id Token type identifier
+     * @param price New price in native currency
+     * @custom:emits EVMAuthTokenConfigured
      */
     function setPrice(uint256 id, uint256 price) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setPrice(id, price);
@@ -252,15 +244,12 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Sets the ERC-20 price of a given token `id` for a specific ERC-20 `token`.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * Emits an {EVMAuthTokenConfigured} event upon successful update.
-     *
-     * @param id The token ID to configure.
-     * @param token The address of the ERC-20 token to set the price in.
-     * @param price The new price for the token, in ERC-20 tokens.
+     * @notice Sets price for a specific ERC-20 payment token
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist
+     * @param id Token type identifier
+     * @param token ERC-20 contract address
+     * @param price Price in ERC-20 token units (0 to disable)
+     * @custom:emits EVMAuthTokenConfigured
      */
     function setERC20Price(uint256 id, address token, uint256 price) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setERC20Price(id, token, price);
@@ -277,14 +266,11 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Sets the list of accepted ERC-20 payment tokens and their prices for a given token `id`.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * Emits an {EVMAuthTokenConfigured} event upon successful update.
-     *
-     * @param id The token ID to configure.
-     * @param prices An array of {PaymentToken} structs, each containing an ERC-20 token address and price.
+     * @notice Updates all ERC-20 payment options for a token type
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Replaces existing ERC-20 prices
+     * @param id Token type identifier
+     * @param prices Array of PaymentToken structs with addresses and prices
+     * @custom:emits EVMAuthTokenConfigured
      */
     function setERC20Prices(uint256 id, PaymentToken[] calldata prices) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setERC20Prices(id, prices);
@@ -301,14 +287,11 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Sets the time-to-live (TTL) of a given token `id`.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * Emits an {EVMAuthTokenConfigured} event upon successful update.
-     *
-     * @param id The token ID to configure.
-     * @param ttl The new TTL for the token, in seconds.
+     * @notice Updates time-to-live for a token type
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Does not affect existing tokens
+     * @param id Token type identifier
+     * @param ttl New TTL in seconds (0 for permanent)
+     * @custom:emits EVMAuthTokenConfigured
      */
     function setTTL(uint256 id, uint256 ttl) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setTTL(id, ttl);
@@ -325,12 +308,11 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Sets the transferability of a given token `id`.
-     *
-     * Emits an {EVMAuthTokenConfigured} event upon successful update.
-     *
-     * @param id The token ID to configure.
-     * @param transferable True if the token should be transferable, false otherwise.
+     * @notice Updates transferability for a token type
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Affects all tokens of this type
+     * @param id Token type identifier
+     * @param transferable True for transferable, false for soulbound
+     * @custom:emits EVMAuthTokenConfigured
      */
     function setTransferable(uint256 id, bool transferable) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setTransferable(id, transferable);
@@ -347,12 +329,11 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Internal function to create a new token type with the given configuration.
-     *
-     * Emits an {EVMAuthTokenConfigured} event upon successful creation.
-     *
-     * @param config The configuration for the new token type, including price, TTL, and transferability.
-     * @return id The ID of the newly created token type.
+     * @notice Internal function to create a new token type
+     * @dev Claims next sequential ID and applies configuration
+     * @param config Complete configuration for new token type
+     * @return id Newly created token type identifier
+     * @custom:emits EVMAuthTokenConfigured
      */
     function _createToken(EVMAuthTokenConfig calldata config) internal virtual returns (uint256 id) {
         id = _claimNextTokenID();
@@ -368,14 +349,11 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @dev Internal function to update the configuration of an existing token type.
-     *
-     * Reverts if the token `id` does has not been created yet.
-     *
-     * Emits an {EVMAuthTokenConfigured} event upon successful update.
-     *
-     * @param id The ID of the token type to update.
-     * @param config The new configuration for the token type, including price, TTL, and transferability.
+     * @notice Internal function to update token configuration
+     * @dev Updates all configuration parameters atomically
+     * @param id Token type identifier (must exist)
+     * @param config New complete configuration
+     * @custom:emits EVMAuthTokenConfigured
      */
     function _updateToken(uint256 id, EVMAuthTokenConfig calldata config) internal virtual tokenExists(id) {
         _setPrice(id, config.price);
@@ -386,27 +364,27 @@ abstract contract EVMAuth is
         emit EVMAuthTokenConfigured(id, config);
     }
 
-    // @inheritdoc TokenPurchasable
+    /// @inheritdoc TokenPurchasable
     function _setPrice(uint256 id, uint256 price) internal virtual override tokenExists(id) {
         TokenPurchasable._setPrice(id, price);
     }
 
-    // @inheritdoc TokenPurchasable
+    /// @inheritdoc TokenPurchasable
     function _setERC20Price(uint256 id, address token, uint256 price) internal virtual override tokenExists(id) {
         TokenPurchasable._setERC20Price(id, token, price);
     }
 
-    // @inheritdoc TokenPurchasable
+    /// @inheritdoc TokenPurchasable
     function _setERC20Prices(uint256 id, PaymentToken[] calldata prices) internal virtual override tokenExists(id) {
         TokenPurchasable._setERC20Prices(id, prices);
     }
 
-    // @inheritdoc TokenEphemeral
+    /// @inheritdoc TokenEphemeral
     function _setTTL(uint256 id, uint256 ttl) internal virtual override tokenExists(id) {
         TokenEphemeral._setTTL(id, ttl);
     }
 
-    // @inheritdoc TokenTransferable
+    /// @inheritdoc TokenTransferable
     function _setTransferable(uint256 id, bool transferable) internal virtual override tokenExists(id) {
         super._setTransferable(id, transferable);
     }

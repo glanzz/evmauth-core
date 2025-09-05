@@ -12,14 +12,21 @@ import { ERC1155URIStorageUpgradeable } from
     "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155URIStorageUpgradeable.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
+/**
+ * @title EVMAuth1155
+ * @author EVMAuth
+ * @notice Multi-token authentication contract implementing ERC-1155 with time-based access control
+ * @dev Extends ERC-1155 with authorization features including time-to-live tokens, role-based access,
+ * and configurable purchasing mechanisms. Implements UUPS upgradeable pattern for future enhancements.
+ */
 contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     /**
-     * @dev Initializer used when deployed directly as an upgradeable contract.
-     *
-     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
-     * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     * @param initialTreasury The address where purchase revenues will be sent.
-     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
+     * @notice Initializes the EVMAuth1155 contract with admin and treasury configuration
+     * @dev Initializer used when deployed directly as an upgradeable contract
+     * @param initialDelay Delay in seconds before a new default admin can exercise their role
+     * @param initialDefaultAdmin Address to be granted the initial default admin role
+     * @param initialTreasury Address where purchase revenues will be sent
+     * @param uri_ Base URI for all token types per EIP-1155 metadata standard
      */
     function initialize(
         uint48 initialDelay,
@@ -31,12 +38,12 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @dev Initializer that calls the parent initializers for upgradeable contracts.
-     *
-     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
-     * @param initialDefaultAdmin The address to be granted the initial default admin role.
-     * @param initialTreasury The address where purchase revenues will be sent.
-     * @param uri_ The base URI for all token types; see also: https://eips.ethereum.org/EIPS/eip-1155#metadata
+     * @notice Internal initializer that sets up all parent contracts
+     * @dev Calls parent initializers in correct order for upgradeable contracts
+     * @param initialDelay Delay in seconds before a new default admin can exercise their role
+     * @param initialDefaultAdmin Address to be granted the initial default admin role
+     * @param initialTreasury Address where purchase revenues will be sent
+     * @param uri_ Base URI for all token types per EIP-1155 metadata standard
      */
     function __EVMAuth1155_init(
         uint48 initialDelay,
@@ -51,7 +58,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @dev Unchained initializer that only initializes THIS contract's storage.
+     * @notice Unchained initializer for contract-specific storage
+     * @dev Currently empty but reserved for future EVMAuth1155-specific initialization
      */
     function __EVMAuth1155_init_unchained() internal onlyInitializing { }
 
@@ -71,7 +79,7 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
         return ERC1155URIStorageUpgradeable.uri(tokenId);
     }
 
-    // @inheritdoc TokenEphemeral
+    /// @inheritdoc TokenEphemeral
     function balanceOf(address account, uint256 id)
         public
         view
@@ -83,24 +91,24 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @dev Mints `amount` tokens of token type `id` to account `to`.
-     *
-     * @param to The address to mint tokens to.
-     * @param id The token ID to mint.
-     * @param amount The amount of tokens to mint.
-     * @param data Additional data with no specified format.
+     * @notice Mints new tokens of a specific type to an account
+     * @dev Restricted to addresses with MINTER_ROLE
+     * @param to Recipient address for minted tokens
+     * @param id Token type identifier to mint
+     * @param amount Quantity of tokens to mint
+     * @param data Additional data passed to receiver contract if applicable
      */
     function mint(address to, uint256 id, uint256 amount, bytes memory data) external onlyRole(MINTER_ROLE) {
         _mint(to, id, amount, data);
     }
 
     /**
-     * @dev Mints multiple token types to a single account.
-     *
-     * @param to The address to mint tokens to.
-     * @param ids The token IDs to mint.
-     * @param amounts The amounts of each token to mint.
-     * @param data Additional data with no specified format.
+     * @notice Batch mints multiple token types to a single account
+     * @dev Restricted to addresses with MINTER_ROLE. Arrays must have matching lengths
+     * @param to Recipient address for minted tokens
+     * @param ids Array of token type identifiers to mint
+     * @param amounts Array of quantities to mint for each token type
+     * @param data Additional data passed to receiver contract if applicable
      */
     function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
         external
@@ -110,41 +118,41 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @dev Burns `amount` tokens of token type `id` from account `from`.
-     *
-     * @param from The address to burn tokens from.
-     * @param id The token ID to burn.
-     * @param amount The amount of tokens to burn.
+     * @notice Burns tokens of a specific type from an account
+     * @dev Restricted to addresses with BURNER_ROLE
+     * @param from Address to burn tokens from
+     * @param id Token type identifier to burn
+     * @param amount Quantity of tokens to burn
      */
     function burn(address from, uint256 id, uint256 amount) external onlyRole(BURNER_ROLE) {
         _burn(from, id, amount);
     }
 
     /**
-     * @dev Burns multiple token types from a single account.
-     *
-     * @param from The address to burn tokens from.
-     * @param ids The token IDs to burn.
-     * @param amounts The amounts of each token to burn.
+     * @notice Batch burns multiple token types from a single account
+     * @dev Restricted to addresses with BURNER_ROLE. Arrays must have matching lengths
+     * @param from Address to burn tokens from
+     * @param ids Array of token type identifiers to burn
+     * @param amounts Array of quantities to burn for each token type
      */
     function burnBatch(address from, uint256[] memory ids, uint256[] memory amounts) external onlyRole(BURNER_ROLE) {
         _burnBatch(from, ids, amounts);
     }
 
     /**
-     * @dev Sets the base URI for all tokens.
-     *
-     * @param baseURI The base URI to set.
+     * @notice Updates the base URI for all token metadata
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE
+     * @param baseURI New base URI for token metadata
      */
     function setBaseURI(string memory baseURI) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setBaseURI(baseURI);
     }
 
     /**
-     * @dev Sets the URI for a given token `id`.
-     *
-     * @param id The token ID to set the URI for.
-     * @param tokenURI The URI to set.
+     * @notice Updates the metadata URI for a specific token type
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE. Overrides base URI for this token
+     * @param id Token type identifier to update
+     * @param tokenURI New metadata URI for this token type
      */
     function setTokenURI(uint256 id, string memory tokenURI) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
         _setURI(id, tokenURI);
@@ -156,22 +164,15 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @dev Transfers a `value` amount of tokens of type `id` from `from` to `to`. Will mint (or burn) if `from`
-     * (or `to`) is the zero address.
-     *
-     * If `to` refers to a smart contract, it must implement {IERC1155Receiver-onERC1155Received} and return the
-     * acceptance magic value: `bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))`
-     * (i.e. 0xf23a6e61, or its own function selector).
-     *
-     * Reverts with {InvalidSelfTransfer} if `from` and `to` are the same address.
-     * Reverts with {InvalidZeroValueTransfer} if any of the `values` is zero.
-     *
-     * Emits a {TransferSingle} event, or a {TransferBatch} event if `ids` contains multiple values.
-     *
-     * @param from The address to transfer tokens from. If zero, it mints tokens to `to`.
-     * @param to The address to transfer tokens to. If zero, it burns tokens from `from`.
-     * @param ids The identifiers of the token types to transfer.
-     * @param values The numbers of tokens to transfer.
+     * @notice Internal function handling token transfers, mints, and burns
+     * @dev Enforces pause state, token existence, and transferability rules.
+     * Recipient contracts must implement IERC1155Receiver.
+     * @param from Source address (zero address for minting)
+     * @param to Destination address (zero address for burning)
+     * @param ids Array of token type identifiers
+     * @param values Array of quantities to transfer
+     * @custom:throws InvalidSelfTransfer When from equals to
+     * @custom:throws InvalidZeroValueTransfer When any value is zero
      */
     function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
         internal

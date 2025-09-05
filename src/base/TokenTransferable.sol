@@ -5,32 +5,34 @@ pragma solidity ^0.8.24;
 import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
 /**
- * @dev Abstract contract that provides token transferability management.
+ * @title TokenTransferable
+ * @author EVMAuth
+ * @notice Manages token transferability settings for soulbound functionality
+ * @dev Abstract contract enabling tokens to be marked as non-transferable (i.e. "soulbound").
+ * Uses EIP-7201 storage pattern for upgrade safety.
  */
 abstract contract TokenTransferable is ContextUpgradeable {
     /// @custom:storage-location erc7201:tokentransferable.storage.TokenTransferable
     struct TokenTransferableStorage {
         /**
-         * @dev Token transferability mapping.
-         * true = transferable, false = non-transferable
+         * @notice Transferability flag per token type
+         * @dev true = transferable, false = soulbound
          */
         mapping(uint256 => bool) transferable;
     }
 
     /**
-     * @dev Storage location for the `TokenTransferable` contract, as defined by EIP-7201.
-     *
-     * This is a keccak-256 hash of a unique string, minus 1, and then rounded down to the nearest
-     * multiple of 256 bits (32 bytes) to avoid potential storage slot collisions with other
-     * upgradeable contracts that may be added to the same deployment.
-     *
-     * keccak256(abi.encode(uint256(keccak256("tokentransferable.storage.TokenTransferable")) - 1)) & ~bytes32(uint256(0xff));
+     * @notice EIP-7201 storage slot for TokenTransferable state
+     * @dev Computed as: keccak256(abi.encode(uint256(keccak256("tokentransferable.storage.TokenTransferable")) - 1))
+     * & ~bytes32(uint256(0xff)). Prevents storage collisions in upgradeable contracts.
      */
     bytes32 private constant TokenTransferableStorageLocation =
         0xdaa3d1cf82c71b982a9e24ff7dadd71a10e8c3e82a219c0e60ca5c6b8e617700;
 
     /**
-     * @dev Returns the the storage struct for the `TokenTransferable` contract.
+     * @notice Retrieves the storage struct for TokenTransferable
+     * @dev Internal function using inline assembly for direct storage access
+     * @return $ Storage pointer to TokenTransferableStorage struct
      */
     function _getTokenTransferableStorage() private pure returns (TokenTransferableStorage storage $) {
         assembly {
@@ -39,21 +41,19 @@ abstract contract TokenTransferable is ContextUpgradeable {
     }
 
     /**
-     * @dev Error thrown when a transfer is attempted for a non-transferable token `id`.
+     * @notice Error for transfer attempts on soulbound tokens
+     * @param id Token type identifier that is non-transferable
      */
     error TokenIsNonTransferable(uint256 id);
 
     /**
-     * @dev Modifier to require that a token `id` can be transferred between accounts. If either `from` or `to`
-     * is the zero address, the transferability check is skipped (to allow minting and burning).
-     *
-     * Reverts with {TokenIsNonTransferable} error if the token `id` is non-transferable.
-     *
-     * @param from The address of the sender.
-     * @param to The address of the receiver.
-     * @param id The identifier of the token type to check.
-     * @notice This modifier should be applied to a core function that handle single token transfers,
-     * like the `_update` method in OpenZeppelin's {ERC6909} contract.
+     * @notice Validates single token transferability
+     * @dev Modifier allowing mints/burns but blocking transfers of soulbound tokens.
+     * Apply to single-token transfer functions like ERC6909's _update
+     * @param from Source address (zero for mints)
+     * @param to Destination address (zero for burns)
+     * @param id Token type identifier to check
+     * @custom:throws TokenIsNonTransferable When attempting to transfer soulbound token
      */
     modifier tokenTransferable(address from, address to, uint256 id) {
         TokenTransferableStorage storage $ = _getTokenTransferableStorage();
@@ -64,16 +64,13 @@ abstract contract TokenTransferable is ContextUpgradeable {
     }
 
     /**
-     * @dev Modifier to require that all token `ids` can be transferred between accounts. If either `from` or `to`
-     * is the zero address, the transferability check is skipped (to allow minting and burning).
-     *
-     * Reverts with {TokenIsNonTransferable} error if the token `id` is non-transferable.
-     *
-     * @param from The address of the sender.
-     * @param to The address of the receiver.
-     * @param ids The identifiers of the token types to check.
-     * @notice This modifier should be applied to a core function that handle batch token transfers,
-     * like the `_update` method in OpenZeppelin's {ERC1155} contract.
+     * @notice Validates batch token transferability
+     * @dev Modifier allowing mints/burns but blocking transfers of soulbound tokens.
+     * Apply to batch transfer functions like ERC1155's _update
+     * @param from Source address (zero for mints)
+     * @param to Destination address (zero for burns)
+     * @param ids Array of token type identifiers to check
+     * @custom:throws TokenIsNonTransferable When any token in batch is soulbound
      */
     modifier allTokensTransferable(address from, address to, uint256[] memory ids) {
         if (from != address(0) && to != address(0)) {
@@ -88,20 +85,22 @@ abstract contract TokenTransferable is ContextUpgradeable {
     }
 
     /**
-     * @dev Initializer that calls the parent initializers for upgradeable contracts.
+     * @notice Internal initializer for TokenTransferable setup
+     * @dev Currently empty as no initialization needed
      */
     function __TokenTransferable_init() internal onlyInitializing { }
 
     /**
-     * @dev Unchained initializer that only initializes THIS contract's storage.
+     * @notice Unchained initializer for contract-specific storage
+     * @dev Currently empty but reserved for future initialization
      */
     function __TokenTransferable_init_unchained() internal onlyInitializing { }
 
     /**
-     * @dev Check if a token `id` can be transferred between accounts.
-     *
-     * @param id The identifier of the token type to check.
-     * @return bool indicating whether the token `id` is transferable.
+     * @notice Checks if token type allows transfers
+     * @dev Returns transferability status
+     * @param id Token type identifier
+     * @return True if transferable, false if soulbound
      */
     function isTransferable(uint256 id) public view virtual returns (bool) {
         TokenTransferableStorage storage $ = _getTokenTransferableStorage();
@@ -109,10 +108,10 @@ abstract contract TokenTransferable is ContextUpgradeable {
     }
 
     /**
-     * @dev Sets the transferability of a given token `id`.
-     *
-     * @param id The token ID to configure.
-     * @param transferable True if the token should be transferable, false otherwise.
+     * @notice Internal function to configure token transferability
+     * @dev Sets whether token type is transferable or soulbound
+     * @param id Token type identifier
+     * @param transferable True for transferable, false for soulbound
      */
     function _setTransferable(uint256 id, bool transferable) internal virtual {
         TokenTransferableStorage storage $ = _getTokenTransferableStorage();

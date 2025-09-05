@@ -9,10 +9,12 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/P
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
- * @dev Abstract contract that provides a standardized access control mechanism for token contracts,
- * including roles for upgrade management, access management, token management, minting, burning,
- * and treasury management. It also includes account freezing and token pausing capabilities via the
- * {AccountFreezable} and {PausableUpgradeable} extensions.
+ * @title TokenAccessControl
+ * @author EVMAuth
+ * @notice Provides comprehensive role-based access control for token management
+ * @dev Abstract contract implementing six distinct roles for granular permission control:
+ * upgrade management, access management, token management, minting, burning, and treasury operations.
+ * Includes account freezing via AccountFreezable and contract pausing via PausableUpgradeable.
  */
 abstract contract TokenAccessControl is
     AccessControlDefaultAdminRulesUpgradeable,
@@ -20,40 +22,46 @@ abstract contract TokenAccessControl is
     PausableUpgradeable
 {
     /**
-     * @dev Role required to upgrade the contract.
+     * @notice Role identifier for contract upgrade permissions
+     * @dev Required for UUPS upgrade authorization
      */
     bytes32 public constant UPGRADE_MANAGER_ROLE = keccak256("UPGRADE_MANAGER_ROLE");
 
     /**
-     * @dev Role required to pause/un-pause the contract and freeze/un-freeze accounts.
+     * @notice Role identifier for access control management
+     * @dev Permits pausing/unpausing contract and freezing/unfreezing accounts
      */
     bytes32 public constant ACCESS_MANAGER_ROLE = keccak256("ACCESS_MANAGER_ROLE");
 
     /**
-     * @dev Role required to manage token configuration, metadata, and content URIs.
+     * @notice Role identifier for token configuration management
+     * @dev Permits modifying token settings, metadata, and URIs
      */
     bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
 
     /**
-     * @dev Role required to mint new tokens.
+     * @notice Role identifier for token minting permissions
+     * @dev Required to create new tokens
      */
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /**
-     * @dev Role required to burn tokens.
+     * @notice Role identifier for token burning permissions
+     * @dev Required to destroy existing tokens
      */
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
     /**
-     * @dev Role required to modify the treasury address (if applicable).
+     * @notice Role identifier for treasury management
+     * @dev Permits modifying the treasury address for revenue collection
      */
     bytes32 public constant TREASURER_ROLE = keccak256("TREASURER_ROLE");
 
     /**
-     * @dev Initializer that calls the parent initializers for upgradeable contracts.
-     *
-     * @param initialDelay The delay in seconds before a new default admin can exercise their role.
-     * @param initialDefaultAdmin The address to be granted the initial default admin role.
+     * @notice Internal initializer for access control setup
+     * @dev Initializes AccessControlDefaultAdminRules with security delay
+     * @param initialDelay Seconds before new admin can exercise role (security delay)
+     * @param initialDefaultAdmin Address receiving initial admin role
      */
     function __TokenAccessControl_init(uint48 initialDelay, address initialDefaultAdmin) internal onlyInitializing {
         __AccessControlDefaultAdminRules_init(initialDelay, initialDefaultAdmin);
@@ -61,31 +69,27 @@ abstract contract TokenAccessControl is
     }
 
     /**
-     * @dev Unchained initializer that only initializes THIS contract's storage.
+     * @notice Unchained initializer for contract-specific storage
+     * @dev Currently empty but reserved for future TokenAccessControl-specific initialization
      */
     function __TokenAccessControl_init_unchained() internal onlyInitializing { }
 
     /**
-     * @dev Freezes an `account`, preventing it from purchasing, transferring, or receiving tokens.
-     * If the account is already frozen, this function does nothing.
-     *
-     * Reverts with {InvalidAddress} if the `account` is the zero address.
-     *
-     * Emits a {AccountStatusUpdate} event with `ACCOUNT_FROZEN_STATUS`.
-     *
-     * @param account The address of the account to freeze.
+     * @notice Freezes an account, blocking all token operations
+     * @dev Restricted to ACCESS_MANAGER_ROLE. Idempotent operation
+     * @param account Address to freeze (cannot be zero address)
+     * @custom:throws InvalidAddress When account is zero address
+     * @custom:emits AccountStatusUpdate With ACCOUNT_FROZEN_STATUS
      */
     function freezeAccount(address account) external onlyRole(ACCESS_MANAGER_ROLE) {
         _freezeAccount(account);
     }
 
     /**
-     * @dev Unfreezes an `account`, allowing it to purchase, transfer, and receive tokens again.
-     * If the account is not frozen, this function does nothing.
-     *
-     * Emits a {AccountStatusUpdate} event with `ACCOUNT_UNFROZEN_STATUS`.
-     *
-     * @param account The address of the account to unfreeze.
+     * @notice Unfreezes an account, restoring all token operations
+     * @dev Restricted to ACCESS_MANAGER_ROLE. Idempotent operation
+     * @param account Address to unfreeze
+     * @custom:emits AccountStatusUpdate With ACCOUNT_UNFROZEN_STATUS
      */
     function unfreezeAccount(address account) external onlyRole(ACCESS_MANAGER_ROLE) {
         _unfreezeAccount(account);
