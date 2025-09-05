@@ -432,28 +432,31 @@ The main abstract contract that combines all base functionality and provides a u
 
 EVMAuth provides the following SDKs and libraries for easy integration with applications and frameworks:
 
-- [TypeScript SDK](https://github.com/evmauth/evmauth-ts)
+- [TypeScript SDK]
 - Python SDK (coming soon)
 
 To request additional SDKs or libraries, create a new issue with the `question` label.
 
 ## Contributing
 
-To contribute to this open source project, please follow the guidelines in the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+To contribute to this open source project, please follow the guidelines in the [Contributing Guide].
 
 ## License
 
-The **EVMAuth** contract is released under the MIT License. See the [LICENSE](LICENSE) file for details.
+The **EVMAuth** contract is released under the MIT License. See the [LICENSE] file for details.
 
 [Base]: https://base.org/
+[Contributing Guide]: https://github.com/evmauth/evmauth-core/blob/main/CONTRIBUTING.md
 [ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155
 [ERC-6909]: https://eips.ethereum.org/EIPS/eip-6909
 [ERC-7201]: https://eips.ethereum.org/EIPS/eip-7201
 [Ethereum]: https://ethereum.org/en/
+[LICENSE]: https://github.com/evmauth/evmauth-core/blob/main/LICENSE
 [Monad]: https://monad.xyz/
 [Polygon]: https://polygon.technology/
 [Radius]: https://radiustech.xyz/
 [transfer delay]: https://docs.openzeppelin.com/contracts/5.x/api/access#AccessControlDefaultAdminRules-defaultAdminDelay--
 [Tron]: https://tron.network/
+[TypeScript SDK]: https://github.com/evmauth/evmauth-ts
 [UUPS]: https://docs.openzeppelin.com/contracts-stylus/0.3.0-rc.1/uups-proxy
 [UUPSUpgradeable]: https://docs.openzeppelin.com/contracts/5.x/api/proxy#UUPSUpgradeable

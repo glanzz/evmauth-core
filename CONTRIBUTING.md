@@ -121,40 +121,50 @@ forge install OpenZeppelin/openzeppelin-foundry-upgrades
 
 ## Running Tests
 
-To run the tests, use the following command:
+It is highly recommended that you run the formatter, clear the cache, recompile the contracts, then run tests with detailed output (i.e. execution traces for all tests + setup traces for failing tests):
+
+```sh
+forge fmt && forge test --force -vvv
+```
+
+To just run all tests, simply use:
 
 ```sh
 forge test
 ```
 
-It is a good practice to format the code before running tests:
+Add the `--force` flag to clear the cache and recompile the contracts first:
 
 ```sh
-forge fmt && forge test
+forge test --force
 ```
 
-Use the `--force` flag to recompile the contracts before running the tests:
+To run tests with detailed output, use the `-vv`, `-vvv`, `-vvvv`, or `-vvvvv` flag:
 
 ```sh
-forge fmt && forge test --force
+# Print logs for all tests.
+forge test -vv
+
+# Print execution traces for failing tests.
+forge test -vvv
+
+# Print execution traces for all tests, and setup traces for failing tests.
+forge test -vvvv
+
+# Print execution and setup traces for all tests, including storage changes.
+forge test -vvvvv
 ```
 
-To run tests with detailed output, use the `-vv`, `-vvv`, or `-vvvv` flag:
+To run all tests in a specific file, use the `--match-path` option:
 
 ```sh
-forge fmt && forge test -vvv
+forge test --match-path test/EVMAuth6909.t.sol
 ```
 
-To specify a particular test file, use the `--match-path` option:
+To run any test function with a specific name, use the `--match-test` option:
 
 ```sh
-forge fmt && forge test --match-path test/YourTestFile.t.sol
-```
-
-To specify a particular test function, use the `--match-test` option:
-
-```sh
-forge fmt && forge test --match-test testFunctionName
+forge test --match-test test_initialize
 ```
 
 More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/test).
@@ -164,7 +174,7 @@ More options can be found in the [Forge Docs](https://getfoundry.sh/forge/refere
 To generate a coverage report, use:
 
 ```sh
-forge fmt && forge coverage
+forge coverage
 ```
 
 You can use the same flags as in the test command to customize the coverage report.
