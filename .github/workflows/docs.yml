@@ -19,6 +19,24 @@ jobs:
       - name: Generate docs
         run: forge doc --build --include
 
+      - name: Install and configure mdbook-mermaid
+        run: |
+          cargo install mdbook-mermaid
+          mdbook-mermaid install docs/
+          
+          # Add preprocessor config to generated book.toml
+          cat >> docs/book.toml << 'EOF'
+          
+          [preprocessor.mermaid]
+          command = "mdbook-mermaid"
+          
+          [output.html]
+          additional-js = ["mermaid.min.js", "mermaid-init.js"]
+          EOF
+          
+          # Rebuild with mermaid support
+          cd docs && mdbook build
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
