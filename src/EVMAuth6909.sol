@@ -174,6 +174,24 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
             revert InvalidZeroValueTransfer();
         }
 
+        // Update balance records in the TokenEphemeral contract
+        if (from == address(0)) {
+            // Minting
+            pruneBalanceRecords(to, id);
+            _addToBalanceRecord(to, id, amount);
+        } else if (to == address(0)) {
+            // Burning
+            _deductFromBalanceRecords(from, id, amount);
+            pruneBalanceRecords(from, id);
+        } else {
+            // Transfer
+            _deductFromBalanceRecords(from, id, amount);
+            pruneBalanceRecords(from, id);
+            pruneBalanceRecords(to, id);
+            _addToBalanceRecord(to, id, amount);
+        }
+
+        // Update balances in the ERC1155 contract
         super._update(from, to, id, amount);
     }
 }

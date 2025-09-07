@@ -194,6 +194,30 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
             }
         }
 
+        // Update balance records in the TokenEphemeral contract
+        if (from == address(0)) {
+            // Minting
+            for (uint256 i = 0; i < ids.length; ++i) {
+                pruneBalanceRecords(to, ids[i]);
+                _addToBalanceRecord(to, ids[i], values[i]);
+            }
+        } else if (to == address(0)) {
+            // Burning
+            for (uint256 i = 0; i < ids.length; ++i) {
+                _deductFromBalanceRecords(from, ids[i], values[i]);
+                pruneBalanceRecords(from, ids[i]);
+            }
+        } else {
+            // Transfer
+            for (uint256 i = 0; i < ids.length; ++i) {
+                _deductFromBalanceRecords(from, ids[i], values[i]);
+                pruneBalanceRecords(from, ids[i]);
+                pruneBalanceRecords(to, ids[i]);
+                _addToBalanceRecord(to, ids[i], values[i]);
+            }
+        }
+
+        // Update balances in the ERC1155 contract
         super._update(from, to, ids, values);
     }
 }
