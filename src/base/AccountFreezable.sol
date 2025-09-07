@@ -85,7 +85,9 @@ abstract contract AccountFreezable is Initializable {
      * @notice Internal initializer for AccountFreezable setup
      * @dev Currently empty as no initialization needed
      */
-    function __AccountFreezable_init() internal onlyInitializing { }
+    function __AccountFreezable_init() internal onlyInitializing {
+        __AccountFreezable_init_unchained();
+    }
 
     /**
      * @notice Unchained initializer for contract-specific storage
@@ -95,7 +97,7 @@ abstract contract AccountFreezable is Initializable {
 
     /**
      * @notice Checks if an account is frozen
-     * @dev Frozen accounts cannot perform token operations
+     * @dev Frozen accounts should not be permitted to perform token operations
      * @param account Address to check
      * @return True if account is frozen, false otherwise
      */

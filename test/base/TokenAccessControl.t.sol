@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 
 import { TokenAccessControl } from "src/base/TokenAccessControl.sol";
 import { BaseTestWithAccessControl } from "test/_helpers/BaseTest.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract MockTokenAccessControlV1 is TokenAccessControl, UUPSUpgradeable {
@@ -76,5 +77,79 @@ contract TokenAccessControlTest is BaseTestWithAccessControl {
 
     function test_initialize() public view {
         assertTrue(v1.hasRole(DEFAULT_ADMIN_ROLE, owner));
+    }
+
+    function test_roles() public view {
+        assertEq(v1.DEFAULT_ADMIN_ROLE(), DEFAULT_ADMIN_ROLE);
+        assertEq(v1.UPGRADE_MANAGER_ROLE(), UPGRADE_MANAGER_ROLE);
+        assertEq(v1.ACCESS_MANAGER_ROLE(), ACCESS_MANAGER_ROLE);
+        assertEq(v1.TOKEN_MANAGER_ROLE(), TOKEN_MANAGER_ROLE);
+        assertEq(v1.MINTER_ROLE(), MINTER_ROLE);
+        assertEq(v1.BURNER_ROLE(), BURNER_ROLE);
+        assertEq(v1.TREASURER_ROLE(), TREASURER_ROLE);
+    }
+
+    function test_hasRole() public view {
+        assertTrue(v1.hasRole(UPGRADE_MANAGER_ROLE, owner));
+        assertTrue(v1.hasRole(ACCESS_MANAGER_ROLE, accessManager));
+        assertTrue(v1.hasRole(TOKEN_MANAGER_ROLE, tokenManager));
+        assertTrue(v1.hasRole(MINTER_ROLE, minter));
+        assertTrue(v1.hasRole(BURNER_ROLE, burner));
+        assertTrue(v1.hasRole(TREASURER_ROLE, treasurer));
+    }
+
+    function test_freezeAccount() public {
+        // Verify that accessManager has the ACCESS_MANAGER_ROLE
+        assertTrue(v1.hasRole(ACCESS_MANAGER_ROLE, accessManager));
+
+        // Freeze Alice's account
+        vm.prank(accessManager);
+        v1.freezeAccount(alice);
+
+        // Verify that Alice's account is frozen
+        assertTrue(v1.isFrozen(alice));
+    }
+
+    function testRevert_freezeAccount_notAuthorized() public {
+        // Verify that Alice does not have the ACCESS_MANAGER_ROLE
+        assertFalse(v1.hasRole(ACCESS_MANAGER_ROLE, alice));
+
+        // Expect a revert when Alice tries to freeze an account
+        vm.startPrank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ACCESS_MANAGER_ROLE)
+        );
+        v1.freezeAccount(bob);
+        vm.stopPrank();
+    }
+
+    function test_unfreezeAccount() public {
+        // Verify that accessManager has the ACCESS_MANAGER_ROLE
+        assertTrue(v1.hasRole(ACCESS_MANAGER_ROLE, accessManager));
+
+        // Freeze Alice's account first
+        vm.prank(accessManager);
+        v1.freezeAccount(alice);
+        assertTrue(v1.isFrozen(alice));
+
+        // Now unfreeze Alice's account
+        vm.prank(accessManager);
+        v1.unfreezeAccount(alice);
+
+        // Verify that Alice's account is no longer frozen
+        assertFalse(v1.isFrozen(alice));
+    }
+
+    function testRevert_unfreezeAccount_notAuthorized() public {
+        // Verify that Alice does not have the ACCESS_MANAGER_ROLE
+        assertFalse(v1.hasRole(ACCESS_MANAGER_ROLE, alice));
+
+        // Expect a revert when Alice tries to unfreeze an account
+        vm.startPrank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ACCESS_MANAGER_ROLE)
+        );
+        v1.unfreezeAccount(bob);
+        vm.stopPrank();
     }
 }
