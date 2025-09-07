@@ -48,6 +48,11 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
         return _expiresAt(id);
     }
 
+    // @dev Expose internal function for testing
+    function maxBalanceRecords() public view returns (uint256) {
+        return _maxBalanceRecords();
+    }
+
     // @dev Helper function to mint tokens for testing.
     function mint(address to, uint256 id, uint256 amount) external onlyOwner {
         _updateBalanceRecords(address(0), to, id, amount);
@@ -245,5 +250,103 @@ contract TokenEphemeralTest is BaseTest {
         // Verify Alice's balance records for Token ID 1 after pruning.
         records = v1.balanceRecordsOf(alice, 1);
         assertEq(records.length, 0); // All records should be pruned
+    }
+
+    function testFuzz_setTTL_succeeds(uint256 tokenId, uint48 ttl) public {
+        // Bound TTL to reasonable values to avoid overflow
+        ttl = uint48(bound(ttl, 0, type(uint48).max));
+
+        // Set the token TTL
+        vm.prank(owner);
+        v1.setTTL(tokenId, ttl);
+
+        // Verify the TTL was set correctly
+        uint256 result = v1.tokenTTL(tokenId);
+        assertEq(result, ttl, "Token TTL should match the set value");
+    }
+
+    function testFuzz_expiresAt_permanentTokens(uint256 tokenId, uint256 timestamp) public {
+        // Bound timestamp to reasonable values to avoid overflow
+        timestamp = bound(timestamp, 1, type(uint128).max);
+
+        // Set the block timestamp and token TTL to 0 (permanent)
+        vm.warp(timestamp);
+        assertEq(v1.tokenTTL(tokenId), 0);
+
+        // Verify that permanent tokens return max uint256
+        uint256 result = v1.expiresAt(tokenId);
+        assertEq(result, type(uint256).max, "Permanent tokens should return max uint256");
+    }
+
+    function testFuzz_expiresAt_expirationRange(uint256 tokenId, uint48 ttl, uint256 timestamp) public {
+        // Ensure TTL is greater than twice maxBalanceRecords, to ensure a bucket size of at least 2 seconds
+        ttl = uint48(bound(ttl, v1.maxBalanceRecords() * 2, type(uint48).max));
+
+        // Bound to prevent overflow in calculations
+        timestamp = bound(timestamp, 1, type(uint64).max);
+
+        // Set the block timestamp and token TTL
+        vm.warp(timestamp);
+        vm.prank(owner);
+        v1.setTTL(tokenId, ttl);
+
+        // Calculate expected expiration range based on bucket size
+        uint256 bucketSize = ttl / v1.maxBalanceRecords();
+        uint256 minimumExpiration = block.timestamp + ttl;
+        uint256 maximumExpiration = block.timestamp + ttl + bucketSize - 1;
+
+        // Verify the expiration falls within the expected range
+        uint256 result = v1.expiresAt(tokenId);
+        assertGe(result, minimumExpiration, "Result should be greater than or equal to minimum expiration");
+        assertLe(result, maximumExpiration, "Result should be less than or equal to maximum expiration");
+    }
+
+    function testFuzz_expiresAt_smallTTLs(uint256 tokenId, uint48 ttl, uint256 timestamp) public {
+        // Ensure TTL is greater than zero but no more than maxBalanceRecords, to force bucket size of 1 second
+        ttl = uint48(bound(ttl, 1, v1.maxBalanceRecords()));
+
+        // Bound to prevent overflow in calculations
+        timestamp = bound(timestamp, 1, type(uint64).max);
+
+        // Set the block timestamp and token TTL
+        vm.warp(timestamp);
+        vm.prank(owner);
+        v1.setTTL(tokenId, ttl);
+
+        // For small TTLs, the bucket size will be 1 second, so expiration should be exact
+        uint256 result = v1.expiresAt(tokenId);
+        assertEq(result, block.timestamp + ttl, "Result should equal minimum expiration when bucket size is 1");
+    }
+
+    function testFuzz_balanceRecordsOf_arraySizeNeverExceedsMax(uint256 tokenId, uint48 ttl, uint256 amount) public {
+        // Bound TTL to a reasonable value
+        ttl = uint48(bound(ttl, 1, 365 days));
+
+        // Bound amount to prevent overflow in calculations
+        amount = bound(amount, 1, 100);
+
+        // Ensure we mint more than the max balance records
+        uint256 maxRecords = v1.maxBalanceRecords();
+        uint256 numMints = maxRecords * 2;
+
+        // Set token TTL
+        vm.prank(owner);
+        v1.setTTL(tokenId, ttl);
+
+        // Mint tokens at different timestamps to create multiple balance records
+        for (uint256 i = 0; i < numMints; i++) {
+            // Advance time by at least bucket size, to ensure different expiration buckets
+            uint256 bucketSize = ttl / maxRecords;
+            if (bucketSize == 0) bucketSize = 1;
+            vm.warp(block.timestamp + bucketSize + i);
+
+            // Mint some amount of tokens
+            vm.prank(owner);
+            v1.mint(alice, tokenId, amount);
+
+            // Check that balance records never exceed max plus one (for the current bucket)
+            TokenEphemeral.BalanceRecord[] memory records = v1.balanceRecordsOf(alice, tokenId);
+            assertLe(records.length, maxRecords + 1, "Balance records should never exceed maxBalanceRecords");
+        }
     }
 }

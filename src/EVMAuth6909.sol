@@ -18,14 +18,14 @@ import { IERC6909 } from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol"
 /**
  * @title EVMAuth6909
  * @author EVMAuth
- * @notice Multi-token authentication contract implementing ERC-6909 with time-based access control
+ * @notice Multi-token authentication contract implementing ERC-6909 with time-based access control.
  * @dev Extends ERC-6909 with authorization features including time-to-live tokens, role-based access,
  * and configurable purchasing mechanisms. Implements UUPS upgradeable pattern for future enhancements.
  */
 contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable, EVMAuth {
     /**
-     * @notice Initializes the EVMAuth6909 contract with admin and treasury configuration
-     * @dev Initializer used when deployed directly as an upgradeable contract
+     * @notice Initializes the EVMAuth6909 contract with admin and treasury configuration.
+     * @dev Initializer used when deployed directly as an upgradeable contract.
      * @param initialDelay Delay in seconds before a new default admin can exercise their role
      * @param initialDefaultAdmin Address to be granted the initial default admin role
      * @param initialTreasury Address where purchase revenues will be sent
@@ -41,8 +41,8 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @notice Internal initializer that sets up all parent contracts
-     * @dev Calls parent initializers in correct order for upgradeable contracts
+     * @notice Internal initializer that sets up all parent contracts.
+     * @dev Calls parent initializers in correct order for upgradeable contracts.
      * @param initialDelay Delay in seconds before a new default admin can exercise their role
      * @param initialDefaultAdmin Address to be granted the initial default admin role
      * @param initialTreasury Address where purchase revenues will be sent
@@ -59,8 +59,8 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @notice Unchained initializer for contract-specific storage
-     * @dev Sets the contract URI for ERC-6909 content URI support
+     * @notice Unchained initializer for contract-specific storage.
+     * @dev Sets the contract URI for ERC-6909 content URI support.
      * @param uri_ Contract URI per EIP-6909 content URI extension
      */
     function __EVMAuth6909_init_unchained(string memory uri_) internal onlyInitializing {
@@ -90,8 +90,8 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @notice Mints new tokens of a specific type to an account
-     * @dev Restricted to addresses with MINTER_ROLE
+     * @notice Mints new tokens of a specific type to an account.
+     * @dev Restricted to addresses with MINTER_ROLE.
      * @param to Recipient address for minted tokens
      * @param id Token type identifier to mint
      * @param amount Quantity of tokens to mint
@@ -101,8 +101,8 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @notice Burns tokens of a specific type from an account
-     * @dev Restricted to addresses with BURNER_ROLE
+     * @notice Burns tokens of a specific type from an account.
+     * @dev Restricted to addresses with BURNER_ROLE.
      * @param from Address to burn tokens from
      * @param id Token type identifier to burn
      * @param amount Quantity of tokens to burn
@@ -112,8 +112,8 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @notice Updates the contract-level metadata URI
-     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE
+     * @notice Updates the contract-level metadata URI.
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE.
      * @param contractURI New contract metadata URI
      */
     function setContractURI(string memory contractURI) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
@@ -121,8 +121,8 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @notice Updates the metadata URI for a specific token type
-     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE
+     * @notice Updates the metadata URI for a specific token type.
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE.
      * @param id Token type identifier to update
      * @param contentURI New metadata URI for this token type
      */
@@ -131,8 +131,8 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @notice Updates the on-chain metadata for a specific token type
-     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE. Sets name, symbol, and decimals
+     * @notice Updates the on-chain metadata for a specific token type.
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE. Sets name, symbol, and decimals.
      * @param id Token type identifier to update
      * @param name Display name for the token type
      * @param symbol Trading symbol for the token type
@@ -154,8 +154,8 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
     }
 
     /**
-     * @notice Internal function handling token transfers, mints, and burns
-     * @dev Enforces pause state and validates transfers. No receiver callbacks in ERC-6909
+     * @notice Internal function handling token transfers, mints, and burns.
+     * @dev Enforces pause state and validates transfers. No receiver callbacks in ERC-6909.
      * @param from Source address (zero address for minting)
      * @param to Destination address (zero address for burning)
      * @param id Token type identifier

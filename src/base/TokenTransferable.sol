@@ -7,7 +7,7 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 /**
  * @title TokenTransferable
  * @author EVMAuth
- * @notice Manages token transferability settings for soulbound functionality
+ * @notice Manages token transferability settings for soulbound functionality.
  * @dev Abstract contract enabling tokens to be marked as non-transferable (i.e. "soulbound").
  * Uses EIP-7201 storage pattern for upgrade safety.
  */
@@ -15,14 +15,14 @@ abstract contract TokenTransferable is ContextUpgradeable {
     /// @custom:storage-location erc7201:tokentransferable.storage.TokenTransferable
     struct TokenTransferableStorage {
         /**
-         * @notice Transferability flag per token type
-         * @dev true = transferable, false = soulbound
+         * @notice Transferability flag per token type.
+         * @dev true = transferable, false = soulbound.
          */
         mapping(uint256 => bool) transferable;
     }
 
     /**
-     * @notice EIP-7201 storage slot for TokenTransferable state
+     * @notice EIP-7201 storage slot for TokenTransferable state.
      * @dev Computed as: keccak256(abi.encode(uint256(keccak256("tokentransferable.storage.TokenTransferable")) - 1))
      * & ~bytes32(uint256(0xff)). Prevents storage collisions in upgradeable contracts.
      */
@@ -30,8 +30,8 @@ abstract contract TokenTransferable is ContextUpgradeable {
         0xdaa3d1cf82c71b982a9e24ff7dadd71a10e8c3e82a219c0e60ca5c6b8e617700;
 
     /**
-     * @notice Retrieves the storage struct for TokenTransferable
-     * @dev Internal function using inline assembly for direct storage access
+     * @notice Retrieves the storage struct for TokenTransferable.
+     * @dev Internal function using inline assembly for direct storage access.
      * @return $ Storage pointer to TokenTransferableStorage struct
      */
     function _getTokenTransferableStorage() private pure returns (TokenTransferableStorage storage $) {
@@ -41,13 +41,13 @@ abstract contract TokenTransferable is ContextUpgradeable {
     }
 
     /**
-     * @notice Error for transfer attempts on soulbound tokens
+     * @notice Error for transfer attempts on soulbound tokens.
      * @param id Token type identifier that is non-transferable
      */
     error TokenIsNonTransferable(uint256 id);
 
     /**
-     * @notice Validates single token transferability
+     * @notice Validates single token transferability.
      * @dev Modifier allowing mints/burns but blocking transfers of soulbound tokens.
      * Apply to single-token transfer functions like ERC6909's _update
      * @param from Source address (zero for mints)
@@ -64,9 +64,9 @@ abstract contract TokenTransferable is ContextUpgradeable {
     }
 
     /**
-     * @notice Validates batch token transferability
+     * @notice Validates batch token transferability.
      * @dev Modifier allowing mints/burns but blocking transfers of soulbound tokens.
-     * Apply to batch transfer functions like ERC1155's _update
+     * Apply to batch transfer functions like ERC1155's _update.
      * @param from Source address (zero for mints)
      * @param to Destination address (zero for burns)
      * @param ids Array of token type identifiers to check
@@ -85,20 +85,20 @@ abstract contract TokenTransferable is ContextUpgradeable {
     }
 
     /**
-     * @notice Internal initializer for TokenTransferable setup
-     * @dev Currently empty as no initialization needed
+     * @notice Internal initializer for TokenTransferable setup.
+     * @dev Currently empty as no initialization needed.
      */
     function __TokenTransferable_init() internal onlyInitializing { }
 
     /**
-     * @notice Unchained initializer for contract-specific storage
-     * @dev Currently empty but reserved for future initialization
+     * @notice Unchained initializer for contract-specific storage.
+     * @dev Currently empty but reserved for future initialization.
      */
     function __TokenTransferable_init_unchained() internal onlyInitializing { }
 
     /**
-     * @notice Checks if token type allows transfers
-     * @dev Returns transferability status
+     * @notice Checks if token type allows transfers.
+     * @dev Returns transferability status.
      * @param id Token type identifier
      * @return True if transferable, false if soulbound
      */
@@ -108,8 +108,8 @@ abstract contract TokenTransferable is ContextUpgradeable {
     }
 
     /**
-     * @notice Internal function to configure token transferability
-     * @dev Sets whether token type is transferable or soulbound
+     * @notice Internal function to configure token transferability.
+     * @dev Sets whether token type is transferable or soulbound.
      * @param id Token type identifier
      * @param transferable True for transferable, false for soulbound
      */

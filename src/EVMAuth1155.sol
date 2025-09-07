@@ -15,14 +15,14 @@ import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol
 /**
  * @title EVMAuth1155
  * @author EVMAuth
- * @notice Multi-token authentication contract implementing ERC-1155 with time-based access control
+ * @notice Multi-token authentication contract implementing ERC-1155 with time-based access control.
  * @dev Extends ERC-1155 with authorization features including time-to-live tokens, role-based access,
  * and configurable purchasing mechanisms. Implements UUPS upgradeable pattern for future enhancements.
  */
 contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     /**
-     * @notice Initializes the EVMAuth1155 contract with admin and treasury configuration
-     * @dev Initializer used when deployed directly as an upgradeable contract
+     * @notice Initializes the EVMAuth1155 contract with admin and treasury configuration.
+     * @dev Initializer used when deployed directly as an upgradeable contract.
      * @param initialDelay Delay in seconds before a new default admin can exercise their role
      * @param initialDefaultAdmin Address to be granted the initial default admin role
      * @param initialTreasury Address where purchase revenues will be sent
@@ -38,8 +38,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @notice Internal initializer that sets up all parent contracts
-     * @dev Calls parent initializers in correct order for upgradeable contracts
+     * @notice Internal initializer that sets up all parent contracts.
+     * @dev Calls parent initializers in correct order for upgradeable contracts.
      * @param initialDelay Delay in seconds before a new default admin can exercise their role
      * @param initialDefaultAdmin Address to be granted the initial default admin role
      * @param initialTreasury Address where purchase revenues will be sent
@@ -58,8 +58,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @notice Unchained initializer for contract-specific storage
-     * @dev Currently empty but reserved for future EVMAuth1155-specific initialization
+     * @notice Unchained initializer for contract-specific storage.
+     * @dev Currently empty but reserved for future EVMAuth1155-specific initialization.
      */
     function __EVMAuth1155_init_unchained() internal onlyInitializing { }
 
@@ -91,8 +91,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @notice Mints new tokens of a specific type to an account
-     * @dev Restricted to addresses with MINTER_ROLE
+     * @notice Mints new tokens of a specific type to an account.
+     * @dev Restricted to addresses with MINTER_ROLE.
      * @param to Recipient address for minted tokens
      * @param id Token type identifier to mint
      * @param amount Quantity of tokens to mint
@@ -103,8 +103,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @notice Batch mints multiple token types to a single account
-     * @dev Restricted to addresses with MINTER_ROLE. Arrays must have matching lengths
+     * @notice Batch mints multiple token types to a single account.
+     * @dev Restricted to addresses with MINTER_ROLE. Arrays must have matching lengths.
      * @param to Recipient address for minted tokens
      * @param ids Array of token type identifiers to mint
      * @param amounts Array of quantities to mint for each token type
@@ -118,8 +118,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @notice Burns tokens of a specific type from an account
-     * @dev Restricted to addresses with BURNER_ROLE
+     * @notice Burns tokens of a specific type from an account.
+     * @dev Restricted to addresses with BURNER_ROLE.
      * @param from Address to burn tokens from
      * @param id Token type identifier to burn
      * @param amount Quantity of tokens to burn
@@ -129,8 +129,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @notice Batch burns multiple token types from a single account
-     * @dev Restricted to addresses with BURNER_ROLE. Arrays must have matching lengths
+     * @notice Batch burns multiple token types from a single account.
+     * @dev Restricted to addresses with BURNER_ROLE. Arrays must have matching lengths.
      * @param from Address to burn tokens from
      * @param ids Array of token type identifiers to burn
      * @param amounts Array of quantities to burn for each token type
@@ -140,8 +140,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @notice Updates the base URI for all token metadata
-     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE
+     * @notice Updates the base URI for all token metadata.
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE.
      * @param baseURI New base URI for token metadata
      */
     function setBaseURI(string memory baseURI) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
@@ -149,8 +149,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @notice Updates the metadata URI for a specific token type
-     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE. Overrides base URI for this token
+     * @notice Updates the metadata URI for a specific token type.
+     * @dev Restricted to addresses with TOKEN_MANAGER_ROLE. Overrides base URI for this token.
      * @param id Token type identifier to update
      * @param tokenURI New metadata URI for this token type
      */
@@ -164,7 +164,7 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
     }
 
     /**
-     * @notice Internal function handling token transfers, mints, and burns
+     * @notice Internal function handling token transfers, mints, and burns.
      * @dev Enforces pause state, token existence, and transferability rules.
      * Recipient contracts must implement IERC1155Receiver.
      * @param from Source address (zero address for minting)

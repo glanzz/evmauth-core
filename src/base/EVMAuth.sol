@@ -12,8 +12,8 @@ pragma solidity ^0.8.24;
 /**
  * @title EVMAuth
  * @author EVMAuth
- * @notice Core abstract contract for EVM-based authentication tokens
- * @dev Combines access control, sequential token IDs, token expiry, direct purchasing, and token transfer
+ * @notice Core abstract contract for EVM-based authentication tokens.
+ * @dev Combines access control, sequential token IDs, token expiry, direct purchasing, and token transfer.
  * restriction into a unified token management system. Implements UUPS upgradeable pattern.
  */
 abstract contract EVMAuth is
@@ -25,7 +25,7 @@ abstract contract EVMAuth is
     UUPSUpgradeable
 {
     /**
-     * @notice Configuration parameters for a token type
+     * @notice Configuration parameters for a token type.
      * @param price Native currency price for purchasing this token
      * @param erc20Prices Array of accepted ERC-20 tokens and their prices
      * @param ttl Time-to-live in seconds (0 for permanent tokens)
@@ -39,7 +39,7 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Complete token type information including ID and configuration
+     * @notice Complete token type information including ID and configuration.
      * @param id Unique identifier for the token type
      * @param config Full configuration settings for the token
      */
@@ -49,26 +49,26 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Emitted when a token type is created or reconfigured
+     * @notice Emitted when a token type is created or reconfigured.
      * @param id Token type identifier
      * @param config New configuration settings
      */
     event EVMAuthTokenConfigured(uint256 indexed id, EVMAuthTokenConfig config);
 
     /**
-     * @notice Error for self-transfer attempts
+     * @notice Error for self-transfer attempts.
      * @param sender Address attempting self-transfer
      */
     error InvalidSelfTransfer(address sender);
 
     /**
-     * @notice Error for zero-amount transfer attempts
+     * @notice Error for zero-amount transfer attempts.
      */
     error InvalidZeroValueTransfer();
 
     /**
-     * @notice Internal initializer for EVMAuth contract setup
-     * @dev Initializes all parent contracts in correct order
+     * @notice Internal initializer for EVMAuth contract setup.
+     * @dev Initializes all parent contracts in correct order.
      * @param initialDelay Security delay for admin role transfers
      * @param initialDefaultAdmin Initial admin address
      * @param initialTreasury Treasury address for revenue collection
@@ -84,14 +84,14 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Unchained initializer for contract-specific storage
-     * @dev Currently empty but reserved for future EVMAuth-specific initialization
+     * @notice Unchained initializer for contract-specific storage.
+     * @dev Currently empty but reserved for future EVMAuth-specific initialization.
      */
     function __EVMAuth_init_unchained() internal onlyInitializing { }
 
     /**
-     * @notice Retrieves complete configuration for a token type
-     * @dev Aggregates settings from all parent contracts
+     * @notice Retrieves complete configuration for a token type.
+     * @dev Aggregates settings from all parent contracts.
      * @param id Token type identifier
      * @return Complete token configuration with ID
      */
@@ -108,8 +108,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Batch retrieves configurations for multiple token types
-     * @dev Gas-efficient bulk configuration query
+     * @notice Batch retrieves configurations for multiple token types.
+     * @dev Gas-efficient bulk configuration query.
      * @param ids Array of token type identifiers
      * @return configs Array of complete token configurations
      */
@@ -127,8 +127,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Gets native currency price for a token type
-     * @dev Overrides TokenPurchasable with existence check
+     * @notice Gets native currency price for a token type.
+     * @dev Overrides TokenPurchasable with existence check.
      * @param id Token type identifier
      * @return Native currency price (wei for ETH chains)
      */
@@ -137,8 +137,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Gets price in specific ERC-20 token
-     * @dev Returns 0 if token not accepted as payment
+     * @notice Gets price in specific ERC-20 token.
+     * @dev Returns 0 if token not accepted as payment.
      * @param id Token type identifier
      * @param token ERC-20 contract address
      * @return Price in ERC-20 token units
@@ -155,8 +155,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Gets all accepted ERC-20 payment options
-     * @dev Returns array of payment token addresses and prices
+     * @notice Gets all accepted ERC-20 payment options.
+     * @dev Returns array of payment token addresses and prices.
      * @param id Token type identifier
      * @return Array of PaymentToken structs
      */
@@ -172,8 +172,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Gets time-to-live for a token type
-     * @dev 0 indicates permanent tokens
+     * @notice Gets time-to-live for a token type.
+     * @dev 0 indicates permanent tokens.
      * @param id Token type identifier
      * @return TTL in seconds
      */
@@ -182,8 +182,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Checks if token type allows transfers
-     * @dev Non-transferable tokens are soulbound to original recipient
+     * @notice Checks if token type allows transfers.
+     * @dev Non-transferable tokens are soulbound to original recipient.
      * @param id Token type identifier
      * @return True if transferable, false if soulbound
      */
@@ -192,8 +192,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Creates a new token type with specified configuration
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Claims next sequential ID
+     * @notice Creates a new token type with specified configuration.
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Claims next sequential ID.
      * @param config Complete configuration for the new token type
      * @return id Newly created token type identifier
      * @custom:emits EVMAuthTokenConfigured
@@ -208,8 +208,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Updates complete configuration for an existing token type
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist
+     * @notice Updates complete configuration for an existing token type.
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist.
      * @param id Token type identifier to update
      * @param config New complete configuration
      * @custom:emits EVMAuthTokenConfigured
@@ -223,8 +223,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Updates native currency price for a token type
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist
+     * @notice Updates native currency price for a token type.
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist.
      * @param id Token type identifier
      * @param price New price in native currency
      * @custom:emits EVMAuthTokenConfigured
@@ -244,8 +244,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Sets price for a specific ERC-20 payment token
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist
+     * @notice Sets price for a specific ERC-20 payment token.
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist.
      * @param id Token type identifier
      * @param token ERC-20 contract address
      * @param price Price in ERC-20 token units (0 to disable)
@@ -266,8 +266,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Updates all ERC-20 payment options for a token type
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Replaces existing ERC-20 prices
+     * @notice Updates all ERC-20 payment options for a token type.
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Replaces existing ERC-20 prices.
      * @param id Token type identifier
      * @param prices Array of PaymentToken structs with addresses and prices
      * @custom:emits EVMAuthTokenConfigured
@@ -287,8 +287,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Updates time-to-live for a token type
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Does not affect existing tokens
+     * @notice Updates time-to-live for a token type.
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Does not affect existing tokens.
      * @param id Token type identifier
      * @param ttl New TTL in seconds (0 for permanent)
      * @custom:emits EVMAuthTokenConfigured
@@ -308,8 +308,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Updates transferability for a token type
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Affects all tokens of this type
+     * @notice Updates transferability for a token type.
+     * @dev Restricted to TOKEN_MANAGER_ROLE. Affects all tokens of this type.
      * @param id Token type identifier
      * @param transferable True for transferable, false for soulbound
      * @custom:emits EVMAuthTokenConfigured
@@ -329,8 +329,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Updates the treasury address where purchase revenues are sent
-     * @dev Restricted to addresses with TREASURER_ROLE
+     * @notice Updates the treasury address where purchase revenues are sent.
+     * @dev Restricted to addresses with TREASURER_ROLE.
      * @param newTreasury The new treasury address
      */
     function setTreasury(address payable newTreasury) external onlyRole(TREASURER_ROLE) {
@@ -338,8 +338,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Internal function to create a new token type
-     * @dev Claims next sequential ID and applies configuration
+     * @notice Internal function to create a new token type.
+     * @dev Claims next sequential ID and applies configuration.
      * @param config Complete configuration for new token type
      * @return id Newly created token type identifier
      * @custom:emits EVMAuthTokenConfigured
@@ -358,8 +358,8 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Internal function to update token configuration
-     * @dev Updates all configuration parameters atomically
+     * @notice Internal function to update token configuration.
+     * @dev Updates all configuration parameters atomically.
      * @param id Token type identifier (must exist)
      * @param config New complete configuration
      * @custom:emits EVMAuthTokenConfigured

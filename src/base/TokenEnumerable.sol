@@ -7,7 +7,7 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 /**
  * @title TokenEnumerable
  * @author EVMAuth
- * @notice Manages sequential token ID generation and existence tracking
+ * @notice Manages sequential token ID generation and existence tracking.
  * @dev Abstract contract providing auto-incrementing sequential token IDs starting at 1.
  * Uses EIP-7201 storage pattern for upgrade safety.
  */
@@ -15,14 +15,14 @@ abstract contract TokenEnumerable is ContextUpgradeable {
     /// @custom:storage-location erc7201:tokenenumerable.storage.TokenEnumerable
     struct TokenEnumerableStorage {
         /**
-         * @notice Next available token ID for assignment
-         * @dev Auto-increments when new tokens are created
+         * @notice Next available token ID for assignment.
+         * @dev Auto-increments when new tokens are created.
          */
         uint256 nextTokenID;
     }
 
     /**
-     * @notice EIP-7201 storage slot for TokenEnumerable state
+     * @notice EIP-7201 storage slot for TokenEnumerable state.
      * @dev Computed as: keccak256(abi.encode(uint256(keccak256("tokenenumerable.storage.TokenEnumerable")) - 1))
      * & ~bytes32(uint256(0xff)). Prevents storage collisions in upgradeable contracts.
      */
@@ -30,8 +30,8 @@ abstract contract TokenEnumerable is ContextUpgradeable {
         0x591f2d2df77efc80b9969dfd51dd4fc103fe490745902503f7c21df07a35d600;
 
     /**
-     * @notice Retrieves the storage struct for TokenEnumerable
-     * @dev Internal function using inline assembly for direct storage access
+     * @notice Retrieves the storage struct for TokenEnumerable.
+     * @dev Internal function using inline assembly for direct storage access.
      * @return $ Storage pointer to TokenEnumerableStorage struct
      */
     function _getTokenEnumerableStorage() private pure returns (TokenEnumerableStorage storage $) {
@@ -41,14 +41,14 @@ abstract contract TokenEnumerable is ContextUpgradeable {
     }
 
     /**
-     * @notice Error thrown for operations on non-existent token IDs
+     * @notice Error thrown for operations on non-existent token IDs.
      * @param id The invalid token ID
      */
     error InvalidTokenID(uint256 id);
 
     /**
-     * @notice Validates that a token ID exists before proceeding
-     * @dev Modifier reverting with InvalidTokenID if token doesn't exist
+     * @notice Validates that a token ID exists before proceeding.
+     * @dev Modifier reverting with InvalidTokenID if token doesn't exist.
      * @param id Token ID to validate
      */
     modifier tokenExists(uint256 id) {
@@ -59,8 +59,8 @@ abstract contract TokenEnumerable is ContextUpgradeable {
     }
 
     /**
-     * @notice Validates that all token IDs in array exist
-     * @dev Modifier reverting with InvalidTokenID if any token doesn't exist
+     * @notice Validates that all token IDs in array exist.
+     * @dev Modifier reverting with InvalidTokenID if any token doesn't exist.
      * @param ids Array of token IDs to validate
      */
     modifier allTokensExist(uint256[] memory ids) {
@@ -73,8 +73,8 @@ abstract contract TokenEnumerable is ContextUpgradeable {
     }
 
     /**
-     * @notice Internal initializer for TokenEnumerable setup
-     * @dev Initializes Context and sets up token enumeration
+     * @notice Internal initializer for TokenEnumerable setup.
+     * @dev Initializes Context and sets up token enumeration.
      */
     function __TokenEnumerable_init() internal onlyInitializing {
         __Context_init();
@@ -82,7 +82,7 @@ abstract contract TokenEnumerable is ContextUpgradeable {
     }
 
     /**
-     * @notice Unchained initializer for contract-specific storage
+     * @notice Unchained initializer for contract-specific storage.
      * @dev Sets initial nextTokenID to 1 (tokens start from ID 1, not 0)
      */
     function __TokenEnumerable_init_unchained() internal onlyInitializing {
@@ -91,8 +91,8 @@ abstract contract TokenEnumerable is ContextUpgradeable {
     }
 
     /**
-     * @notice Gets the next available token ID
-     * @dev Public view function for upcoming token ID
+     * @notice Gets the next available token ID.
+     * @dev Public view function for upcoming token ID.
      * @return Next sequential token ID to be assigned
      */
     function nextTokenID() public view returns (uint256) {
@@ -101,7 +101,7 @@ abstract contract TokenEnumerable is ContextUpgradeable {
     }
 
     /**
-     * @notice Checks if a token ID has been created
+     * @notice Checks if a token ID has been created.
      * @dev Token exists if ID is between 1 and nextTokenID (exclusive)
      * @param id Token ID to check
      * @return True if token has been created, false otherwise
@@ -112,8 +112,8 @@ abstract contract TokenEnumerable is ContextUpgradeable {
     }
 
     /**
-     * @notice Claims and returns the next sequential token ID
-     * @dev Internal function that auto-increments nextTokenID after claiming
+     * @notice Claims and returns the next sequential token ID.
+     * @dev Internal function that auto-increments nextTokenID after claiming.
      * @return id Newly claimed token ID
      */
     function _claimNextTokenID() internal virtual returns (uint256 id) {

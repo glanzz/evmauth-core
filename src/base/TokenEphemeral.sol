@@ -7,20 +7,20 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
 /**
  * @title TokenEphemeral
  * @author EVMAuth
- * @notice Implements time-based token expiration with automatic balance pruning
+ * @notice Implements time-based token expiration with automatic balance pruning.
  * @dev Abstract contract providing TTL functionality for tokens with FIFO spending logic.
  * Expired tokens are automatically excluded from balances and pruned for gas optimization.
  * Uses EIP-7201 storage pattern for upgrade safety.
  */
 abstract contract TokenEphemeral is ContextUpgradeable {
     /**
-     * @notice Default limit for balance records per account per token
-     * @dev Can be overridden via _maxBalanceRecords() function
+     * @notice Default limit for balance records per account per token.
+     * @dev Can be overridden via _maxBalanceRecords() function.
      */
     uint256 public constant DEFAULT_MAX_BALANCE_RECORDS = 30;
 
     /**
-     * @notice Balance record with amount and expiration timestamp
+     * @notice Balance record with amount and expiration timestamp.
      * @param amount Token balance that expires
      * @param expiresAt Unix timestamp of expiration (type(uint256).max for permanent)
      */
@@ -32,19 +32,19 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     /// @custom:storage-location erc7201:tokenephemeral.storage.TokenEphemeral
     struct TokenEphemeralStorage {
         /**
-         * @notice Nested mapping of account -> tokenId -> balance records array
-         * @dev Stores time-bucketed balance records for FIFO processing
+         * @notice Nested mapping of account -> tokenId -> balance records array.
+         * @dev Stores time-bucketed balance records for FIFO processing.
          */
         mapping(address account => mapping(uint256 id => BalanceRecord[])) balanceRecords;
         /**
-         * @notice Token TTL configuration mapping
+         * @notice Token TTL configuration mapping.
          * @dev Maps tokenId to TTL in seconds (0 = permanent)
          */
         mapping(uint256 => uint256) ttls;
     }
 
     /**
-     * @notice EIP-7201 storage slot for TokenEphemeral state
+     * @notice EIP-7201 storage slot for TokenEphemeral state.
      * @dev Computed as: keccak256(abi.encode(uint256(keccak256("tokenephemeral.storage.TokenEphemeral")) - 1))
      * & ~bytes32(uint256(0xff)). Prevents storage collisions in upgradeable contracts.
      */
@@ -52,8 +52,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
         0xec3c1253ecdf88a29ff53024f0721fc3faa1b42abcff612deb5b22d1f94e2d00;
 
     /**
-     * @notice Retrieves the storage struct for TokenEphemeral
-     * @dev Internal function using inline assembly for direct storage access
+     * @notice Retrieves the storage struct for TokenEphemeral.
+     * @dev Internal function using inline assembly for direct storage access.
      * @return $ Storage pointer to TokenEphemeralStorage struct
      */
     function _getTokenEphemeralStorage() private pure returns (TokenEphemeralStorage storage $) {
@@ -63,8 +63,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Error for insufficient token balance
-     * @param account Address with insufficient balance
+     * @notice Error for insufficient token balance.
+     * @param account Address with insufficient balance.
      * @param available Current available balance
      * @param requested Amount requested
      * @param id Token type identifier
@@ -72,20 +72,20 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     error InsufficientBalance(address account, uint256 available, uint256 requested, uint256 id);
 
     /**
-     * @notice Internal initializer for TokenEphemeral setup
-     * @dev Currently empty as no initialization needed
+     * @notice Internal initializer for TokenEphemeral setup.
+     * @dev Currently empty as no initialization needed.
      */
     function __TokenEphemeral_init() internal onlyInitializing { }
 
     /**
-     * @notice Unchained initializer for contract-specific storage
-     * @dev Currently empty but reserved for future initialization
+     * @notice Unchained initializer for contract-specific storage.
+     * @dev Currently empty but reserved for future initialization.
      */
     function __TokenEphemeral_init_unchained() internal onlyInitializing { }
 
     /**
-     * @notice Gets current balance excluding expired tokens
-     * @dev Iterates through balance records and sums non-expired amounts
+     * @notice Gets current balance excluding expired tokens.
+     * @dev Iterates through balance records and sums non-expired amounts.
      * @param account Address to check balance for
      * @param id Token type identifier
      * @return Total non-expired balance
@@ -106,8 +106,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Retrieves all balance records for an account and token
-     * @dev Returns raw records including expired ones
+     * @notice Retrieves all balance records for an account and token.
+     * @dev Returns raw records including expired ones.
      * @param account Address to query
      * @param id Token type identifier
      * @return Array of balance records for the account/token pair
@@ -118,8 +118,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Gets time-to-live configuration for a token type
-     * @dev Returns TTL in seconds, 0 indicates permanent tokens
+     * @notice Gets time-to-live configuration for a token type.
+     * @dev Returns TTL in seconds, 0 indicates permanent tokens.
      * @param id Token type identifier
      * @return TTL in seconds (0 = no expiration)
      */
@@ -129,8 +129,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Removes expired and zero-balance records for gas optimization
-     * @dev Public function for manual storage cleanup. Automatically called during transfers
+     * @notice Removes expired and zero-balance records for gas optimization.
+     * @dev Public function for manual storage cleanup. Automatically called during transfers.
      * @param account Address to prune records for
      * @param id Token type identifier
      */
@@ -173,8 +173,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Internal function to configure token TTL
-     * @dev Sets expiration duration for new tokens of this type
+     * @notice Internal function to configure token TTL.
+     * @dev Sets expiration duration for new tokens of this type.
      * @param id Token type identifier
      * @param ttlSeconds Duration in seconds (0 = permanent)
      */
@@ -184,7 +184,7 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Calculates bucketed expiration timestamp for a token
+     * @notice Calculates bucketed expiration timestamp for a token.
      * @dev Rounds up to next time bucket to ensure minimum TTL guarantee.
      * Bucketing prevents unbounded storage growth by limiting unique expiration times.
      * Example: 30-day TTL with 30 max records creates 1-day buckets.
@@ -199,8 +199,7 @@ abstract contract TokenEphemeral is ContextUpgradeable {
         }
 
         uint256 exactExpiration = block.timestamp + _ttl;
-        uint256 arraySize = _maxBalanceRecords();
-        uint256 bucketSize = _ttl / arraySize;
+        uint256 bucketSize = _ttl / _maxBalanceRecords();
 
         if (bucketSize == 0) {
             bucketSize = 1;
@@ -210,9 +209,9 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Returns maximum balance records per account/token pair
+     * @notice Returns maximum balance records per account/token pair.
      * @dev Limits storage to prevent DoS attacks. Override to customize.
-     * Affects expiration precision: actual expiry is TTL to TTL + (TTL/maxRecords - 1) seconds
+     * Affects expiration precision: actual expiry is TTL to TTL + (TTL/maxRecords - 1) seconds.
      * @return Maximum number of balance records (default: 30)
      */
     function _maxBalanceRecords() internal view virtual returns (uint256) {
@@ -220,9 +219,9 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Internal hook to update balance records on token transfers
-     * @dev Handles minting, burning, and transfers with automatic pruning
-     * Automatically prunes expired records before adding and/or after deducting balances
+     * @notice Internal hook to update balance records on token transfers.
+     * @dev Handles minting, burning, and transfers with automatic pruning.
+     * Automatically prunes expired records before adding and/or after deducting balances.
      * @param from Source address (zero address for minting)
      * @param to Destination address (zero address for burning)
      * @param id Token type identifier
@@ -247,8 +246,9 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Internal function to add or update balance records
-     * @dev Maintains chronological sorting and merges same-expiration records
+     * @notice Internal function to add or update balance records.
+     * @dev Maintains chronological sorting and merges same-expiration records.
+     * In most cases, _updateBalanceRecords() should be called instead of calling this directly.
      * @param account Address to update balance for
      * @param id Token type identifier
      * @param amount Quantity to add
@@ -301,8 +301,9 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Internal function to deduct tokens using FIFO logic
-     * @dev Consumes oldest tokens first, automatically prunes after deduction
+     * @notice Internal function to deduct tokens using FIFO logic.
+     * @dev Consumes oldest tokens first, automatically prunes after deduction.
+     * In most cases, _updateBalanceRecords() should be called instead of calling this directly.
      * @param account Address to deduct from
      * @param id Token type identifier
      * @param amount Quantity to deduct
@@ -338,8 +339,9 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
-     * @notice Internal function to transfer tokens preserving expiration
-     * @dev Uses FIFO to transfer oldest tokens first, maintains expiration timestamps
+     * @notice Internal function to transfer tokens preserving expiration.
+     * @dev Uses FIFO to transfer oldest tokens first, maintains expiration timestamps.
+     * In most cases, _updateBalanceRecords() should be called instead of calling this directly.
      * @param from Source address
      * @param to Destination address
      * @param id Token type identifier
