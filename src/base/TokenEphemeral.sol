@@ -220,6 +220,33 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
+     * @notice Internal hook to update balance records on token transfers
+     * @dev Handles minting, burning, and transfers with automatic pruning
+     * Automatically prunes expired records before adding and/or after deducting balances
+     * @param from Source address (zero address for minting)
+     * @param to Destination address (zero address for burning)
+     * @param id Token type identifier
+     * @param amount Quantity transferred
+     */
+    function _updateBalanceRecords(address from, address to, uint256 id, uint256 amount) internal virtual {
+        // Update balance records in the TokenEphemeral contract
+        if (from == address(0)) {
+            // Minting
+            pruneBalanceRecords(to, id);
+            _addToBalanceRecords(to, id, amount, _expiresAt(id));
+        } else if (to == address(0)) {
+            // Burning
+            _deductFromBalanceRecords(from, id, amount);
+            pruneBalanceRecords(from, id);
+        } else {
+            // Transfer
+            pruneBalanceRecords(to, id);
+            _transferBalanceRecords(from, to, id, amount);
+            pruneBalanceRecords(from, id);
+        }
+    }
+
+    /**
      * @notice Internal function to add or update balance records
      * @dev Maintains chronological sorting and merges same-expiration records
      * @param account Address to update balance for
@@ -227,10 +254,7 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @param amount Quantity to add
      * @param expiresAt Unix timestamp of expiration
      */
-    function _addToBalanceRecord(address account, uint256 id, uint256 amount, uint256 expiresAt) internal {
-        // First, prune expired records to free up space
-        pruneBalanceRecords(account, id);
-
+    function _addToBalanceRecords(address account, uint256 id, uint256 amount, uint256 expiresAt) internal {
         TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
         BalanceRecord[] storage records = $.balanceRecords[account][id];
         uint256 currentLength = records.length;
@@ -311,9 +335,6 @@ abstract contract TokenEphemeral is ContextUpgradeable {
         if (debt > 0) {
             revert InsufficientBalance(account, amount - debt, amount, id);
         }
-
-        // Prune expired records from the `account`
-        pruneBalanceRecords(account, id);
     }
 
     /**
@@ -342,12 +363,12 @@ abstract contract TokenEphemeral is ContextUpgradeable {
 
             if (fromRecords[i].amount > debt) {
                 // Transfer partial record
-                _addToBalanceRecord(to, id, uint256(debt), fromRecords[i].expiresAt);
+                _addToBalanceRecords(to, id, uint256(debt), fromRecords[i].expiresAt);
                 fromRecords[i].amount -= uint256(debt);
                 debt = 0;
             } else {
                 // Transfer entire record
-                _addToBalanceRecord(to, id, fromRecords[i].amount, fromRecords[i].expiresAt);
+                _addToBalanceRecords(to, id, fromRecords[i].amount, fromRecords[i].expiresAt);
                 debt -= fromRecords[i].amount;
                 fromRecords[i].amount = 0;
             }
@@ -356,8 +377,5 @@ abstract contract TokenEphemeral is ContextUpgradeable {
         if (debt > 0) {
             revert InsufficientBalance(from, amount - debt, amount, id);
         }
-
-        // Prune expired records from the `from` account
-        pruneBalanceRecords(from, id);
     }
 }

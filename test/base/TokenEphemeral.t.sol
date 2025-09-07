@@ -50,17 +50,17 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
 
     // @dev Helper function to mint tokens for testing.
     function mint(address to, uint256 id, uint256 amount) external onlyOwner {
-        _addToBalanceRecord(to, id, amount, _expiresAt(id));
+        _updateBalanceRecords(address(0), to, id, amount);
     }
 
     // @dev Helper function to burn tokens for testing.
     function burn(address from, uint256 id, uint256 amount) external onlyOwner {
-        _deductFromBalanceRecords(from, id, amount);
+        _updateBalanceRecords(from, address(0), id, amount);
     }
 
     // @dev Helper function to transfer tokens for testing.
     function transfer(address to, uint256 id, uint256 amount) external {
-        _transferBalanceRecords(_msgSender(), to, id, amount);
+        _updateBalanceRecords(_msgSender(), to, id, amount);
     }
 }
 
@@ -210,5 +210,40 @@ contract TokenEphemeralTest is BaseTest {
         assertEq(records.length, 1);
         assertEq(records[0].amount, 1);
         assertEq(records[0].expiresAt, block.timestamp + 5);
+    }
+
+    function test_balanceRecordsOf_afterPruning() public {
+        // Verify Alice has no balance records initially.
+        TokenEphemeral.BalanceRecord[] memory records = v1.balanceRecordsOf(alice, 1);
+        assertEq(records.length, 0);
+
+        // Set TTL for token ID 1.
+        vm.prank(owner);
+        v1.setTTL(1, 10); // Token ID 1 with TTL 10 seconds
+
+        // Verify expiration for token ID 1.
+        uint256 expiresAt = v1.expiresAt(1);
+        assertEq(expiresAt, block.timestamp + 10);
+
+        // Mint a token with TTL.
+        vm.prank(owner);
+        v1.mint(alice, 1, 1);
+
+        // Verify Alice's balance records for Token ID 1.
+        records = v1.balanceRecordsOf(alice, 1);
+        assertEq(records.length, 1);
+        assertEq(records[0].amount, 1);
+        assertEq(records[0].expiresAt, block.timestamp + 10);
+
+        // Fast forward time by 15 seconds to let the token expire.
+        vm.warp(block.timestamp + 15);
+
+        // Prune expired balance records.
+        vm.prank(alice);
+        v1.pruneBalanceRecords(alice, 1);
+
+        // Verify Alice's balance records for Token ID 1 after pruning.
+        records = v1.balanceRecordsOf(alice, 1);
+        assertEq(records.length, 0); // All records should be pruned
     }
 }

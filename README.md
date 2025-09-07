@@ -144,6 +144,7 @@ The architecture consists of:
 classDiagram
     class TokenAccessControl {
         <<abstract>>
+        +DEFAULT_ADMIN_ROLE
         +UPGRADE_MANAGER_ROLE
         +ACCESS_MANAGER_ROLE
         +TOKEN_MANAGER_ROLE
@@ -193,10 +194,16 @@ classDiagram
         -ttl mapping
         -balanceRecords mapping
         +balanceOf(account, id)
-        +tokenTTL(id)
         +balanceRecordsOf(account, id)
+        +tokenTTL(id)
         +pruneBalanceRecords(account, id)
         #_setTTL(id, ttl)
+        #_expiresAt(id)
+        #_maxBalanceRecords()
+        #_updateBalanceRecords(from, to, id, amount)
+        #_addToBalanceRecords(account, id, amount, expiresAt)
+        #_deductFromBalanceRecords(account, id, amount)
+        #_transferBalanceRecords(from, to, id, amount)
     }
     
     class TokenPurchasable {
@@ -231,6 +238,7 @@ classDiagram
         +setERC20Prices(id, prices[])
         +setTTL(id, ttl)
         +setTransferable(id, bool)
+        +setTreasury(address payable newTreasury)
         #_authorizeUpgrade(newImplementation)
     }
     
@@ -251,24 +259,49 @@ classDiagram
 classDiagram
     class EVMAuth {
         <<abstract>>
-        +createToken(config)
-        +updateToken(id, config)
+        +DEFAULT_ADMIN_ROLE
+        +UPGRADE_MANAGER_ROLE
+        +ACCESS_MANAGER_ROLE
+        +TOKEN_MANAGER_ROLE
+        +MINTER_ROLE
+        +BURNER_ROLE
+        +TREASURER_ROLE
+        +hasRole(role, account)
+        +isFrozen(address)
+        +frozenAccounts()
+        +balanceOf(account, id)
+        +balanceRecordsOf(account, id)
+        +nextTokenID()
+        +exists(id)
         +tokenConfig(id)
         +tokenConfigs(ids[])
+        +treasury()
+        +tokenPrice(id)
+        +tokenERC20Price(id, token)
+        +tokenERC20Prices(id)
+        +isAcceptedERC20PaymentToken(id, token)
+        +tokenTTL(id)
+        +isTransferable(id)
+        +grantRole(role, account)
+        +revokeRole(role, account)
+        +renounceRole(role, account)
+        +pause()
+        +unpause()
+        +freezeAccount(account)
+        +unfreezeAccount(account)
+        +createToken(config)
+        +updateToken(id, config)
         +setPrice(id, price)
         +setERC20Price(id, token, price)
         +setERC20Prices(id, prices[])
         +setTTL(id, ttl)
         +setTransferable(id, bool)
-        +tokenPrice(id)
-        +tokenERC20Price(id, token)
-        +tokenERC20Prices(id)
-        +tokenTTL(id)
-        +isTransferable(id)
+        +setTreasury(address payable newTreasury)
         +purchase(id, amount)
+        +purchaseFor(receiver, id, amount)
         +purchaseWithERC20(token, id, amount)
-        +freezeAccount(account)
-        +unfreezeAccount(account)
+        +purchaseWithERC20For(receiver, token, id, amount)
+        +pruneBalanceRecords(account, id)
     }
     
     class ERC1155Upgradeable {
@@ -315,26 +348,51 @@ classDiagram
 
 ```mermaid
 classDiagram
-    class EVMAuth {
+     class EVMAuth {
         <<abstract>>
-        +createToken(config)
-        +updateToken(id, config)
+        +DEFAULT_ADMIN_ROLE
+        +UPGRADE_MANAGER_ROLE
+        +ACCESS_MANAGER_ROLE
+        +TOKEN_MANAGER_ROLE
+        +MINTER_ROLE
+        +BURNER_ROLE
+        +TREASURER_ROLE
+        +hasRole(role, account)
+        +isFrozen(address)
+        +frozenAccounts()
+        +balanceOf(account, id)
+        +balanceRecordsOf(account, id)
+        +nextTokenID()
+        +exists(id)
         +tokenConfig(id)
         +tokenConfigs(ids[])
+        +treasury()
+        +tokenPrice(id)
+        +tokenERC20Price(id, token)
+        +tokenERC20Prices(id)
+        +isAcceptedERC20PaymentToken(id, token)
+        +tokenTTL(id)
+        +isTransferable(id)
+        +grantRole(role, account)
+        +revokeRole(role, account)
+        +renounceRole(role, account)
+        +pause()
+        +unpause()
+        +freezeAccount(account)
+        +unfreezeAccount(account)
+        +createToken(config)
+        +updateToken(id, config)
         +setPrice(id, price)
         +setERC20Price(id, token, price)
         +setERC20Prices(id, prices[])
         +setTTL(id, ttl)
         +setTransferable(id, bool)
-        +tokenPrice(id)
-        +tokenERC20Price(id, token)
-        +tokenERC20Prices(id)
-        +tokenTTL(id)
-        +isTransferable(id)
+        +setTreasury(address payable newTreasury)
         +purchase(id, amount)
+        +purchaseFor(receiver, id, amount)
         +purchaseWithERC20(token, id, amount)
-        +freezeAccount(account)
-        +unfreezeAccount(account)
+        +purchaseWithERC20For(receiver, token, id, amount)
+        +pruneBalanceRecords(account, id)
     }
     
     class ERC6909Upgradeable {

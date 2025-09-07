@@ -329,6 +329,15 @@ abstract contract EVMAuth is
     }
 
     /**
+     * @notice Updates the treasury address where purchase revenues are sent
+     * @dev Restricted to addresses with TREASURER_ROLE
+     * @param newTreasury The new treasury address
+     */
+    function setTreasury(address payable newTreasury) external onlyRole(TREASURER_ROLE) {
+        _setTreasury(newTreasury);
+    }
+
+    /**
      * @notice Internal function to create a new token type
      * @dev Claims next sequential ID and applies configuration
      * @param config Complete configuration for new token type
