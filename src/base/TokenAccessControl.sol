@@ -65,6 +65,7 @@ abstract contract TokenAccessControl is
      */
     function __TokenAccessControl_init(uint48 initialDelay, address initialDefaultAdmin) internal onlyInitializing {
         __AccessControlDefaultAdminRules_init(initialDelay, initialDefaultAdmin);
+        __AccountFreezable_init();
         __TokenAccessControl_init_unchained();
     }
 

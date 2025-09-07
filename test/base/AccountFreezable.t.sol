@@ -95,7 +95,7 @@ contract AccountFreezableTest is BaseTest {
         assertEq(v1.ACCOUNT_UNFROZEN_STATUS(), ACCOUNT_UNFROZEN_STATUS);
     }
 
-    function test_modifier_succeeds() public {
+    function test_modifier_notFrozen_succeeds() public view {
         // Initially, Alice's account is not frozen
         assertEq(v1.isFrozen(alice), false);
 
@@ -103,7 +103,7 @@ contract AccountFreezableTest is BaseTest {
         assertTrue(v1.withModifierNotFrozen(alice));
     }
 
-    function testRevert_modifier_AccountFrozen() public {
+    function testRevert_modifier_notFrozen_AccountFrozen() public {
         // Initially, Alice's account is not frozen
         assertEq(v1.isFrozen(alice), false);
         assertTrue(v1.withModifierNotFrozen(alice));
