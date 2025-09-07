@@ -37,12 +37,12 @@ contract MockAccountFreezableV1 is AccountFreezable, OwnableUpgradeable, UUPSUpg
         // This will revert if the caller is not authorized.
     }
 
-    /// @dev Expose internal functions for testing
+    /// @dev Expose internal function for testing
     function freezeAccount(address account) external onlyOwner {
         _freezeAccount(account);
     }
 
-    /// @dev Expose internal functions for testing
+    /// @dev Expose internal function for testing
     function unfreezeAccount(address account) external onlyOwner {
         _unfreezeAccount(account);
     }

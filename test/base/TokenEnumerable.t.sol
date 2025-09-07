@@ -38,7 +38,7 @@ contract MockTokenEnumerableV1 is TokenEnumerable, OwnableUpgradeable, UUPSUpgra
         // This will revert if the caller is not authorized.
     }
 
-    /// @dev Expose internal functions for testing
+    /// @dev Expose internal function for testing
     function claimNextTokenID() external returns (uint256) {
         return _claimNextTokenID();
     }

@@ -8,9 +8,6 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgradeable {
-    // For testing only; in a real implementation, use a token standard like ERC-1155 or ERC-6909.
-    mapping(address => mapping(uint256 => uint256)) public balances;
-
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
@@ -39,6 +36,31 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
     /// @inheritdoc UUPSUpgradeable
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
         // This will revert if the caller is not authorized.
+    }
+
+    // @dev Expose internal function for testing
+    function setTTL(uint256 id, uint48 ttl) public onlyOwner {
+        _setTTL(id, ttl);
+    }
+
+    // @dev Expose internal function for testing
+    function expiresAt(uint256 id) public view returns (uint256) {
+        return _expiresAt(id);
+    }
+
+    // @dev Helper function to mint tokens for testing.
+    function mint(address to, uint256 id, uint256 amount) external onlyOwner {
+        _addToBalanceRecord(to, id, amount, _expiresAt(id));
+    }
+
+    // @dev Helper function to burn tokens for testing.
+    function burn(address from, uint256 id, uint256 amount) external onlyOwner {
+        _deductFromBalanceRecords(from, id, amount);
+    }
+
+    // @dev Helper function to transfer tokens for testing.
+    function transfer(address to, uint256 id, uint256 amount) external {
+        _transferBalanceRecords(_msgSender(), to, id, amount);
     }
 }
 
@@ -74,5 +96,119 @@ contract TokenEphemeralTest is BaseTest {
             keccak256(abi.encode(uint256(keccak256("tokenephemeral.storage.TokenEphemeral")) - 1))
                 & ~bytes32(uint256(0xff))
         );
+    }
+
+    function test_balanceOf_succeeds() public {
+        // Set TTL for token ID 1 to 10 seconds.
+        vm.prank(owner);
+        v1.setTTL(1, 10);
+
+        // Verify expiration time.
+        uint256 expiresAt = v1.expiresAt(1);
+        assertEq(expiresAt, block.timestamp + 10);
+
+        // Mint a token with a TTL of 10 seconds.
+        vm.prank(owner);
+        v1.mint(alice, 1, 1);
+        assertEq(v1.balanceOf(alice, 1), 1);
+
+        // Fast forward time by 5 seconds; the token should still be valid.
+        vm.warp(block.timestamp + 5);
+        assertEq(v1.balanceOf(alice, 1), 1);
+
+        // Fast forward time by another 6 seconds (total 11 seconds); the token should have expired.
+        vm.warp(block.timestamp + 6);
+        assertEq(v1.balanceOf(alice, 1), 0);
+    }
+
+    function test_balanceOf_multipleTokens() public {
+        // Set TTLs for token IDs.
+        vm.startPrank(owner);
+        v1.setTTL(1, 10); // Token ID 1 with TTL 10 seconds
+        v1.setTTL(2, 20); // Token ID 2 with TTL 20 seconds
+        vm.stopPrank();
+
+        // Verify expiration for token ID 1.
+        uint256 expiresAt = v1.expiresAt(1);
+        assertEq(expiresAt, block.timestamp + 10);
+
+        // Verify expiration for token ID 2.
+        expiresAt = v1.expiresAt(2);
+        assertEq(expiresAt, block.timestamp + 20);
+
+        // Mint multiple tokens with different TTLs.
+        vm.startPrank(owner);
+        v1.mint(alice, 1, 1);
+        v1.mint(alice, 2, 1);
+        vm.stopPrank();
+
+        // Verify Alice's balances immediately after minting.
+        assertEq(v1.balanceOf(alice, 1), 1);
+        assertEq(v1.balanceOf(alice, 2), 1);
+
+        // Fast forward time by 15 seconds; Token ID 1 should have expired, Token ID 2 should still be valid.
+        vm.warp(block.timestamp + 15);
+        assertEq(v1.balanceOf(alice, 1), 0);
+        assertEq(v1.balanceOf(alice, 2), 1);
+
+        // Fast forward time by another 10 seconds (total 25 seconds); both tokens should have expired.
+        vm.warp(block.timestamp + 10);
+        assertEq(v1.balanceOf(alice, 1), 0);
+        assertEq(v1.balanceOf(alice, 2), 0);
+    }
+
+    function test_balanceRecordsOf_succeeds() public {
+        // Verify Alice has no balance records initially.
+        TokenEphemeral.BalanceRecord[] memory records = v1.balanceRecordsOf(alice, 1);
+        assertEq(records.length, 0);
+        records = v1.balanceRecordsOf(alice, 2);
+        assertEq(records.length, 0);
+
+        // Set TTLs for token IDs.
+        vm.startPrank(owner);
+        v1.setTTL(1, 10); // Token ID 1 with TTL 10 seconds
+        v1.setTTL(2, 20); // Token ID 2 with TTL 20 seconds
+        vm.stopPrank();
+
+        // Verify expiration for token ID 1.
+        uint256 expiresAt = v1.expiresAt(1);
+        assertEq(expiresAt, block.timestamp + 10);
+
+        // Verify expiration for token ID 2.
+        expiresAt = v1.expiresAt(2);
+        assertEq(expiresAt, block.timestamp + 20);
+
+        // Mint multiple tokens with different TTLs.
+        vm.startPrank(owner);
+        v1.mint(alice, 1, 1);
+        v1.mint(alice, 2, 1);
+        vm.stopPrank();
+
+        // Verify Alice's balance records for Token ID 1.
+        records = v1.balanceRecordsOf(alice, 1);
+        assertEq(records.length, 1);
+        assertEq(records[0].amount, 1);
+        assertEq(records[0].expiresAt, block.timestamp + 10);
+
+        // Verify Alice's balance records for Token ID 2.
+        records = v1.balanceRecordsOf(alice, 2);
+        assertEq(records.length, 1);
+        assertEq(records[0].amount, 1);
+        assertEq(records[0].expiresAt, block.timestamp + 20);
+
+        // Fast forward time by 15 seconds.
+        vm.warp(block.timestamp + 15);
+
+        // Token ID 1 should have expired, but the record was not pruned so it should still exist.
+        records = v1.balanceRecordsOf(alice, 1);
+        assertEq(records.length, 1);
+        assertEq(records[0].amount, 1);
+        assertEq(records[0].expiresAt, block.timestamp - 5); // Expired
+
+        // Token ID 2 should still be valid with 5 seconds remaining.
+        records = v1.balanceRecordsOf(alice, 2);
+        assertEq(records.length, 1);
+        assertEq(records[0].amount, 1);
+        assertEq(records[0].expiresAt, block.timestamp + 5);
     }
 }
