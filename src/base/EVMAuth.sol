@@ -108,25 +108,6 @@ abstract contract EVMAuth is
     }
 
     /**
-     * @notice Batch retrieves configurations for multiple token types.
-     * @dev Gas-efficient bulk configuration query.
-     * @param ids Array of token type identifiers
-     * @return configs Array of complete token configurations
-     */
-    function tokenConfigs(uint256[] calldata ids) external view virtual returns (EVMAuthToken[] memory configs) {
-        configs = new EVMAuthToken[](ids.length);
-        if (ids.length == 0) {
-            return configs;
-        }
-
-        for (uint256 i = 0; i < ids.length; i++) {
-            configs[i] = tokenConfig(ids[i]);
-        }
-
-        return configs;
-    }
-
-    /**
      * @notice Gets native currency price for a token type.
      * @dev Overrides TokenPurchasable with existence check.
      * @param id Token type identifier
@@ -220,112 +201,6 @@ abstract contract EVMAuth is
         onlyRole(TOKEN_MANAGER_ROLE)
     {
         _updateToken(id, config);
-    }
-
-    /**
-     * @notice Updates native currency price for a token type.
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist.
-     * @param id Token type identifier
-     * @param price New price in native currency
-     * @custom:emits EVMAuthTokenConfigured
-     */
-    function setPrice(uint256 id, uint256 price) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _setPrice(id, price);
-
-        emit EVMAuthTokenConfigured(
-            id,
-            EVMAuthTokenConfig({
-                price: price,
-                erc20Prices: tokenERC20Prices(id),
-                ttl: tokenTTL(id),
-                transferable: isTransferable(id)
-            })
-        );
-    }
-
-    /**
-     * @notice Sets price for a specific ERC-20 payment token.
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Token must exist.
-     * @param id Token type identifier
-     * @param token ERC-20 contract address
-     * @param price Price in ERC-20 token units (0 to disable)
-     * @custom:emits EVMAuthTokenConfigured
-     */
-    function setERC20Price(uint256 id, address token, uint256 price) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _setERC20Price(id, token, price);
-
-        emit EVMAuthTokenConfigured(
-            id,
-            EVMAuthTokenConfig({
-                price: tokenPrice(id),
-                erc20Prices: tokenERC20Prices(id),
-                ttl: tokenTTL(id),
-                transferable: isTransferable(id)
-            })
-        );
-    }
-
-    /**
-     * @notice Updates all ERC-20 payment options for a token type.
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Replaces existing ERC-20 prices.
-     * @param id Token type identifier
-     * @param prices Array of PaymentToken structs with addresses and prices
-     * @custom:emits EVMAuthTokenConfigured
-     */
-    function setERC20Prices(uint256 id, PaymentToken[] calldata prices) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _setERC20Prices(id, prices);
-
-        emit EVMAuthTokenConfigured(
-            id,
-            EVMAuthTokenConfig({
-                price: tokenPrice(id),
-                erc20Prices: tokenERC20Prices(id),
-                ttl: tokenTTL(id),
-                transferable: isTransferable(id)
-            })
-        );
-    }
-
-    /**
-     * @notice Updates time-to-live for a token type.
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Does not affect existing tokens.
-     * @param id Token type identifier
-     * @param ttl New TTL in seconds (0 for permanent)
-     * @custom:emits EVMAuthTokenConfigured
-     */
-    function setTTL(uint256 id, uint256 ttl) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _setTTL(id, ttl);
-
-        emit EVMAuthTokenConfigured(
-            id,
-            EVMAuthTokenConfig({
-                price: tokenPrice(id),
-                erc20Prices: tokenERC20Prices(id),
-                ttl: ttl,
-                transferable: isTransferable(id)
-            })
-        );
-    }
-
-    /**
-     * @notice Updates transferability for a token type.
-     * @dev Restricted to TOKEN_MANAGER_ROLE. Affects all tokens of this type.
-     * @param id Token type identifier
-     * @param transferable True for transferable, false for soulbound
-     * @custom:emits EVMAuthTokenConfigured
-     */
-    function setTransferable(uint256 id, bool transferable) external virtual onlyRole(TOKEN_MANAGER_ROLE) {
-        _setTransferable(id, transferable);
-
-        emit EVMAuthTokenConfigured(
-            id,
-            EVMAuthTokenConfig({
-                price: tokenPrice(id),
-                erc20Prices: tokenERC20Prices(id),
-                ttl: tokenTTL(id),
-                transferable: transferable
-            })
-        );
     }
 
     /**
