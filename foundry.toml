@@ -26,3 +26,12 @@ bracket_spacing = true
 [doc]
 out = "docs"
 repository = "https://github.com/evmauth/evmauth-core"
+
+[rpc_endpoints]
+radius-testnet = "${RADIUS_TESTNET_RPC_URL}"
+base-sepolia = "${BASE_SEPOLIA_RPC_URL}"
+sepolia = "${SEPOLIA_RPC_URL}"
+
+[etherscan]
+base-sepolia = { key = "${ETHERSCAN_API_KEY}" }
+sepolia = { key = "${ETHERSCAN_API_KEY}" }
