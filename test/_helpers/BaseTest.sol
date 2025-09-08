@@ -98,8 +98,8 @@ abstract contract WithUpgrades is WithUsers {
      * Should be called in the `setUp` function of inheriting contracts.
      */
     function _deployContract() public virtual {
-        proxy = Upgrades.deployUUPSProxy(_getContractName(), _getInitializerData());
-        _setToken(proxy);
+        proxy = Upgrades.deployUUPSProxy(_getDeploymentArtifact(), _getInitializeCallData());
+        _castProxy(proxy);
     }
 
     /**
@@ -124,19 +124,19 @@ abstract contract WithUpgrades is WithUsers {
      * @dev Get the contract name for deployment.
      * Must be overridden by inheriting contracts.
      */
-    function _getContractName() internal view virtual returns (string memory);
+    function _getDeploymentArtifact() internal view virtual returns (string memory);
 
     /**
      * @dev Get the initialization call data.
      * Must be overridden by inheriting contracts.
      */
-    function _getInitializerData() internal view virtual returns (bytes memory);
+    function _getInitializeCallData() internal view virtual returns (bytes memory);
 
     /**
      * @dev Set the token variable with the correct type.
      * Must be overridden by inheriting contracts to cast proxy to the specific token type.
      */
-    function _setToken(address proxyAddress) internal virtual;
+    function _castProxy(address proxyAddress) internal virtual;
 
     // ========== Initialization and Upgrade Tests ==========
 
@@ -148,7 +148,7 @@ abstract contract WithUpgrades is WithUsers {
         address implementation = _deployNewImplementation();
 
         // Get initialization data
-        bytes memory initData = _getInitializerData();
+        bytes memory initData = _getInitializeCallData();
 
         // Call initialize directly on the implementation
         (bool success,) = implementation.call(initData);
@@ -160,7 +160,7 @@ abstract contract WithUpgrades is WithUsers {
      */
     function testRevert_BaseTest_initialize_InvalidInitialization() public virtual {
         // Try to call the initializer again on the already initialized proxy
-        bytes memory initData = _getInitializerData();
+        bytes memory initData = _getInitializeCallData();
 
         // Expect revert due to already being initialized
         vm.startPrank(owner);

@@ -52,15 +52,15 @@ contract TokenAccessControlTest is BaseTestWithAccessControl {
         return address(new MockTokenAccessControlV1());
     }
 
-    function _getContractName() internal pure override returns (string memory) {
+    function _getDeploymentArtifact() internal pure override returns (string memory) {
         return "TokenAccessControl.t.sol:MockTokenAccessControlV1";
     }
 
-    function _getInitializerData() internal view override returns (bytes memory) {
+    function _getInitializeCallData() internal view override returns (bytes memory) {
         return abi.encodeCall(MockTokenAccessControlV1.initialize, (2 days, owner));
     }
 
-    function _setToken(address proxyAddress) internal override {
+    function _castProxy(address proxyAddress) internal override {
         v1 = MockTokenAccessControlV1(proxyAddress);
     }
 

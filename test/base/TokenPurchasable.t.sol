@@ -61,15 +61,15 @@ contract TokenPurchasableTest is BaseTestWithERC20s {
         return address(new MockTokenPurchasableV1());
     }
 
-    function _getContractName() internal pure override returns (string memory) {
+    function _getDeploymentArtifact() internal pure override returns (string memory) {
         return "TokenPurchasable.t.sol:MockTokenPurchasableV1";
     }
 
-    function _getInitializerData() internal view override returns (bytes memory) {
+    function _getInitializeCallData() internal view override returns (bytes memory) {
         return abi.encodeCall(MockTokenPurchasableV1.initialize, (owner, treasury));
     }
 
-    function _setToken(address proxyAddress) internal override {
+    function _castProxy(address proxyAddress) internal override {
         v1 = MockTokenPurchasableV1(proxyAddress);
     }
 

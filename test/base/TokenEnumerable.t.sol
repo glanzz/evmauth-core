@@ -63,15 +63,15 @@ contract TokenEnumerableTest is BaseTest {
         return address(new MockTokenEnumerableV1());
     }
 
-    function _getContractName() internal pure override returns (string memory) {
+    function _getDeploymentArtifact() internal pure override returns (string memory) {
         return "TokenEnumerable.t.sol:MockTokenEnumerableV1";
     }
 
-    function _getInitializerData() internal view override returns (bytes memory) {
+    function _getInitializeCallData() internal view override returns (bytes memory) {
         return abi.encodeCall(MockTokenEnumerableV1.initialize, (owner));
     }
 
-    function _setToken(address proxyAddress) internal override {
+    function _castProxy(address proxyAddress) internal override {
         v1 = MockTokenEnumerableV1(proxyAddress);
     }
 

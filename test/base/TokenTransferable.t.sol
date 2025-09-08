@@ -51,15 +51,15 @@ contract TokenTransferableTest is BaseTest {
         return address(new MockTokenTransferableV1());
     }
 
-    function _getContractName() internal pure override returns (string memory) {
+    function _getDeploymentArtifact() internal pure override returns (string memory) {
         return "TokenTransferable.t.sol:MockTokenTransferableV1";
     }
 
-    function _getInitializerData() internal view override returns (bytes memory) {
+    function _getInitializeCallData() internal view override returns (bytes memory) {
         return abi.encodeCall(MockTokenTransferableV1.initialize, (owner));
     }
 
-    function _setToken(address proxyAddress) internal override {
+    function _castProxy(address proxyAddress) internal override {
         v1 = MockTokenTransferableV1(proxyAddress);
     }
 

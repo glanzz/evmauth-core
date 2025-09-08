@@ -14,15 +14,15 @@ contract EVMAuth1155Test is BaseTestWithAccessControlAndERC20s {
         return address(new EVMAuth1155());
     }
 
-    function _getContractName() internal pure override returns (string memory) {
+    function _getDeploymentArtifact() internal pure override returns (string memory) {
         return "EVMAuth1155.sol:EVMAuth1155";
     }
 
-    function _getInitializerData() internal view override returns (bytes memory) {
+    function _getInitializeCallData() internal view override returns (bytes memory) {
         return abi.encodeCall(EVMAuth1155.initialize, (2 days, owner, treasury, "https://token-cdn-domain/{id}.json"));
     }
 
-    function _setToken(address proxyAddress) internal override {
+    function _castProxy(address proxyAddress) internal override {
         v1 = EVMAuth1155(proxyAddress);
     }
 

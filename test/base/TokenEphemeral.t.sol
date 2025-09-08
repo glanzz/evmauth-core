@@ -78,15 +78,15 @@ contract TokenEphemeralTest is BaseTest {
         return address(new MockTokenEphemeralV1());
     }
 
-    function _getContractName() internal pure override returns (string memory) {
+    function _getDeploymentArtifact() internal pure override returns (string memory) {
         return "TokenEphemeral.t.sol:MockTokenEphemeralV1";
     }
 
-    function _getInitializerData() internal view override returns (bytes memory) {
+    function _getInitializeCallData() internal view override returns (bytes memory) {
         return abi.encodeCall(MockTokenEphemeralV1.initialize, (owner));
     }
 
-    function _setToken(address proxyAddress) internal override {
+    function _castProxy(address proxyAddress) internal override {
         v1 = MockTokenEphemeralV1(proxyAddress);
     }
 
