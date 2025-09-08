@@ -87,7 +87,7 @@ contract DeployEVMAuth1155 is BaseDeployEVMAuth {
 
     function _getInitializeCallData(address defaultAdmin, address payable treasury, string memory uri)
         internal
-        view
+        pure
         override
         returns (bytes memory)
     {
@@ -126,7 +126,7 @@ contract DeployEVMAuth6909 is BaseDeployEVMAuth {
 
     function _getInitializeCallData(address defaultAdmin, address payable treasury, string memory uri)
         internal
-        view
+        pure
         override
         returns (bytes memory)
     {
@@ -141,9 +141,19 @@ contract DeployMultiNetwork is Script {
     DeployEVMAuth1155 public deployer1155;
     DeployEVMAuth6909 public deployer6909;
 
+    string[] public networks;
+
     function setUp() public {
         deployer1155 = new DeployEVMAuth1155();
         deployer6909 = new DeployEVMAuth6909();
+        _setUpNetworks();
+    }
+
+    function _setUpNetworks() internal virtual {
+        // These named RPC URLs are defined in foundry.toml
+        networks = new string[](2);
+        networks[0] = "radius-testnet";
+        networks[1] = "base-sepolia";
     }
 
     function run() public {
@@ -155,10 +165,6 @@ contract DeployMultiNetwork is Script {
 
         // Ensure exactly one token standard is set to true
         require(use1155 != use6909, "Either ERC_1155 or ERC_6909 env var must be set to true");
-
-        string[] memory networks = new string[](2);
-        networks[0] = "radius-testnet";
-        networks[1] = "base-sepolia";
 
         // Deploy to networks
         for (uint256 i = 0; i < networks.length; i++) {
