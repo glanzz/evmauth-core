@@ -28,6 +28,7 @@ out = "docs"
 repository = "https://github.com/evmauth/evmauth-core"
 
 [rpc_endpoints]
+localhost = "http://localhost:8545"
 radius-testnet = "${RADIUS_TESTNET_RPC_URL}"
 base-sepolia = "${BASE_SEPOLIA_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"

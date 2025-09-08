@@ -26,6 +26,24 @@ Edit `.env` to set your private key and other parameters, then load it:
 source .env
 ```
 
+### Using Anvil
+
+To run your own Ethereum node locally, you can use [Anvil](https://getfoundry.sh/anvil/overview):
+
+```sh
+anvil
+```
+
+Or, you can specify a network to fork from:
+
+```sh
+anvil --fork-url sepolia  # or `radius-testnet`, `base-sepolia`, or any RPC URL
+```
+
+Then you can specify `--rpc-url localhost` in the deployment commands below.
+
+**NOTE:** Be sure to use the private key of a funded account from Anvil for deployment in your `.env` file.
+
 ### Deploy EVMAuth1155
 
 ```sh
@@ -56,7 +74,6 @@ Configure deployment parameters via environment variables:
 
 ### Example with Custom Configuration
 ```sh
-source .env
 forge script script/DeployEVMAuth.s.sol:DeployEVMAuth1155 \
   --rpc-url radius-testnet \
   --private-key $PRIVATE_KEY \
@@ -68,8 +85,9 @@ forge script script/DeployEVMAuth.s.sol:DeployEVMAuth1155 \
 Deploy to multiple networks in a single transaction:
 
 ```sh
-source .env
 forge script script/DeployEVMAuth.s.sol:DeployMultiNetwork \
+  --rpc-url radius-testnet \
+  --private-key $PRIVATE_KEY \
   --broadcast
 ```
 
