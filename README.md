@@ -474,6 +474,8 @@ EVMAuth provides the following SDKs and libraries for easy integration with appl
 
 To request additional SDKs or libraries, create a new issue with the `question` label.
 
+You can also use Foundry's [cast] command line tool to interact with deployed EVMAuth contracts, and reference this [Cast Command Cheat Sheet] which illustrates how to call each EVMAuth function.
+
 ## Contributing
 
 To contribute to this open source project, please follow the guidelines in the [Contributing Guide].
@@ -483,6 +485,8 @@ To contribute to this open source project, please follow the guidelines in the [
 The **EVMAuth** contract is released under the MIT License. See the [LICENSE] file for details.
 
 [Base]: https://base.org/
+[cast]: https://getfoundry.sh/cast/overview
+[Cast Command Cheat Sheet]: https://github.com/evmauth/evmauth-core/blob/main/CAST_COMMANDS.md
 [Contributing Guide]: https://github.com/evmauth/evmauth-core/blob/main/CONTRIBUTING.md
 [ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155
 [ERC-6909]: https://eips.ethereum.org/EIPS/eip-6909
