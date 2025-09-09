@@ -26,15 +26,17 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
      * @param initialDelay Delay in seconds before a new default admin can exercise their role
      * @param initialDefaultAdmin Address to be granted the initial default admin role
      * @param initialTreasury Address where purchase revenues will be sent
+     * @param roleGrants Array of initial role assignments
      * @param uri_ Base URI for all token types per EIP-1155 metadata standard
      */
     function initialize(
         uint48 initialDelay,
         address initialDefaultAdmin,
         address payable initialTreasury,
+        RoleGrant[] calldata roleGrants,
         string memory uri_
     ) public virtual initializer {
-        __EVMAuth1155_init(initialDelay, initialDefaultAdmin, initialTreasury, uri_);
+        __EVMAuth1155_init(initialDelay, initialDefaultAdmin, initialTreasury, roleGrants, uri_);
     }
 
     /**
@@ -43,17 +45,19 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
      * @param initialDelay Delay in seconds before a new default admin can exercise their role
      * @param initialDefaultAdmin Address to be granted the initial default admin role
      * @param initialTreasury Address where purchase revenues will be sent
+     * @param roleGrants Array of initial role assignments
      * @param uri_ Base URI for all token types per EIP-1155 metadata standard
      */
     function __EVMAuth1155_init(
         uint48 initialDelay,
         address initialDefaultAdmin,
         address payable initialTreasury,
+        RoleGrant[] calldata roleGrants,
         string memory uri_
     ) internal onlyInitializing {
         __ERC1155_init(uri_);
         __ERC1155URIStorage_init();
-        __EVMAuth_init(initialDelay, initialDefaultAdmin, initialTreasury);
+        __EVMAuth_init(initialDelay, initialDefaultAdmin, initialTreasury, roleGrants);
         __EVMAuth1155_init_unchained();
     }
 

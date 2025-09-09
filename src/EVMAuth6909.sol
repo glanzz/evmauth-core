@@ -29,15 +29,17 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
      * @param initialDelay Delay in seconds before a new default admin can exercise their role
      * @param initialDefaultAdmin Address to be granted the initial default admin role
      * @param initialTreasury Address where purchase revenues will be sent
+     * @param roleGrants Array of initial role assignments
      * @param uri_ Contract URI per EIP-6909 content URI extension
      */
     function initialize(
         uint48 initialDelay,
         address initialDefaultAdmin,
         address payable initialTreasury,
+        RoleGrant[] calldata roleGrants,
         string memory uri_
     ) public virtual initializer {
-        __EVMAuth6909_init(initialDelay, initialDefaultAdmin, initialTreasury, uri_);
+        __EVMAuth6909_init(initialDelay, initialDefaultAdmin, initialTreasury, roleGrants, uri_);
     }
 
     /**
@@ -46,15 +48,17 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
      * @param initialDelay Delay in seconds before a new default admin can exercise their role
      * @param initialDefaultAdmin Address to be granted the initial default admin role
      * @param initialTreasury Address where purchase revenues will be sent
+     * @param roleGrants Array of initial role assignments
      * @param uri_ Contract URI per EIP-6909 content URI extension
      */
     function __EVMAuth6909_init(
         uint48 initialDelay,
         address initialDefaultAdmin,
         address payable initialTreasury,
+        RoleGrant[] calldata roleGrants,
         string memory uri_
     ) internal onlyInitializing {
-        __EVMAuth_init(initialDelay, initialDefaultAdmin, initialTreasury);
+        __EVMAuth_init(initialDelay, initialDefaultAdmin, initialTreasury, roleGrants);
         __EVMAuth6909_init_unchained(uri_);
     }
 

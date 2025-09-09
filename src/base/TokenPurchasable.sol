@@ -204,25 +204,6 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @notice Gets price in specific ERC-20 token.
-     * @dev Reverts if token not accepted (price is 0)
-     * @param id Token type identifier
-     * @param paymentToken ERC-20 contract address
-     * @return price Price in ERC-20 token units
-     * @custom:throws TokenNotForSaleWithERC20 When token not accepted
-     */
-    function tokenERC20Price(uint256 id, address paymentToken) public view virtual returns (uint256 price) {
-        TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
-        price = $.erc20Prices[id][paymentToken];
-
-        if (price == 0) {
-            revert TokenNotForSaleWithERC20(id, paymentToken);
-        }
-
-        return price;
-    }
-
-    /**
      * @notice Gets all accepted ERC-20 payment options.
      * @dev Returns array of payment tokens and their prices.
      * @param id Token type identifier

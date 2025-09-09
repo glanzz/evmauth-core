@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { Script } from "forge-std/Script.sol";
+import { EVMAuth } from "src/base/EVMAuth.sol";
 import { EVMAuth1155 } from "src/EVMAuth1155.sol";
 import { EVMAuth6909 } from "src/EVMAuth6909.sol";
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
@@ -17,16 +18,30 @@ abstract contract BaseDeployEVMAuth is Script {
     // Deployed proxy address
     address public proxy;
 
+    // Struct for JSON parsing
+    struct RoleGrantConfig {
+        string roleName;
+        address account;
+    }
+
     /**
      * @dev Main deployment function
      * @param defaultAdmin The initial default admin address
      * @param treasury The treasury address for payments
+     * @param roleGrants Array of initial role grants
+     * @param uri The token or contract URI
+     * @return The address of the deployed proxy contract
      */
-    function deploy(address defaultAdmin, address payable treasury, string memory uri) public returns (address) {
+    function deploy(
+        address defaultAdmin,
+        address payable treasury,
+        EVMAuth.RoleGrant[] memory roleGrants,
+        string memory uri
+    ) public returns (address) {
         require(defaultAdmin != address(0), "Invalid admin address");
         require(treasury != address(0), "Invalid treasury address");
 
-        bytes memory initData = _getInitializeCallData(defaultAdmin, treasury, uri);
+        bytes memory initData = _getInitializeCallData(defaultAdmin, treasury, roleGrants, uri);
         proxy = Upgrades.deployUUPSProxy(_getDeploymentArtifact(), initData);
 
         _postDeploy(proxy);
@@ -34,24 +49,74 @@ abstract contract BaseDeployEVMAuth is Script {
         return proxy;
     }
 
+    /**
+     * @dev Load role grants from JSON config file (optional)
+     * @param configPath Path to the JSON config file (relative to project root)
+     * @return roleGrants Array of role grants, empty if file doesn't exist
+     */
+    function _loadRoleGrants(string memory configPath) internal view returns (EVMAuth.RoleGrant[] memory roleGrants) {
+        string memory fullPath = string.concat(vm.projectRoot(), "/", configPath);
+
+        // Check if file exists and parse
+        try vm.readFile(fullPath) returns (string memory json) {
+            // Parse the JSON
+            bytes memory roleGrantsData = vm.parseJson(json, ".roleGrants");
+            RoleGrantConfig[] memory configs = abi.decode(roleGrantsData, (RoleGrantConfig[]));
+
+            // Convert to RoleGrant array with encoded role names
+            roleGrants = new EVMAuth.RoleGrant[](configs.length);
+            for (uint256 i = 0; i < configs.length; i++) {
+                roleGrants[i] = EVMAuth.RoleGrant({
+                    role: keccak256(abi.encodePacked(configs[i].roleName)),
+                    account: configs[i].account
+                });
+            }
+
+            console.log("Loaded", roleGrants.length, "role grants from config");
+        } catch {
+            // File doesn't exist or parsing failed - return empty array
+            console.log("No role grants config found, using empty array");
+            roleGrants = new EVMAuth.RoleGrant[](0);
+        }
+    }
+
+    /**
+     * @dev Helper function to log role grants for verification
+     */
+    function _logRoleGrants(EVMAuth.RoleGrant[] memory roleGrants) internal pure {
+        console.log("Role Grants:");
+        for (uint256 i = 0; i < roleGrants.length; i++) {
+            console.log("  Role:", vm.toString(roleGrants[i].role));
+            console.log("  Account:", roleGrants[i].account);
+        }
+    }
+
     // ========== Abstract Methods ==========
 
     /**
      * @dev Get the implementation contract name for deployment
+     * @return The contract name string
      */
     function _getDeploymentArtifact() internal pure virtual returns (string memory);
 
     /**
      * @dev Get the initialization calldata for the proxy
+     * @param defaultAdmin The initial default admin address
+     * @param treasury The treasury address for payments
+     * @param roleGrants Array of initial role grants
+     * @param uri The token or contract URI
+     * @return The encoded initialization calldata
      */
-    function _getInitializeCallData(address defaultAdmin, address payable treasury, string memory uri)
-        internal
-        view
-        virtual
-        returns (bytes memory);
+    function _getInitializeCallData(
+        address defaultAdmin,
+        address payable treasury,
+        EVMAuth.RoleGrant[] memory roleGrants,
+        string memory uri
+    ) internal view virtual returns (bytes memory);
 
     /**
      * @dev Optional post-deployment setup (e.g., granting additional roles)
+     * @param proxyAddress The address of the deployed proxy contract
      */
     function _postDeploy(address proxyAddress) internal virtual { }
 }
@@ -69,8 +134,12 @@ contract DeployEVMAuth1155 is BaseDeployEVMAuth {
         address payable treasury = payable(vm.envOr("TREASURY_ADDRESS", msg.sender));
         string memory uri = vm.envOr("TOKEN_URI", string(""));
 
+        // Load role grants from config file (optional)
+        string memory configPath = vm.envOr("ROLE_GRANTS_CONFIG", string("config/role-grants.json"));
+        EVMAuth.RoleGrant[] memory roleGrants = _loadRoleGrants(configPath);
+
         vm.startBroadcast();
-        address deployed = deploy(defaultAdmin, treasury, uri);
+        address deployed = deploy(defaultAdmin, treasury, roleGrants, uri);
         vm.stopBroadcast();
 
         evmAuth = EVMAuth1155(deployed);
@@ -79,19 +148,22 @@ contract DeployEVMAuth1155 is BaseDeployEVMAuth {
         console.log("Default Admin:", defaultAdmin);
         console.log("Treasury:", treasury);
         console.log("Token URI:", uri);
+        _logRoleGrants(roleGrants);
     }
 
+    /// @inheritdoc BaseDeployEVMAuth
     function _getDeploymentArtifact() internal pure override returns (string memory) {
         return "EVMAuth1155.sol:EVMAuth1155";
     }
 
-    function _getInitializeCallData(address defaultAdmin, address payable treasury, string memory uri)
-        internal
-        pure
-        override
-        returns (bytes memory)
-    {
-        return abi.encodeCall(EVMAuth1155.initialize, (ADMIN_DELAY, defaultAdmin, treasury, uri));
+    /// @inheritdoc BaseDeployEVMAuth
+    function _getInitializeCallData(
+        address defaultAdmin,
+        address payable treasury,
+        EVMAuth.RoleGrant[] memory roleGrants,
+        string memory uri
+    ) internal pure override returns (bytes memory) {
+        return abi.encodeCall(EVMAuth1155.initialize, (ADMIN_DELAY, defaultAdmin, treasury, roleGrants, uri));
     }
 }
 
@@ -108,8 +180,12 @@ contract DeployEVMAuth6909 is BaseDeployEVMAuth {
         address payable treasury = payable(vm.envOr("TREASURY_ADDRESS", msg.sender));
         string memory uri = vm.envOr("CONTRACT_URI", string(""));
 
+        // Load role grants from config file (optional)
+        string memory configPath = vm.envOr("ROLE_GRANTS_CONFIG", string("config/role-grants.json"));
+        EVMAuth.RoleGrant[] memory roleGrants = _loadRoleGrants(configPath);
+
         vm.startBroadcast();
-        address deployed = deploy(defaultAdmin, treasury, uri);
+        address deployed = deploy(defaultAdmin, treasury, roleGrants, uri);
         vm.stopBroadcast();
 
         evmAuth = EVMAuth6909(deployed);
@@ -118,70 +194,21 @@ contract DeployEVMAuth6909 is BaseDeployEVMAuth {
         console.log("Default Admin:", defaultAdmin);
         console.log("Treasury:", treasury);
         console.log("Contract URI:", uri);
+        _logRoleGrants(roleGrants);
     }
 
+    /// @inheritdoc BaseDeployEVMAuth
     function _getDeploymentArtifact() internal pure override returns (string memory) {
         return "EVMAuth6909.sol:EVMAuth6909";
     }
 
-    function _getInitializeCallData(address defaultAdmin, address payable treasury, string memory uri)
-        internal
-        pure
-        override
-        returns (bytes memory)
-    {
-        return abi.encodeCall(EVMAuth6909.initialize, (ADMIN_DELAY, defaultAdmin, treasury, uri));
-    }
-}
-
-/**
- * @dev Deploy script for multiple networks
- */
-contract DeployMultiNetwork is Script {
-    DeployEVMAuth1155 public deployer1155;
-    DeployEVMAuth6909 public deployer6909;
-
-    string[] public networks;
-
-    function setUp() public {
-        deployer1155 = new DeployEVMAuth1155();
-        deployer6909 = new DeployEVMAuth6909();
-        _setUpNetworks();
-    }
-
-    function _setUpNetworks() internal virtual {
-        // These named RPC URLs are defined in foundry.toml
-        networks = new string[](2);
-        networks[0] = "radius-testnet";
-        networks[1] = "base-sepolia";
-    }
-
-    function run() public {
-        address defaultAdmin = vm.envOr("DEFAULT_ADMIN_ADDRESS", msg.sender);
-        address payable treasury = payable(vm.envOr("TREASURY_ADDRESS", msg.sender));
-        bool use1155 = vm.envOr("ERC_1155", false);
-        bool use6909 = vm.envOr("ERC_6909", false);
-        string memory uri = use1155 ? vm.envOr("TOKEN_URI", string("")) : vm.envOr("CONTRACT_URI", string(""));
-
-        // Ensure exactly one token standard is set to true
-        require(use1155 != use6909, "Either ERC_1155 or ERC_6909 env var must be set to true");
-
-        // Deploy to networks
-        for (uint256 i = 0; i < networks.length; i++) {
-            string memory network = networks[i];
-            console.log("Deploying to network:", network);
-            vm.createSelectFork(network);
-
-            vm.startBroadcast();
-            if (use1155) {
-                address radius1155 = deployer1155.deploy(defaultAdmin, treasury, uri);
-                console.log(string.concat(network, " EVMAuth1155:"), radius1155);
-            }
-            if (use6909) {
-                address radius6909 = deployer6909.deploy(defaultAdmin, treasury, uri);
-                console.log(string.concat(network, " EVMAuth6909:"), radius6909);
-            }
-            vm.stopBroadcast();
-        }
+    /// @inheritdoc BaseDeployEVMAuth
+    function _getInitializeCallData(
+        address defaultAdmin,
+        address payable treasury,
+        EVMAuth.RoleGrant[] memory roleGrants,
+        string memory uri
+    ) internal pure override returns (bytes memory) {
+        return abi.encodeCall(EVMAuth6909.initialize, (ADMIN_DELAY, defaultAdmin, treasury, roleGrants, uri));
     }
 }

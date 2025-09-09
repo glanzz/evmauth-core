@@ -118,20 +118,95 @@ Configure deployment parameters via environment variables in your `.env` file:
 | `TOKEN_URI`             | Base URI for [ERC-1155] token metadata    | `""` (empty) |
 | `CONTRACT_URI`          | Contract metadata URI for [ERC-6909]      | `""` (empty) |
 
-## Multi-Network Deployment
+## Upgrades
 
-Deploy either `EVMAuth1155` or `EVMAuth6909` to multiple networks in a single transaction:
+Upgrading requires a deployed EVMAuth contract address, and the sender must have the `UPGRADE_MANAGER_ROLE`.
+
+First, make sure you build the latest version:
 
 ```sh
-forge script script/DeployEVMAuth.s.sol:DeployMultiNetwork \
+forge fmt && forge clean && forge build
+```
+
+You should probably also run the tests, to be sure everything is working as expected:
+
+```sh
+forge test
+```
+
+Then, run the appropriate upgrade script for your contract.
+
+### Upgrade EVMAuth1155
+
+Replace `0xYourContractAddress` with your deployed contract address:
+
+```sh
+PROXY=0xYourContractAddress \
+forge script script/UpgradeEVMAuth.s.sol:UpgradeEVMAuth1155 \
   --rpc-url radius-testnet \
   --private-key $PRIVATE_KEY \
   --broadcast
 ```
 
-The `DeployMultiNetwork` script deploys to Radius Testnet and Base Sepolia `networks`, as configured in the `_setUpNetworks` method. You can modify that method, or create a script that inherits `DeployMultiNetwork` and overrides `_setUpNetworks`.
+### Upgrade EVMAuth6909
 
-**Note:** When running `DeployMultiNetwork`, you must set either environment variable `ERC_1155=true` or `ERC_6909=true` (not both).
+Replace `0xYourContractAddress` with your deployed contract address:
+
+```sh
+PROXY=0xYourContractAddress \
+forge script script/UpgradeEVMAuth.s.sol:UpgradeEVMAuth6909 \
+  --rpc-url radius-testnet \
+  --private-key $PRIVATE_KEY \
+  --broadcast
+```
+
+### Initial Role Grants
+
+You can grant roles during deployment by creating a JSON configuration file with role assignments:
+
+```json
+{
+  "roleGrants": [
+    {
+      "roleName": "MINTER_ROLE",
+      "account": "0x1234567890123456789012345678901234567890"
+    },
+    {
+      "roleName": "TOKEN_MANAGER_ROLE", 
+      "account": "0x0987654321098765432109876543210987654321"
+    },
+    {
+      "roleName": "TREASURER_ROLE",
+      "account": "0x1111111111111111111111111111111111111111"
+    }
+  ]
+}
+```
+
+Then, you would run the deployment script with the `ROLE_GRANTS_CONFIG` environment variable set to the path of your config file:
+
+```sh
+ROLE_GRANTS_CONFIG="path/to/role-grants.json" \
+forge script script/DeployEVMAuth.s.sol:DeployEVMAuth1155 \
+  --rpc-url radius-testnet \
+  --private-key $PRIVATE_KEY \
+  --broadcast
+```
+
+The deployment script automatically:
+
+- Converts role names to `bytes32` hashes using `keccak256`
+- Logs all granted roles for verification
+- Falls back to empty array if config file doesn't exist
+
+EVMAuth provides the following roles:
+
+- `UPGRADE_MANAGER_ROLE` - Can upgrade contract implementation
+- `ACCESS_MANAGER_ROLE` - Can freeze/unfreeze accounts and pause/unpause contract
+- `TOKEN_MANAGER_ROLE` - Can create and configure token types
+- `MINTER_ROLE` - Can mint tokens to addresses
+- `BURNER_ROLE` - Can burn tokens from addresses
+- `TREASURER_ROLE` - Can update treasury address
 
 ## Script Architecture
 
@@ -150,10 +225,9 @@ Each deployment logs:
 - Default admin address
 - Treasury address
 - Metadata URI (if configured)
+- Roles granted during initialization
 
 Save these addresses for contract interaction and future upgrades.
-
-**NOTE:** Any address that is granted the `UPGRADE_MANAGER_ROLE` in an EVMAuth contract can upgrade the contract implementation.
 
 ## Troubleshooting
 
@@ -164,6 +238,24 @@ Save these addresses for contract interaction and future upgrades.
 **Compilation errors**: Run `forge build` to check for issues before deployment.
 
 # Cast Command Cheat Sheet
+
+## Decode Return Values
+
+To decode the return value of any call, use this pattern:
+
+```sh
+cast decode-abi "f()(bool)" $(cast call $PROXY "myFunc()" --rpc-url $RPC)
+```
+
+...where `f()(bool)` is the function signature with return types, and `myFunc()` is the function being called.
+
+You need to include parameter types and call data if the function takes parameters:
+
+```sh
+cast decode-abi "f(uint256)(bytes32)" $(cast call $PROXY "myFunc(uint256)" 42 --rpc-url $RPC)
+```
+
+In the example above, `42` is the parameter being passed to `myFunc` and `bytes32` is the return type, which is decoded by `cast decode-abi`.
 
 ## Send ETH
 
@@ -179,7 +271,7 @@ For Radius Testnet, you can use the `--gas-price 0` flag to avoid needing enough
 cast balance $ADDRESS --rpc-url radius-testnet
 ```
 
-## View Functions (Read-Only)
+## EVMAuth View Functions (Read-Only)
 
 ### Role Constants
 
@@ -222,7 +314,6 @@ cast call $PROXY "tokenTTL(uint256)" $TOKEN_ID --rpc-url $RPC
 cast call $PROXY "isTransferable(uint256)" $TOKEN_ID --rpc-url $RPC
 
 # ERC20 pricing
-cast call $PROXY "tokenERC20Price(uint256,address)" $TOKEN_ID $ERC20_ADDRESS --rpc-url $RPC
 cast call $PROXY "tokenERC20Prices(uint256)" $TOKEN_ID --rpc-url $RPC
 cast call $PROXY "isAcceptedERC20PaymentToken(uint256,address)" $TOKEN_ID $ERC20_ADDRESS --rpc-url $RPC
 ```
@@ -259,7 +350,7 @@ cast call $PROXY "allowance(address,address,uint256)" $OWNER_ADDRESS $SPENDER_AD
 cast call $PROXY "isOperator(address,address)" $OWNER_ADDRESS $SPENDER_ADDRESS --rpc-url $RPC
 ```
 
-## State-Changing Functions (Require Private Key)
+## EVMAuth State-Changing Functions (Require Private Key)
 
 ### Token Management
 
@@ -432,16 +523,6 @@ cast send $PROXY "setContractURI(string)" \
 # but can be manually triggered if needed.
 cast send $PROXY "pruneBalanceRecords(address,uint256)" \
   $ADDRESS $TOKEN_ID \
-  --rpc-url $RPC --private-key $PRIVATE_KEY
-```
-
-### Upgrades
-
-These operations require the `UPGRADE_MANAGER_ROLE`.
-
-```sh
-cast send $PROXY "upgradeToAndCall(address,bytes)" \
-  $NEW_IMPLEMENTATION_ADDRESS $CALL_DATA \
   --rpc-url $RPC --private-key $PRIVATE_KEY
 ```
 

@@ -22,8 +22,8 @@ contract MockAccountFreezableV1 is AccountFreezable, OwnableUpgradeable, UUPSUpg
      * @param initialOwner The address to be set as the owner of the contract.
      */
     function __MockAccountFreezableV1_init(address initialOwner) internal onlyInitializing {
-        __Ownable_init(initialOwner);
         __AccountFreezable_init();
+        __Ownable_init(initialOwner);
         __MockAccountFreezableV1_init_unchained();
     }
 

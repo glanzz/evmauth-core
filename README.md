@@ -51,11 +51,12 @@ When deploying the contract, you will need to specify the following parameters:
 - Initial [transfer delay] for the default admin role
 - Initial default admin address, [for role management](https://docs.openzeppelin.com/contracts/5.x/api/access#AccessControlDefaultAdminRules)
 - Initial treasury address, for receiving revenue from direct purchases
+- Role grants, to set up access control during initialization (optional, can be done later)
 - Base token metadata URI ([for ERC-1155](https://eips.ethereum.org/EIPS/eip-1155#metadata-extensions)) or contract URI ([for ERC-6909](https://eips.ethereum.org/EIPS/eip-6909#content-uri-extension)) (optional, can be updated later)
 
 ## Access Control
 
-Once you've deployed the contract, the default admin will need to grant various access roles:
+If you did not grant roles during initialization, only the default admin can assign roles after deployment, by calling:
 
 - `grantRole(TOKEN_MANAGER_ROLE, address)` for accounts that can configure tokens and token metadata
 - `grantRole(ACCESS_MANAGER_ROLE, address)` for accounts that can pause/unpause the contract and freeze accounts
@@ -108,7 +109,6 @@ An account with the `TOKEN_MANAGER_ROLE` can modify an existing token by calling
 | Recipient Requirements | Contract recipients must implement callback functions with return values     | No special requirements for contract recipients                             |
 | Approval Granularity   | Operators only (all-or-nothing for entire contract)                          | Granular allowances per token ID + full operators                           |
 | Metadata Handling      | URI-based metadata (typically off-chain JSON)                                | On-chain name/symbol/decimals per token ID                                  |
-| Supply Tracking        | Global `totalSupply()` plus per-token supply                                 | Only per-token `totalSupply(id)`                                            |
 
 </div>
 
@@ -153,9 +153,9 @@ classDiagram
         +TREASURER_ROLE
         +freezeAccount(account)
         +unfreezeAccount(account)
-        <<inherited from Pausable>>
         +pause()
         +unpause()
+        <<inherited from Pausable>>
         +paused()
         <<inherited from AccessControl>>
         +hasRole(role, account)
@@ -213,7 +213,6 @@ classDiagram
         -erc20Prices mapping
         +treasury()
         +tokenPrice(id)
-        +tokenERC20Price(id, token)
         +tokenERC20Prices(id)
         +isAcceptedERC20PaymentToken(id, token)
         +purchase(id, amount)
@@ -270,7 +269,6 @@ classDiagram
         +tokenConfig(id)
         +treasury()
         +tokenPrice(id)
-        +tokenERC20Price(id, token)
         +tokenERC20Prices(id)
         +isAcceptedERC20PaymentToken(id, token)
         +tokenTTL(id)
@@ -355,7 +353,6 @@ classDiagram
         +tokenConfig(id)
         +treasury()
         +tokenPrice(id)
-        +tokenERC20Price(id, token)
         +tokenERC20Prices(id)
         +isAcceptedERC20PaymentToken(id, token)
         +tokenTTL(id)

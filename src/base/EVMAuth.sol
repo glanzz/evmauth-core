@@ -49,6 +49,16 @@ abstract contract EVMAuth is
     }
 
     /**
+     * @notice Structure for role assignment during initialization.
+     * @param role The role being granted
+     * @param account The account receiving the role
+     */
+    struct RoleGrant {
+        bytes32 role;
+        address account;
+    }
+
+    /**
      * @notice Emitted when a token type is created or reconfigured.
      * @param id Token type identifier
      * @param config New configuration settings
@@ -72,22 +82,30 @@ abstract contract EVMAuth is
      * @param initialDelay Security delay for admin role transfers
      * @param initialDefaultAdmin Initial admin address
      * @param initialTreasury Treasury address for revenue collection
+     * @param roleGrants Array of initial role assignments
      */
-    function __EVMAuth_init(uint48 initialDelay, address initialDefaultAdmin, address payable initialTreasury)
-        internal
-        onlyInitializing
-    {
+    function __EVMAuth_init(
+        uint48 initialDelay,
+        address initialDefaultAdmin,
+        address payable initialTreasury,
+        RoleGrant[] calldata roleGrants
+    ) internal onlyInitializing {
         __TokenAccessControl_init(initialDelay, initialDefaultAdmin);
         __TokenEnumerable_init();
         __TokenPurchasable_init(initialTreasury);
-        __EVMAuth_init_unchained();
+        __EVMAuth_init_unchained(roleGrants);
     }
 
     /**
      * @notice Unchained initializer for contract-specific storage.
      * @dev Currently empty but reserved for future EVMAuth-specific initialization.
+     * @param roleGrants Array of initial role assignments
      */
-    function __EVMAuth_init_unchained() internal onlyInitializing { }
+    function __EVMAuth_init_unchained(RoleGrant[] calldata roleGrants) internal onlyInitializing {
+        for (uint256 i = 0; i < roleGrants.length; i++) {
+            _grantRole(roleGrants[i].role, roleGrants[i].account);
+        }
+    }
 
     /**
      * @notice Retrieves complete configuration for a token type.
@@ -115,24 +133,6 @@ abstract contract EVMAuth is
      */
     function tokenPrice(uint256 id) public view virtual override tokenExists(id) returns (uint256) {
         return TokenPurchasable.tokenPrice(id);
-    }
-
-    /**
-     * @notice Gets price in specific ERC-20 token.
-     * @dev Returns 0 if token not accepted as payment.
-     * @param id Token type identifier
-     * @param token ERC-20 contract address
-     * @return Price in ERC-20 token units
-     */
-    function tokenERC20Price(uint256 id, address token)
-        public
-        view
-        virtual
-        override
-        tokenExists(id)
-        returns (uint256)
-    {
-        return TokenPurchasable.tokenERC20Price(id, token);
     }
 
     /**
