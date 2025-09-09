@@ -9,7 +9,7 @@ import "forge-std/console.sol";
 /**
  * @dev Upgrade script for EVMAuth1155
  */
-contract UpgradeEVMAuth1155 is Script {
+contract Upgrade1155 is Script {
     function run() external {
         // Get proxy address from env
         address proxyAddress = vm.envAddress("PROXY");
@@ -37,7 +37,7 @@ contract UpgradeEVMAuth1155 is Script {
 /**
  * @dev Upgrade script for EVMAuth6909
  */
-contract UpgradeEVMAuth6909 is Script {
+contract Upgrade6909 is Script {
     function run() external {
         // Get proxy address from env
         address proxyAddress = vm.envAddress("PROXY");

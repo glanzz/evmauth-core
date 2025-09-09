@@ -87,36 +87,29 @@ Private Keys
 
 ### Deploy EVMAuth1155
 
-To deploy the `EVMAuth1155` contract ([ERC-1155]), run:
+To deploy the `EVMAuth1155` contract ([ERC-1155]) using the example script, run:
 
 ```sh
-forge script script/DeployEVMAuth.s.sol:DeployEVMAuth1155 \
+forge script script/DeployExample.s.sol:DeployExample1155 \
   --rpc-url radius-testnet \
   --private-key $PRIVATE_KEY \
   --broadcast
 ```
+
+You can write your own script with custom initialization parameters by extending `BaseDeploy1155`, as illustrated in `DeployExample.s.sol`.
 
 ### Deploy EVMAuth6909
 
-To deploy the `EVMAuth6909` contract ([ERC-6909]), run:
+To deploy the `EVMAuth6909` contract ([ERC-6909]) using the example script, run:
 
 ```sh
-forge script script/DeployEVMAuth.s.sol:DeployEVMAuth6909 \
+forge script script/DeployExample.s.sol:DeployExample6909 \
   --rpc-url radius-testnet \
   --private-key $PRIVATE_KEY \
   --broadcast
 ```
 
-## Environment Variables
-
-Configure deployment parameters via environment variables in your `.env` file:
-
-| Variable                | Description                               | Default      |
-|-------------------------|-------------------------------------------|--------------|
-| `DEFAULT_ADMIN_ADDRESS` | Initial admin address with upgrade rights | `msg.sender` |
-| `TREASURY_ADDRESS`      | Address to receive payment revenues       | `msg.sender` |
-| `TOKEN_URI`             | Base URI for [ERC-1155] token metadata    | `""` (empty) |
-| `CONTRACT_URI`          | Contract metadata URI for [ERC-6909]      | `""` (empty) |
+You can write your own script with custom initialization parameters by extending `BaseDeploy6909`, as illustrated in `DeployExample.s.sol`.
 
 ## Upgrades
 
@@ -160,54 +153,6 @@ forge script script/UpgradeEVMAuth.s.sol:UpgradeEVMAuth6909 \
   --broadcast
 ```
 
-### Initial Role Grants
-
-You can grant roles during deployment by creating a JSON configuration file with role assignments:
-
-```json
-{
-  "roleGrants": [
-    {
-      "roleName": "MINTER_ROLE",
-      "account": "0x1234567890123456789012345678901234567890"
-    },
-    {
-      "roleName": "TOKEN_MANAGER_ROLE", 
-      "account": "0x0987654321098765432109876543210987654321"
-    },
-    {
-      "roleName": "TREASURER_ROLE",
-      "account": "0x1111111111111111111111111111111111111111"
-    }
-  ]
-}
-```
-
-Then, you would run the deployment script with the `ROLE_GRANTS_CONFIG` environment variable set to the path of your config file:
-
-```sh
-ROLE_GRANTS_CONFIG="path/to/role-grants.json" \
-forge script script/DeployEVMAuth.s.sol:DeployEVMAuth1155 \
-  --rpc-url radius-testnet \
-  --private-key $PRIVATE_KEY \
-  --broadcast
-```
-
-The deployment script automatically:
-
-- Converts role names to `bytes32` hashes using `keccak256`
-- Logs all granted roles for verification
-- Falls back to empty array if config file doesn't exist
-
-EVMAuth provides the following roles:
-
-- `UPGRADE_MANAGER_ROLE` - Can upgrade contract implementation
-- `ACCESS_MANAGER_ROLE` - Can freeze/unfreeze accounts and pause/unpause contract
-- `TOKEN_MANAGER_ROLE` - Can create and configure token types
-- `MINTER_ROLE` - Can mint tokens to addresses
-- `BURNER_ROLE` - Can burn tokens from addresses
-- `TREASURER_ROLE` - Can update treasury address
-
 ## Script Architecture
 
 All deployment scripts extend `BaseDeployEVMAuth` which:
@@ -233,9 +178,7 @@ Save these addresses for contract interaction and future upgrades.
 
 **"Invalid admin/treasury address"**: Ensure addresses are not zero addresses.
 
-**"Either ERC_1155 or ERC_6909 env var must be set"**: Set exactly one of these to `true` for multi-network deployment.
-
-**Compilation errors**: Run `forge build` to check for issues before deployment.
+**Compilation errors**: Run `forge fmt && forge clean && forge build` to check for issues before deployment.
 
 # Cast Command Cheat Sheet
 
