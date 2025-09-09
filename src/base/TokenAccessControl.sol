@@ -95,4 +95,24 @@ abstract contract TokenAccessControl is
     function unfreezeAccount(address account) external onlyRole(ACCESS_MANAGER_ROLE) {
         _unfreezeAccount(account);
     }
+
+    /**
+     * @notice Pauses all contract operations.
+     * @dev Restricted to ACCESS_MANAGER_ROLE.
+     * @custom:emits Paused When contract is paused
+     * @custom:throws MissingRole When caller lacks ACCESS_MANAGER_ROLE
+     */
+    function pause() external onlyRole(ACCESS_MANAGER_ROLE) {
+        _pause();
+    }
+
+    /**
+     * @notice Resumes contract operations after a pause.
+     * @dev Restricted to ACCESS_MANAGER_ROLE.
+     * @custom:emits Unpaused When contract is unpaused
+     * @custom:throws MissingRole When caller lacks ACCESS_MANAGER_ROLE
+     */
+    function unpause() external onlyRole(ACCESS_MANAGER_ROLE) {
+        _unpause();
+    }
 }
