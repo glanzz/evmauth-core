@@ -40,6 +40,31 @@ contract MockTokenTransferableV1 is TokenTransferable, OwnableUpgradeable, UUPSU
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
         // This will revert if the caller is not authorized.
     }
+
+    /// @dev Expose internal function for testing
+    function setTransferable(uint256 tokenId, bool transferable) external onlyOwner {
+        _setTransferable(tokenId, transferable);
+    }
+
+    /// @dev Expose modifier for testing
+    function withModifierTokenTransferable(address from, address to, uint256 id)
+        external
+        view
+        tokenTransferable(from, to, id)
+        returns (bool)
+    {
+        return true;
+    }
+
+    /// @dev Expose modifier for testing
+    function withModifierAllTokensTransferable(address from, address to, uint256[] memory ids)
+        external
+        view
+        allTokensTransferable(from, to, ids)
+        returns (bool)
+    {
+        return true;
+    }
 }
 
 contract TokenTransferableTest is BaseTest {
@@ -74,5 +99,95 @@ contract TokenTransferableTest is BaseTest {
             keccak256(abi.encode(uint256(keccak256("tokentransferable.storage.TokenTransferable")) - 1))
                 & ~bytes32(uint256(0xff))
         );
+    }
+
+    function test_setTransferable() public {
+        // Verify default is true
+        assertEq(v1.isTransferable(1), false, "Default should be false");
+
+        // Set back to true and verify
+        vm.prank(owner);
+        v1.setTransferable(1, true);
+        assertEq(v1.isTransferable(1), true, "Should be true after setting to true");
+
+        // Set to false and verify
+        vm.prank(owner);
+        v1.setTransferable(1, false);
+        assertEq(v1.isTransferable(1), false, "Should be false after setting to false");
+    }
+
+    function test_modifier_tokenTransferable_succeeds() public {
+        // Set token ID 1 to transferable
+        vm.prank(owner);
+        v1.setTransferable(1, true);
+
+        // Should succeed for transfers
+        assertTrue(v1.withModifierTokenTransferable(alice, bob, 1));
+        assertTrue(v1.withModifierTokenTransferable(address(0), carol, 1)); // mint
+        assertTrue(v1.withModifierTokenTransferable(bob, address(0), 1)); // burn
+
+        // Set token ID 2 to non-transferable
+        vm.prank(owner);
+        v1.setTransferable(2, false);
+
+        // Should succeed for minting and burning
+        assertTrue(v1.withModifierTokenTransferable(address(0), alice, 2)); // mint
+        assertTrue(v1.withModifierTokenTransferable(bob, address(0), 2)); // burn
+    }
+
+    function testRevert_modifier_tokenTransferable_TokenIsNonTransferable() public {
+        // Set token ID 1 to non-transferable
+        vm.prank(owner);
+        v1.setTransferable(1, false);
+
+        // Should revert for transfers
+        vm.expectRevert(abi.encodeWithSelector(TokenTransferable.TokenIsNonTransferable.selector, 1));
+        v1.withModifierTokenTransferable(alice, bob, 1);
+    }
+
+    function test_modifier_allTokensTransferable_succeeds() public {
+        // Set token IDs 1 and 2 to transferable
+        vm.prank(owner);
+        v1.setTransferable(1, true);
+        vm.prank(owner);
+        v1.setTransferable(2, true);
+
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+
+        // Should succeed for transfers
+        assertTrue(v1.withModifierAllTokensTransferable(alice, bob, ids));
+        assertTrue(v1.withModifierAllTokensTransferable(address(0), carol, ids)); // mint
+        assertTrue(v1.withModifierAllTokensTransferable(bob, address(0), ids)); // burn
+
+        // Set token ID 3 to non-transferable
+        vm.prank(owner);
+        v1.setTransferable(3, false);
+
+        uint256[] memory idsWithNonTransferable = new uint256[](3);
+        idsWithNonTransferable[0] = 1;
+        idsWithNonTransferable[1] = 2;
+        idsWithNonTransferable[2] = 3;
+
+        // Should succeed for minting and burning
+        assertTrue(v1.withModifierAllTokensTransferable(address(0), alice, idsWithNonTransferable)); // mint
+        assertTrue(v1.withModifierAllTokensTransferable(bob, address(0), idsWithNonTransferable)); // burn
+    }
+
+    function testRevert_modifier_allTokensTransferable_TokenIsNonTransferable() public {
+        // Set token ID 1 to transferable and ID 2 to non-transferable
+        vm.prank(owner);
+        v1.setTransferable(1, true);
+        vm.prank(owner);
+        v1.setTransferable(2, false);
+
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+
+        // Should revert for transfers
+        vm.expectRevert(abi.encodeWithSelector(TokenTransferable.TokenIsNonTransferable.selector, 2));
+        v1.withModifierAllTokensTransferable(alice, bob, ids);
     }
 }

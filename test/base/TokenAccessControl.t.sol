@@ -110,7 +110,7 @@ contract TokenAccessControlTest is BaseTestWithAccessControl {
         assertTrue(v1.isFrozen(alice));
     }
 
-    function testRevert_freezeAccount_notAuthorized() public {
+    function testRevert_freezeAccount_AccessControlUnauthorizedAccount() public {
         // Verify that Alice does not have the ACCESS_MANAGER_ROLE
         assertFalse(v1.hasRole(ACCESS_MANAGER_ROLE, alice));
 
@@ -140,7 +140,7 @@ contract TokenAccessControlTest is BaseTestWithAccessControl {
         assertFalse(v1.isFrozen(alice));
     }
 
-    function testRevert_unfreezeAccount_notAuthorized() public {
+    function testRevert_unfreezeAccount_AccessControlUnauthorizedAccount() public {
         // Verify that Alice does not have the ACCESS_MANAGER_ROLE
         assertFalse(v1.hasRole(ACCESS_MANAGER_ROLE, alice));
 
@@ -150,6 +150,61 @@ contract TokenAccessControlTest is BaseTestWithAccessControl {
             abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ACCESS_MANAGER_ROLE)
         );
         v1.unfreezeAccount(bob);
+        vm.stopPrank();
+    }
+
+    function test_pause() public {
+        // Verify that accessManager has the ACCESS_MANAGER_ROLE
+        assertTrue(v1.hasRole(ACCESS_MANAGER_ROLE, accessManager));
+
+        // Pause the contract
+        vm.prank(accessManager);
+        v1.pause();
+
+        // Verify that the contract is paused
+        assertTrue(v1.paused());
+    }
+
+    function testRevert_pause_AccessControlUnauthorizedAccount() public {
+        // Verify that Alice does not have the ACCESS_MANAGER_ROLE
+        assertFalse(v1.hasRole(ACCESS_MANAGER_ROLE, alice));
+
+        // Expect a revert when Alice tries to pause the contract
+        vm.startPrank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ACCESS_MANAGER_ROLE)
+        );
+        v1.pause();
+        vm.stopPrank();
+    }
+
+    function test_unpause() public {
+        // Verify that accessManager has the ACCESS_MANAGER_ROLE
+        assertTrue(v1.hasRole(ACCESS_MANAGER_ROLE, accessManager));
+
+        // Pause the contract first
+        vm.prank(accessManager);
+        v1.pause();
+        assertTrue(v1.paused());
+
+        // Now unpause the contract
+        vm.prank(accessManager);
+        v1.unpause();
+
+        // Verify that the contract is no longer paused
+        assertFalse(v1.paused());
+    }
+
+    function testRevert_unpause_AccessControlUnauthorizedAccount() public {
+        // Verify that Alice does not have the ACCESS_MANAGER_ROLE
+        assertFalse(v1.hasRole(ACCESS_MANAGER_ROLE, alice));
+
+        // Expect a revert when Alice tries to unpause the contract
+        vm.startPrank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, alice, ACCESS_MANAGER_ROLE)
+        );
+        v1.unpause();
         vm.stopPrank();
     }
 }
