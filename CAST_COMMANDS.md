@@ -1,5 +1,9 @@
 # Cast Command Cheat Sheet
 
+This is a reference guide for using `cast` commands with a deployed EVMAuth contract. Replace the placeholder variables (e.g., `$PROXY`, `$RPC`, `$PRIVATE_KEY`, etc.) with your actual values, or set them as environment variables.
+
+**NOTE:** It is STRONGLY [recommended to use a hardware wallet or password protected key store](https://getfoundry.sh/guides/best-practices/key-management/) for private keys.
+
 ## Decode Return Values
 
 To decode the return value of any call, use this pattern:
@@ -21,7 +25,7 @@ In the example above, `42` is the parameter being passed to `myFunc` and `bytes3
 ## Send ETH
 
 ```sh
-cast send $TO_ADDRESS --value 1ether --private-key $PRIVATE_KEY --rpc-url radius-testnet
+cast send $TO_ADDRESS --value 1ether --private-key $PRIVATE_KEY --rpc-url $RPC
 ```
 
 For Radius Testnet, you can use the `--gas-price 0` flag to avoid needing enough value to cover gas fees.

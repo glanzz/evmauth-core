@@ -24,7 +24,7 @@ Edit `.env` to set your private key and other parameters, then load it:
 source .env
 ```
 
-**NOTE:** It is STRONGLY [recommended to use a hardware wallet or password protected key store](https://getfoundry.sh/guides/best-practices/key-management/) for production deployments.
+**NOTE:** It is STRONGLY [recommended to use a hardware wallet or password protected key store](https://getfoundry.sh/guides/best-practices/key-management/) for private keys.
 
 ### Using Anvil
 
