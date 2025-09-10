@@ -113,7 +113,7 @@ To deploy the `EVMAuth1155` contract ([ERC-1155]) using the example script, run:
 
 ```sh
 forge script script/ExampleDeploy.s.sol:ExampleDeploy1155 \
-  --rpc-url radius-testnet \
+  --rpc-url $RPC \
   --private-key $PRIVATE_KEY \
   --broadcast
 ```
@@ -126,7 +126,7 @@ To deploy the `EVMAuth6909` contract ([ERC-6909]) using the example script, run:
 
 ```sh
 forge script script/ExampleDeploy.s.sol:ExampleDeploy6909 \
-  --rpc-url radius-testnet \
+  --rpc-url $RPC \
   --private-key $PRIVATE_KEY \
   --broadcast
 ```
@@ -158,7 +158,7 @@ Replace `0xYourContractAddress` with your deployed contract address:
 ```sh
 PROXY=0xYourContractAddress \
 forge script script/UpgradeEVMAuth.s.sol:UpgradeEVMAuth1155 \
-  --rpc-url radius-testnet \
+  --rpc-url $RPC \
   --private-key $PRIVATE_KEY \
   --broadcast
 ```
@@ -170,7 +170,7 @@ Replace `0xYourContractAddress` with your deployed contract address:
 ```sh
 PROXY=0xYourContractAddress \
 forge script script/UpgradeEVMAuth.s.sol:UpgradeEVMAuth6909 \
-  --rpc-url radius-testnet \
+  --rpc-url $RPC \
   --private-key $PRIVATE_KEY \
   --broadcast
 ```
