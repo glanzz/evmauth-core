@@ -10,6 +10,28 @@ Deploy upgradeable `EVMAuth1155` and `EVMAuth6909` contracts using Foundry.
 
 ## Quick Start
 
+### Setup
+
+1. Clone the repository:
+
+```sh
+git clone git@github.com:evmauth/evmauth-core.git
+```
+
+2. Navigate to the project directory:
+
+```sh
+cd evmauth-core
+```
+
+3. Install the dependencies:
+
+```sh
+forge install foundry-rs/forge-std
+forge install OpenZeppelin/openzeppelin-contracts-upgradeable
+forge install OpenZeppelin/openzeppelin-foundry-upgrades
+```
+
 ### Configure Environment
 
 Copy the example environment file:
@@ -26,7 +48,7 @@ source .env
 
 **NOTE:** It is STRONGLY [recommended to use a hardware wallet or password protected key store](https://getfoundry.sh/guides/best-practices/key-management/) for private keys.
 
-### Using Anvil
+### Use Anvil for Local Testing
 
 To run your own Ethereum node locally for testing, you can use [Anvil](https://getfoundry.sh/anvil/overview):
 
