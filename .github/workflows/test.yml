@@ -52,7 +52,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge coverage -vvv --ffi --report lcov --lcov-version 2.2 --no-match-coverage ".(t|s).sol"
+          forge coverage --no-match-coverage ".(t|s).sol" -vvv --report lcov --lcov-version 2.2
         id: test
 
       - name: Upload results to Codecov

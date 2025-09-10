@@ -6,7 +6,7 @@ import { EVMAuth } from "src/base/EVMAuth.sol";
 import { EVMAuth1155 } from "src/EVMAuth1155.sol";
 import { EVMAuth6909 } from "src/EVMAuth6909.sol";
 import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
-import "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 
 /**
  * @dev Base deployment script for upgradeable EVMAuth contracts

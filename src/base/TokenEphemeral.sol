@@ -205,7 +205,10 @@ abstract contract TokenEphemeral is ContextUpgradeable {
             bucketSize = 1;
         }
 
-        return ((exactExpiration + bucketSize - 1) / bucketSize) * bucketSize;
+        // Ceiling division: round up to the next bucket boundary
+        // This ensures tokens last AT LEAST the TTL duration
+        uint256 buckets = (exactExpiration + bucketSize - 1) / bucketSize;
+        return buckets * bucketSize;
     }
 
     /**

@@ -167,7 +167,16 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
      * @custom:throws InvalidSelfTransfer When from equals to
      * @custom:throws InvalidZeroValueTransfer When amount is zero
      */
-    function _update(address from, address to, uint256 id, uint256 amount) internal virtual override whenNotPaused {
+    function _update(address from, address to, uint256 id, uint256 amount)
+        internal
+        virtual
+        override
+        whenNotPaused
+        notFrozen(from)
+        notFrozen(to)
+        tokenExists(id)
+        tokenTransferable(from, to, id)
+    {
         // Check if the sender and receiver are the same
         if (from == to) {
             revert InvalidSelfTransfer(from);

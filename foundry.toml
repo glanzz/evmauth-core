@@ -23,6 +23,9 @@ remappings = [
 [fmt]
 bracket_spacing = true
 
+[lint]
+severity = ["high", "med", "low"]
+
 [doc]
 out = "docs"
 repository = "https://github.com/evmauth/evmauth-core"

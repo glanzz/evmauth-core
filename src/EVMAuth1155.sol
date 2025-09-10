@@ -80,7 +80,7 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
 
     /// @inheritdoc ERC1155URIStorageUpgradeable
     function uri(uint256 tokenId) public view virtual override returns (string memory) {
-        return ERC1155URIStorageUpgradeable.uri(tokenId);
+        return super.uri(tokenId);
     }
 
     /// @inheritdoc TokenEphemeral
@@ -183,6 +183,8 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
         virtual
         override
         whenNotPaused
+        notFrozen(from)
+        notFrozen(to)
         allTokensExist(ids)
         allTokensTransferable(from, to, ids)
     {
