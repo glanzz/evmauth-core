@@ -13,10 +13,10 @@ docs/
 !.env.example
 
 # Custom scripts
-scripts/*.s.sol
-!scripts/BaseDeploy.s.sol
-!scripts/ExampleDeploy.s.sol
-!scripts/Upgrade.s.sol
+script/*.s.sol
+!script/BaseDeploy.s.sol
+!script/ExampleDeploy.s.sol
+!script/Upgrade.s.sol
 
 # JetBrains IDEs
 .idea/
