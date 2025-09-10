@@ -7,7 +7,7 @@ import { BaseDeploy1155, BaseDeploy6909 } from "script/BaseDeploy.s.sol";
 /**
  * @dev Example deployment script for EVMAuth1155
  */
-contract DeployExample1155 is BaseDeploy1155 {
+contract ExampleDeploy1155 is BaseDeploy1155 {
     /**
      * @dev Main deployment function. Sets initializer parameters, then executes the deployment.
      */
@@ -36,7 +36,7 @@ contract DeployExample1155 is BaseDeploy1155 {
 /**
  * @dev Example deployment script for EVMAuth6909
  */
-contract DeployExample6909 is BaseDeploy6909 {
+contract ExampleDeploy6909 is BaseDeploy6909 {
     /**
      * @dev Main deployment function. Sets initializer parameters, then executes the deployment.
      */

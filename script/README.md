@@ -90,26 +90,26 @@ Private Keys
 To deploy the `EVMAuth1155` contract ([ERC-1155]) using the example script, run:
 
 ```sh
-forge script script/DeployExample.s.sol:DeployExample1155 \
+forge script script/ExampleDeploy.s.sol:ExampleDeploy1155 \
   --rpc-url radius-testnet \
   --private-key $PRIVATE_KEY \
   --broadcast
 ```
 
-You can write your own script with custom initialization parameters by extending `BaseDeploy1155`, as illustrated in `DeployExample.s.sol`.
+You can write your own script with custom initialization parameters by extending `BaseDeploy1155`, as illustrated in `ExampleDeploy.s.sol`.
 
 ### Deploy EVMAuth6909
 
 To deploy the `EVMAuth6909` contract ([ERC-6909]) using the example script, run:
 
 ```sh
-forge script script/DeployExample.s.sol:DeployExample6909 \
+forge script script/ExampleDeploy.s.sol:ExampleDeploy6909 \
   --rpc-url radius-testnet \
   --private-key $PRIVATE_KEY \
   --broadcast
 ```
 
-You can write your own script with custom initialization parameters by extending `BaseDeploy6909`, as illustrated in `DeployExample.s.sol`.
+You can write your own script with custom initialization parameters by extending `BaseDeploy6909`, as illustrated in `ExampleDeploy.s.sol`.
 
 ## Upgrades
 

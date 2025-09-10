@@ -12,6 +12,12 @@ docs/
 .env*
 !.env.example
 
+# Scripts other than base, example, and upgrade scripts
+scripts/
+!scripts/BaseDeploy.s.ts
+!scripts/ExampleDeploy.s.ts
+!scripts/Upgrade.s.ts
+
 # JetBrains IDEs
 .idea/
 
