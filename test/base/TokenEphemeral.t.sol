@@ -72,7 +72,7 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
 contract TokenEphemeralTest is BaseTest {
     MockTokenEphemeralV1 internal v1;
 
-    // =========== Test Setup ============ //
+    // ============ Test Setup ============= //
 
     function _deployNewImplementation() internal override returns (address) {
         return address(new MockTokenEphemeralV1());
@@ -90,7 +90,7 @@ contract TokenEphemeralTest is BaseTest {
         v1 = MockTokenEphemeralV1(proxyAddress);
     }
 
-    // ============ Tests ============= //
+    // ============ Initialization Tests ============= //
 
     function test_initialize() public view {
         assertEq(v1.tokenTTL(1), 0);
@@ -102,6 +102,8 @@ contract TokenEphemeralTest is BaseTest {
                 & ~bytes32(uint256(0xff))
         );
     }
+
+    // ============ Balance Tests ============= //
 
     function test_balanceOf_succeeds() public {
         // Set TTL for token ID 1 to 10 seconds.
@@ -252,6 +254,8 @@ contract TokenEphemeralTest is BaseTest {
         assertEq(records.length, 0); // All records should be pruned
     }
 
+    // ============ Fuzz Tests ============= //
+
     function testFuzz_balanceRecordsOf_maxArraySize(uint256 tokenId, uint48 ttl, uint256 amount) public {
         // Bound TTL to a reasonable value
         ttl = uint48(bound(ttl, 1, 365 days));
@@ -349,6 +353,8 @@ contract TokenEphemeralTest is BaseTest {
         assertGe(result, minimumExpiration, "Result should be greater than or equal to minimum expiration");
         assertLe(result, maximumExpiration, "Result should be less than or equal to maximum expiration");
     }
+
+    // ============ Balance Record Management Tests ============= //
 
     function test_addToBalanceRecords_permanentTokens() public {
         // Token with 0 TTL should be permanent
@@ -448,6 +454,8 @@ contract TokenEphemeralTest is BaseTest {
         assertEq(v1.balanceOf(alice, 1), 45);
     }
 
+    // ============ Insufficient Balance Tests ============= //
+
     function testRevert_deductFromBalanceRecords_InsufficientBalance() public {
         // Set TTL and mint tokens
         vm.prank(owner);
@@ -524,6 +532,8 @@ contract TokenEphemeralTest is BaseTest {
         );
         v1.burn(alice, 1, 15);
     }
+
+    // ============ Transfer Tests ============= //
 
     function test_transferBalanceRecords_preservesExpiration() public {
         // Set TTL
@@ -643,6 +653,8 @@ contract TokenEphemeralTest is BaseTest {
         assertEq(carolRecords.length, 1);
         assertEq(carolRecords[0].expiresAt, expiry);
     }
+
+    // ============ Pruning Tests ============= //
 
     function test_pruneBalanceRecords_shrinksArray() public {
         // Set TTL for creating buckets

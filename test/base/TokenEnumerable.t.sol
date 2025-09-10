@@ -57,7 +57,7 @@ contract MockTokenEnumerableV1 is TokenEnumerable, OwnableUpgradeable, UUPSUpgra
 contract TokenEnumerableTest is BaseTest {
     MockTokenEnumerableV1 internal v1;
 
-    // =========== Test Setup ============ //
+    // ============ Test Setup ============= //
 
     function _deployNewImplementation() internal override returns (address) {
         return address(new MockTokenEnumerableV1());
@@ -75,7 +75,7 @@ contract TokenEnumerableTest is BaseTest {
         v1 = MockTokenEnumerableV1(proxyAddress);
     }
 
-    // ============ Tests ============= //
+    // ============ Initialization Tests ============= //
 
     function test_initialize() public view {
         assertFalse(v1.exists(1));
@@ -87,6 +87,8 @@ contract TokenEnumerableTest is BaseTest {
                 & ~bytes32(uint256(0xff))
         );
     }
+
+    // ============ Token ID Management Tests ============= //
 
     function test_nextTokenID_succeeds() public view {
         // Token IDs should start at 1
@@ -126,6 +128,8 @@ contract TokenEnumerableTest is BaseTest {
             assertEq(nextTokenID, tokenID + 1);
         }
     }
+
+    // ============ Modifier Tests ============= //
 
     function test_modifier_tokenExists_succeeds() public {
         // Claim a token ID to test existence

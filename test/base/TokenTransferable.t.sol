@@ -70,7 +70,7 @@ contract MockTokenTransferableV1 is TokenTransferable, OwnableUpgradeable, UUPSU
 contract TokenTransferableTest is BaseTest {
     MockTokenTransferableV1 internal v1;
 
-    // =========== Test Setup ============ //
+    // ============ Test Setup ============= //
 
     function _deployNewImplementation() internal override returns (address) {
         return address(new MockTokenTransferableV1());
@@ -88,7 +88,7 @@ contract TokenTransferableTest is BaseTest {
         v1 = MockTokenTransferableV1(proxyAddress);
     }
 
-    // ============ Tests ============= //
+    // ============ Initialization Tests ============= //
 
     function test_initialize() public view {
         assertEq(v1.isTransferable(1), false);
@@ -100,6 +100,8 @@ contract TokenTransferableTest is BaseTest {
                 & ~bytes32(uint256(0xff))
         );
     }
+
+    // ============ Transferable Settings Tests ============= //
 
     function test_setTransferable() public {
         // Verify default is true
@@ -115,6 +117,8 @@ contract TokenTransferableTest is BaseTest {
         v1.setTransferable(1, false);
         assertEq(v1.isTransferable(1), false, "Should be false after setting to false");
     }
+
+    // ============ Modifier Tests ============= //
 
     function test_modifier_tokenTransferable_succeeds() public {
         // Set token ID 1 to transferable

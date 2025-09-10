@@ -46,7 +46,7 @@ contract MockTokenAccessControlV1 is TokenAccessControl, UUPSUpgradeable {
 contract TokenAccessControlTest is BaseTestWithAccessControl {
     MockTokenAccessControlV1 internal v1;
 
-    // =========== Test Setup ============ //
+    // ============ Test Setup ============= //
 
     function _deployNewImplementation() internal override returns (address) {
         return address(new MockTokenAccessControlV1());
@@ -73,11 +73,13 @@ contract TokenAccessControlTest is BaseTestWithAccessControl {
         v1.grantRole(TREASURER_ROLE, treasurer);
     }
 
-    // ============ Tests ============= //
+    // ============ Initialization Tests ============= //
 
     function test_initialize() public view {
         assertTrue(v1.hasRole(DEFAULT_ADMIN_ROLE, owner));
     }
+
+    // ============ Role Tests ============= //
 
     function test_roles() public view {
         assertEq(v1.DEFAULT_ADMIN_ROLE(), DEFAULT_ADMIN_ROLE);
@@ -97,6 +99,8 @@ contract TokenAccessControlTest is BaseTestWithAccessControl {
         assertTrue(v1.hasRole(BURNER_ROLE, burner));
         assertTrue(v1.hasRole(TREASURER_ROLE, treasurer));
     }
+
+    // ============ Account Freezing Tests ============= //
 
     function test_freezeAccount() public {
         // Verify that accessManager has the ACCESS_MANAGER_ROLE
@@ -152,6 +156,8 @@ contract TokenAccessControlTest is BaseTestWithAccessControl {
         v1.unfreezeAccount(bob);
         vm.stopPrank();
     }
+
+    // ============ Pausable Tests ============= //
 
     function test_pause() public {
         // Verify that accessManager has the ACCESS_MANAGER_ROLE

@@ -111,7 +111,7 @@ contract TokenPurchasableTest is BaseTestWithERC20s {
         v1 = MockTokenPurchasableV1(proxyAddress);
     }
 
-    // ============ Tests ============= //
+    // ============ Initialization Tests ============= //
 
     function test_initialize() public view {
         assertEq(v1.treasury(), treasury);
