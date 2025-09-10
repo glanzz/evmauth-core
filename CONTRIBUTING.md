@@ -95,7 +95,7 @@ All pull requests should include:
 ### Prerequisites
 
 - [Solidity](https://docs.soliditylang.org/en/v0.8.0/installing-solidity.html)
-- [Foundry](https://getfoundry.sh/)
+- [Foundry](https://getfoundry.sh/) >= v1.3
 
 ### Setup
 

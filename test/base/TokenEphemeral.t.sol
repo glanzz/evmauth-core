@@ -8,6 +8,9 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgradeable {
+    // Used for testing different max balance records
+    uint256 public customMaxBalanceRecords;
+
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
@@ -48,11 +51,6 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
         return _expiresAt(id);
     }
 
-    // @dev Expose internal function for testing
-    function maxBalanceRecords() public view returns (uint256) {
-        return _maxBalanceRecords();
-    }
-
     // @dev Helper function to mint tokens for testing.
     function mint(address to, uint256 id, uint256 amount) external onlyOwner {
         _updateBalanceRecords(address(0), to, id, amount);
@@ -66,6 +64,19 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
     // @dev Helper function to transfer tokens for testing.
     function transfer(address to, uint256 id, uint256 amount) external {
         _updateBalanceRecords(_msgSender(), to, id, amount);
+    }
+
+    // @dev Override to allow custom max balance records for testing.
+    function maxBalanceRecords() public view returns (uint256) {
+        if (customMaxBalanceRecords != 0) {
+            return customMaxBalanceRecords;
+        }
+        return _maxBalanceRecords();
+    }
+
+    // @dev Function to set a custom max balance records for testing.
+    function setCustomMaxBalanceRecords(uint256 newMax) external onlyOwner {
+        customMaxBalanceRecords = newMax;
     }
 }
 
@@ -265,7 +276,7 @@ contract TokenEphemeralTest is BaseTest {
 
         // Ensure we mint more than the max balance records
         uint256 maxRecords = v1.maxBalanceRecords();
-        uint256 numMints = maxRecords * 2;
+        uint256 numMints = maxRecords + 1;
 
         // Set token TTL
         vm.prank(owner);
@@ -276,7 +287,7 @@ contract TokenEphemeralTest is BaseTest {
             // Advance time by at least bucket size, to ensure different expiration buckets
             uint256 bucketSize = ttl / maxRecords;
             if (bucketSize == 0) bucketSize = 1;
-            vm.warp(block.timestamp + bucketSize + i);
+            vm.warp(block.timestamp + bucketSize);
 
             // Mint some amount of tokens
             vm.prank(owner);
@@ -505,19 +516,23 @@ contract TokenEphemeralTest is BaseTest {
     }
 
     function testRevert_deductFromBalanceRecords_InsufficientBalance_someExpired() public {
+        uint256 maxRecords = v1.maxBalanceRecords();
+        uint48 ttl = 24 * 60 * 60; // 1 day
+        uint256 bucketSize = ttl / maxRecords;
+
         // Set TTL
         vm.prank(owner);
-        v1.setTTL(1, 60);
+        v1.setTTL(1, ttl); // Ensure bucket size of 2 seconds
 
         // Mint tokens
         vm.prank(owner);
         v1.mint(alice, 1, 10);
-        vm.warp(block.timestamp + 10); // Advance time but not enough to expire
+        vm.warp(block.timestamp + bucketSize); // Advance time but not enough to expire
         vm.prank(owner);
         v1.mint(alice, 1, 10);
 
         // Let first tokens expire
-        vm.warp(block.timestamp + 60);
+        vm.warp(block.timestamp + ttl);
 
         // Try to burn tokens after they have expired
         vm.prank(owner);
@@ -687,5 +702,78 @@ contract TokenEphemeralTest is BaseTest {
         // Array size should be zero
         records = v1.balanceRecordsOf(alice, 1);
         assertEq(records.length, 0);
+    }
+
+    // ============ Griefing Attack Mitigation Tests ============= //
+
+    struct TestCase {
+        uint256 maxBalanceRecords;
+        uint48 ttl;
+    }
+
+    function fixtureConfigs() public pure returns (TestCase[] memory configs) {
+        uint256[] memory maxRecordsOptions = new uint256[](5); // Ensure array size matches number of options!
+        maxRecordsOptions[0] = 30;
+        maxRecordsOptions[1] = 60;
+        maxRecordsOptions[2] = 120;
+        maxRecordsOptions[3] = 240;
+        maxRecordsOptions[4] = 1000;
+
+        uint48[] memory ttlOptions = new uint48[](7); // Ensure array size matches number of options!
+        ttlOptions[0] = 30; // 30 seconds
+        ttlOptions[1] = 30 * 60; // 30 minutes
+        ttlOptions[2] = 60 * 60; // 1 hour
+        ttlOptions[3] = 24 * 60 * 60; // 1 day
+        ttlOptions[4] = 7 * 24 * 60 * 60; // 1 week
+        ttlOptions[5] = 30 * 24 * 60 * 60; // 30 days
+        ttlOptions[6] = 365 * 24 * 60 * 60; // 1 year
+
+        configs = new TestCase[](maxRecordsOptions.length * ttlOptions.length);
+        uint256 index = 0;
+        for (uint256 i = 0; i < maxRecordsOptions.length; i++) {
+            for (uint256 j = 0; j < ttlOptions.length; j++) {
+                configs[index] = TestCase({ maxBalanceRecords: maxRecordsOptions[i], ttl: ttlOptions[j] });
+                index++;
+            }
+        }
+
+        return configs;
+    }
+
+    function tableTest_maxBalanceRecords(TestCase memory configs) public {
+        vm.prank(owner);
+        v1.setCustomMaxBalanceRecords(configs.maxBalanceRecords);
+
+        uint256 maxRecords = configs.maxBalanceRecords;
+        uint48 ttl = configs.ttl;
+
+        vm.prank(owner);
+        v1.setTTL(1, ttl);
+
+        uint256 bucketSize = ttl / maxRecords;
+        if (bucketSize == 0) {
+            bucketSize = 1;
+        }
+
+        for (uint256 i = 0; i < maxRecords; i++) {
+            vm.warp(block.timestamp + bucketSize);
+
+            // Mint some amount of tokens
+            vm.prank(owner);
+            v1.mint(alice, 1, 1);
+
+            // Check that balance records never exceed max plus one (for the current bucket)
+            TokenEphemeral.BalanceRecord[] memory records = v1.balanceRecordsOf(alice, 1);
+            assertLe(records.length, maxRecords + 1, "Balance records should never exceed maxBalanceRecords");
+        }
+
+        // Transferring all of Alice's tokens to Bob should not run out of gas
+        uint256 totalBalance = v1.balanceOf(alice, 1);
+        vm.prank(alice);
+        v1.transfer(bob, 1, totalBalance);
+
+        // Final balances should be correct
+        assertEq(v1.balanceOf(alice, 1), 0);
+        assertEq(v1.balanceOf(bob, 1), totalBalance);
     }
 }

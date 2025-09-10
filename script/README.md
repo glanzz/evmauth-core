@@ -4,9 +4,9 @@ Deploy upgradeable `EVMAuth1155` and `EVMAuth6909` contracts using Foundry.
 
 ## Prerequisites
 
-- [Foundry](https://getfoundry.sh) installed
-- RPC URLs configured in `foundry.toml` for target networks
+- [Foundry](https://getfoundry.sh) >= v1.3 installed
 - Private key or wallet configuration for deployment
+- RPC URLs set as environment variables (see `.env.example`)
 
 ## Quick Start
 
@@ -37,7 +37,7 @@ anvil
 Or, you can specify a network to fork from:
 
 ```sh
-anvil --fork-url sepolia  # or `radius-testnet`, `base-sepolia`, or any RPC URL
+anvil --fork-url https://ethereum-sepolia-rpc.publicnode.com  # or any RPC URL
 ```
 
 Then you can specify `--rpc-url localhost` in the deployment commands below.

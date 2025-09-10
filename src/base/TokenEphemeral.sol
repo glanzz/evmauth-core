@@ -17,7 +17,7 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @notice Default limit for balance records per account per token.
      * @dev Can be overridden via _maxBalanceRecords() function.
      */
-    uint256 public constant DEFAULT_MAX_BALANCE_RECORDS = 30;
+    uint256 public constant DEFAULT_MAX_BALANCE_RECORDS = 100;
 
     /**
      * @notice Balance record with amount and expiration timestamp.
@@ -187,7 +187,7 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @notice Calculates bucketed expiration timestamp for a token.
      * @dev Rounds up to next time bucket to ensure minimum TTL guarantee.
      * Bucketing prevents unbounded storage growth by limiting unique expiration times.
-     * Example: 30-day TTL with 30 max records creates 1-day buckets.
+     * Example: 30-day TTL with 100 max records creates 100 buckets of 25920 seconds (7.2 hours) each.
      * @param id Token type identifier
      * @return Unix timestamp of expiration (type(uint256).max for permanent)
      */
@@ -211,8 +211,8 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     /**
      * @notice Returns maximum balance records per account/token pair.
      * @dev Limits storage to prevent DoS attacks. Override to customize.
-     * Affects expiration precision: actual expiry is TTL to TTL + (TTL/maxRecords - 1) seconds.
-     * @return Maximum number of balance records (default: 30)
+     * Affects expiration precision: actual expiry is anywhere from TTL to TTL + (TTL/maxRecords - 1) seconds.
+     * @return Maximum number of balance records (default: 100)
      */
     function _maxBalanceRecords() internal view virtual returns (uint256) {
         return DEFAULT_MAX_BALANCE_RECORDS;
