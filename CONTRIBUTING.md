@@ -9,6 +9,14 @@ Thank you for your interest in contributing to EVMAuth! This document provides g
 - [Development Workflow](#development-workflow)
 - [Commit Messages](#commit-messages)
 - [Pull Requests](#pull-requests)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+- [Running Tests](#running-tests)
+- [Coverage Reports](#coverage-reports)
+- [Documentation](#documentation)
+- [ABI & Bytecode](#abi--bytecode)
+- [Additional Resources](#additional-resources)
 - [Questions?](#questions)
 - [License](#license)
 
@@ -82,6 +90,148 @@ All pull requests should include:
 6. Update CHANGELOG.md
 7. Ensure CI checks pass
 
+## Getting Started
+
+### Prerequisites
+
+- [Solidity](https://docs.soliditylang.org/en/v0.8.0/installing-solidity.html)
+- [Foundry](https://getfoundry.sh/) >= v1.3
+
+### Setup
+
+1. Clone the repository:
+
+```sh
+git clone git@github.com:evmauth/evmauth-core.git
+```
+
+2. Navigate to the project directory:
+
+```sh
+cd evmauth-core
+```
+
+3. Install the dependencies:
+
+```sh
+forge install foundry-rs/forge-std
+forge install OpenZeppelin/openzeppelin-contracts-upgradeable
+forge install OpenZeppelin/openzeppelin-foundry-upgrades
+```
+
+## Running Tests
+
+It is highly recommended that you run the formatter, clear the cache, recompile the contracts, then run tests with detailed output (i.e. execution traces for all tests + setup traces for failing tests):
+
+```sh
+forge fmt && forge test --force -vvv
+```
+
+To just run all tests, simply use:
+
+```sh
+forge test
+```
+
+Add the `--force` flag to clear the cache and recompile the contracts first:
+
+```sh
+forge test --force
+```
+
+To run tests with detailed output, use the `-vv`, `-vvv`, `-vvvv`, or `-vvvvv` flag:
+
+```sh
+# Print logs for all tests.
+forge test -vv
+
+# Print execution traces for failing tests.
+forge test -vvv
+
+# Print execution traces for all tests, and setup traces for failing tests.
+forge test -vvvv
+
+# Print execution and setup traces for all tests, including storage changes.
+forge test -vvvvv
+```
+
+To run all tests in a specific file, use the `--match-path` option:
+
+```sh
+forge test --match-path test/EVMAuth6909.t.sol
+```
+
+To run any test function with a specific name, use the `--match-test` option:
+
+```sh
+forge test --match-test test_initialize
+```
+
+More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/test).
+
+## Coverage Reports
+
+To generate a coverage report, use:
+
+```sh
+forge coverage
+```
+
+You can use the same flags as in the test command to customize the coverage report.
+
+More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/coverage).
+
+## Documentation
+
+To generate the documentation site, use:
+
+```sh
+forge doc --serve --open
+```
+
+This will create a `docs` directory with the generated documentation and open it in your default web browser.
+
+To watch for changes and automatically regenerate the documentation, use the `--watch` (or `-w`) option:
+
+```sh
+forge doc -w -s --open
+```
+
+To include external libraries in the documentation, use the `--include` (or `-i`) option:
+
+```sh
+forge doc -i -s --open
+```
+
+More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/doc).
+
+## ABI & Bytecode
+
+To generate the full ABI for a contract, use:
+
+```sh
+forge inspect src/EVMAuth1155.sol:EVMAuth1155 abi --json > src/EVMAuth1155.abi
+forge inspect src/EVMAuth6909.sol:EVMAuth6909 abi --json > src/EVMAuth6909.abi
+```
+
+To generate bytecode for a contract, use:
+
+```sh
+forge inspect src/EVMAuth1155.sol:EVMAuth1155 bytecode > src/EVMAuth1155.bin
+forge inspect src/EVMAuth6909.sol:EVMAuth6909 bytecode > src/EVMAuth6909.bin
+```
+
+More options can be found in the [Forge Docs](https://getfoundry.sh/forge/reference/inspect).
+
+## Additional Resources
+
+- [Intro to Smart Contracts](https://docs.soliditylang.org/en/v0.8.0/introduction-to-smart-contracts.html)
+- [Solidity Docs](https://docs.soliditylang.org/en/v0.8.0/)
+- [Forge Docs](https://getfoundry.sh/forge/overview)
+- [Forge Tests](https://getfoundry.sh/forge/tests/overview)
+- [OpenZeppelin Upgrades](https://docs.openzeppelin.com/contracts/5.x/upgradeable)
+- [OpenZeppelin Foundry Upgrades](https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades)
+
 ## Questions?
 
 If you have questions:
@@ -91,9 +241,6 @@ If you have questions:
 3. Ask in your PR if you're working on code
 
 Thank you for your contributions!
-
-[ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155
-[ERC-2470]: https://eips.ethereum.org/EIPS/eip-2470
 
 ## License
 

@@ -12,5 +12,17 @@ docs/
 .env*
 !.env.example
 
+# Custom scripts
+script/*.s.sol
+!script/BaseDeploy.s.sol
+!script/ExampleDeploy.s.sol
+!script/Upgrade.s.sol
+
 # JetBrains IDEs
 .idea/
+
+# Dependencies
+lib/
+
+# Coverage reports
+lcov.info

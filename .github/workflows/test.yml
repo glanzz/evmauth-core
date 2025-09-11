@@ -52,5 +52,10 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test -vvv
+          forge coverage --no-match-coverage ".(t|s).sol" -vvv --report lcov --lcov-version 2.2
         id: test
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

@@ -1,20 +1,41 @@
 [profile.default]
-src = "src"
-out = "out"
-libs = ["lib"]
-remappings = [
-    "@openzeppelin/=lib/openzeppelin-contracts/",
-    "forge-std/=lib/forge-std/src/"
-]
+solc = "0.8.24"
 optimizer = true
 optimizer_runs = 200
 
-# The following settings are critical because without them, CREATE2 same argument assumptions are broken if new
-# Foundry libraries are added to the repository over time, via forge install. Forge build generates a different
-# bytecode for a contract if a new foundry library is installed. Also, the metadata hash is included as part of
-# the bytecode by default, which can prevent deterministic deployments with CREATE2.
+# Required settings for OpenZeppelin Foundry Upgrades
+# Source: https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades?tab=readme-ov-file#before-running
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
 
-solc = "0.8.20"
-evm_version = "london"  # Set specific EVM version; both Sepolia and Holesky testnets use London
-bytecode_hash = "none"  # Disable bytecode hash; this is necessary for consistent deployed bytecode
-cbor_metadata = false   # Disable CBOR metadata
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/",
+    "script/=script/",
+    "src/=src/",
+    "test/=test/"
+]
+
+[fmt]
+bracket_spacing = true
+
+[lint]
+severity = ["high", "med", "low"]
+
+[doc]
+out = "docs"
+repository = "https://github.com/evmauth/evmauth-core"
+
+[rpc_endpoints]
+localhost = "http://localhost:8545"
+radius-testnet = "${RADIUS_TESTNET}"
+base-sepolia = "${BASE_SEPOLIA}"
+sepolia = "${SEPOLIA}"
+
+[etherscan]
+base-sepolia = { key = "${ETHERSCAN_API_KEY}" }
+sepolia = { key = "${ETHERSCAN_API_KEY}" }
