@@ -19,7 +19,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          forge install foundry-rs/forge-std
           forge install OpenZeppelin/openzeppelin-contracts-upgradeable
           forge install OpenZeppelin/openzeppelin-foundry-upgrades
 
