@@ -73,13 +73,7 @@ An account with the `TOKEN_MANAGER_ROLE` should then create one or more new toke
 - `uint256 ttl`: Time-to-live in seconds; 0 means the token never expires; set to 0 for non-expiring tokens
 - `bool transferable`: Whether the token can be transferred between accounts
 
-An account with the `TOKEN_MANAGER_ROLE` can modify an existing token by calling `updateToken(id, EVMAuthTokenConfig)`, or any of the individual property setter functions:
-
-- `setTokenPrice(id, uint256 price)`
-- `setERC20Price(uint256 id, address token, uint256 price)`
-- `setTokenERC20Prices(id, PaymentToken[] erc20Prices)`
-- `setTokenTTL(id, uint256 ttl)`
-- `setTokenTransferable(id, bool transferable)`
+An account with the `TOKEN_MANAGER_ROLE` can modify an existing token by calling `updateToken(id, EVMAuthTokenConfig)`.
 
 ## Token Standards
 
@@ -125,6 +119,19 @@ Choose [ERC-6909] when you:
 - Want granular approval control
 - Need on-chain token metadata
 - Prefer a simpler token transfer model
+- Want to extend the contract with custom features
+
+Both versions of EVMAuth are fairly large. EVMAuth1155 is right near the limit, while EVMAuth6909 has a bit more headroom for exapnsion.
+
+```text
+╭------------------------------+------------------+-------------------+--------------------+---------------------╮
+| Contract                     | Runtime Size (B) | Initcode Size (B) | Runtime Margin (B) | Initcode Margin (B) |
++================================================================================================================+
+| EVMAuth1155                  | 24,555           | 24,614            | 21                 | 24,538              |
+|------------------------------+------------------+-------------------+--------------------+---------------------|
+| EVMAuth6909                  | 22,424           | 22,483            | 2,152              | 26,669              |
+╰------------------------------+------------------+-------------------+--------------------+---------------------╯
+```
 
 ## EVMAuth Contract Architecture
 
