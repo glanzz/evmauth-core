@@ -2,6 +2,7 @@ name: Deploy Docs
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -17,7 +18,7 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Generate docs
-        run: forge doc --build --include
+        run: forge doc --build
 
       - name: Install and configure mdbook-mermaid
         run: |
