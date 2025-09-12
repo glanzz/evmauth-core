@@ -23,7 +23,14 @@ jobs:
           forge install OpenZeppelin/openzeppelin-foundry-upgrades
 
       - name: Generate docs
-        run: forge doc --build
+        run: forge doc --build -i
+
+      - name: Install mdbook and mdbook-mermaid
+        run: |
+          cargo install mdbook --version "^0.4"
+          cargo install mdbook-mermaid
+          mdbook-mermaid install docs/
+          cd docs && mdbook build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
