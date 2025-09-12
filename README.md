@@ -5,11 +5,11 @@
 
 ## Overview
 
-EVMAuth is an **authorization state management system** for software systems, service providers, and AI agents.
+EVMAuth is an **authorization state management system** for APIs, MCP servers, and AI agents.
 
 ### Purpose
 
-EVMAuth was created to provide a simple, standardized way to manage persistent authorization without the overhead of developing and maintaining auth servers and databases.
+EVMAuth was created to provide a simple, standardized way to manage persistent authorization without the overhead of developing and maintaining auth servers, databases, subscription management services, and payment systems.
 
 ### Use Cases
 
