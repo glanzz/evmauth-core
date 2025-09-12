@@ -206,6 +206,8 @@ Save these addresses for contract interaction and future upgrades.
 
 **Compilation errors**: Run `forge fmt && forge clean && forge build` to check for issues before deployment.
 
+**Transaction failures**: Make sure your environment variables are set correctly and your account has sufficient funds.
+
 [Cast Command Cheat Sheet]: https://github.com/evmauth/evmauth-core/blob/main/CAST_COMMANDS.md
 [ERC-1155]: https://eips.ethereum.org/EIPS/eip-1155
 [ERC-6909]: https://eips.ethereum.org/EIPS/eip-6909
