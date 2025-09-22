@@ -252,7 +252,4 @@ abstract contract EVMAuth is
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADE_MANAGER_ROLE) {
         // This will revert if the caller is not authorized.
     }
-
-    /// @inheritdoc TokenEphemeral
-    function _burnPrunedTokens(address account, uint256 id, uint256 amount) internal virtual override { }
 }

@@ -203,7 +203,7 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @param id Token type identifier
      * @param amount Quantity of tokens that were pruned (expired)
      */
-    function _burnPrunedTokens(address account, uint256 id, uint256 amount) internal virtual { }
+    function _burnPrunedTokens(address account, uint256 id, uint256 amount) internal virtual;
 
     /**
      * @notice Internal function to configure token TTL.
