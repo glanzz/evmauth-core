@@ -151,8 +151,8 @@ contract EVMAuth6909 is ERC6909MetadataUpgradeable, ERC6909ContentURIUpgradeable
         _setSymbol(id, symbol);
         _setDecimals(id, decimals);
     }
-    /// @inheritdoc TokenEphemeral
 
+    /// @inheritdoc TokenEphemeral
     function _burnPrunedTokens(address account, uint256 id, uint256 amount) internal virtual override {
         super._update(account, address(0), id, amount);
     }
