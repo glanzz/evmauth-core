@@ -121,15 +121,15 @@ Choose [ERC-6909] when you:
 - Prefer a simpler token transfer model
 - Want to extend the contract with custom features
 
-Both versions of EVMAuth are fairly large. EVMAuth1155 is right near the limit, while EVMAuth6909 has a bit more headroom for exapnsion.
+Both versions of EVMAuth are fairly large. EVMAuth1155 is right near the limit, while EVMAuth6909 has a bit more headroom for expansion.
 
 ```text
 ╭------------------------------+------------------+-------------------+--------------------+---------------------╮
 | Contract                     | Runtime Size (B) | Initcode Size (B) | Runtime Margin (B) | Initcode Margin (B) |
 +================================================================================================================+
-| EVMAuth1155                  | 24,555           | 24,614            | 21                 | 24,538              |
+| EVMAuth1155                  | 24,516           | 24,575            | 60                 | 24,577              |
 |------------------------------+------------------+-------------------+--------------------+---------------------|
-| EVMAuth6909                  | 22,424           | 22,483            | 2,152              | 26,669              |
+| EVMAuth6909                  | 22,247           | 22,306            | 2,329              | 26,846              |
 ╰------------------------------+------------------+-------------------+--------------------+---------------------╯
 ```
 

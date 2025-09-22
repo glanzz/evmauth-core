@@ -3,6 +3,7 @@
 pragma solidity ^0.8.24;
 
 import { EVMAuth } from "src/base/EVMAuth.sol";
+import { TokenEphemeral } from "src/base/TokenEphemeral.sol";
 import { TokenPurchasable } from "src/base/TokenPurchasable.sol";
 import { EVMAuth1155 } from "src/EVMAuth1155.sol";
 import { BaseTestWithAccessControlAndERC20s } from "test/_helpers/BaseTest.sol";
@@ -928,6 +929,62 @@ contract EVMAuth1155Test is BaseTestWithAccessControlAndERC20s {
         // Fast forward a very long time - tokens should still be valid
         vm.warp(block.timestamp + 365 days);
         assertEq(v1.balanceOf(alice, tokenId), 100);
+    }
+
+    function test_ephemeralToken_balanceRecords() public {
+        // Create ephemeral token
+        uint256 ttl = 7200; // 2 hours
+        vm.prank(tokenManager);
+        uint256 tokenId = v1.createToken(
+            EVMAuth.EVMAuthTokenConfig({
+                price: 1 ether,
+                erc20Prices: new TokenPurchasable.PaymentToken[](0),
+                ttl: ttl,
+                transferable: true
+            })
+        );
+
+        // Mint tokens at different times
+        vm.prank(minter);
+        v1.mint(alice, tokenId, 50, "");
+
+        vm.warp(block.timestamp + 3600); // 1 hour later
+        vm.prank(minter);
+        v1.mint(alice, tokenId, 75, "");
+
+        // Check balance records
+        TokenEphemeral.BalanceRecord[] memory records = v1.balanceRecordsOf(alice, tokenId);
+        assertEq(records.length, 2);
+        assertEq(v1.balanceOf(alice, tokenId), 125);
+    }
+
+    function test_ephemeralToken_pruning() public {
+        // Create ephemeral token
+        uint256 ttl = 60; // 1 minute
+        vm.prank(tokenManager);
+        uint256 tokenId = v1.createToken(
+            EVMAuth.EVMAuthTokenConfig({
+                price: 1 ether,
+                erc20Prices: new TokenPurchasable.PaymentToken[](0),
+                ttl: ttl,
+                transferable: true
+            })
+        );
+
+        // Mint tokens
+        vm.prank(minter);
+        v1.mint(alice, tokenId, 5, "");
+        assertEq(v1.balanceOf(alice, tokenId), 5);
+
+        // Let tokens expire
+        vm.warp(block.timestamp + ttl * 2);
+        assertEq(v1.balanceOf(alice, tokenId), 0);
+
+        // Prune expired records
+        v1.pruneBalanceRecords(alice, tokenId);
+
+        TokenEphemeral.BalanceRecord[] memory records = v1.balanceRecordsOf(alice, tokenId);
+        assertEq(records.length, 0);
     }
 
     // ============ Transfer Restrictions Tests ============= //

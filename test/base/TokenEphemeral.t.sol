@@ -11,6 +11,9 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
     // Used for testing different max balance records
     uint256 public customMaxBalanceRecords;
 
+    // Mapping of address to token ID to balance, simulating an ERC-1155 or ERC-6909 implementation
+    mapping(address => mapping(uint256 => uint256)) public balances;
+
     /**
      * @dev Initializer used when deployed directly as an upgradeable contract.
      *
@@ -36,11 +39,6 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
      */
     function __MockTokenEphemeralV1_init_unchained() internal onlyInitializing { }
 
-    /// @inheritdoc UUPSUpgradeable
-    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
-        // This will revert if the caller is not authorized.
-    }
-
     // @dev Expose internal function for testing
     function setTTL(uint256 id, uint48 ttl) public onlyOwner {
         _setTTL(id, ttl);
@@ -53,17 +51,24 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
 
     // @dev Helper function to mint tokens for testing.
     function mint(address to, uint256 id, uint256 amount) external onlyOwner {
+        // Call _updateBalanceRecords first, because that is what we're testing
         _updateBalanceRecords(address(0), to, id, amount);
+        balances[to][id] += amount;
     }
 
     // @dev Helper function to burn tokens for testing.
     function burn(address from, uint256 id, uint256 amount) external onlyOwner {
+        // Call _updateBalanceRecords first, because that is what we're testing
         _updateBalanceRecords(from, address(0), id, amount);
+        balances[from][id] -= amount;
     }
 
     // @dev Helper function to transfer tokens for testing.
     function transfer(address to, uint256 id, uint256 amount) external {
+        // Call _updateBalanceRecords first, because that is what we're testing
         _updateBalanceRecords(_msgSender(), to, id, amount);
+        balances[to][id] += amount;
+        balances[_msgSender()][id] -= amount;
     }
 
     // @dev Override to allow custom max balance records for testing.
@@ -77,6 +82,16 @@ contract MockTokenEphemeralV1 is TokenEphemeral, OwnableUpgradeable, UUPSUpgrade
     // @dev Function to set a custom max balance records for testing.
     function setCustomMaxBalanceRecords(uint256 newMax) external onlyOwner {
         customMaxBalanceRecords = newMax;
+    }
+
+    /// @inheritdoc UUPSUpgradeable
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
+        // This will revert if the caller is not authorized.
+    }
+
+    /// @inheritdoc TokenEphemeral
+    function _burnPrunedTokens(address from, uint256 id, uint256 amount) internal virtual override {
+        balances[from][id] -= amount;
     }
 }
 
@@ -701,6 +716,29 @@ contract TokenEphemeralTest is BaseTest {
 
         // Array size should be zero
         records = v1.balanceRecordsOf(alice, 1);
+        assertEq(records.length, 0);
+    }
+
+    function test_pruneBalanceRecords_callsBurnPrunedTokens() public {
+        // Set TTL
+        uint48 ttl = 10;
+        vm.prank(owner);
+        v1.setTTL(1, ttl);
+
+        // Mint tokens
+        vm.prank(owner);
+        v1.mint(alice, 1, 5);
+
+        // Let tokens expire
+        vm.warp(block.timestamp + ttl * 2);
+
+        // Expect the PrunedTokensBurned event to be emitted when pruning
+        vm.expectEmit(true, true, false, true);
+        emit TokenEphemeral.ExpiredTokensPruned(alice, 1, 5);
+        v1.pruneBalanceRecords(alice, 1);
+
+        // Verify all records are pruned
+        TokenEphemeral.BalanceRecord[] memory records = v1.balanceRecordsOf(alice, 1);
         assertEq(records.length, 0);
     }
 

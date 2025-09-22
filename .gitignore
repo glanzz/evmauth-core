@@ -26,3 +26,7 @@ lib/
 
 # Coverage reports
 lcov.info
+
+# Slither reports
+mutation_campaign/
+mutation.results

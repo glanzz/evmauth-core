@@ -4,60 +4,69 @@ pragma solidity ^0.8.24;
 import { EVMAuth } from "src/base/EVMAuth.sol";
 import { BaseDeploy1155, BaseDeploy6909 } from "script/BaseDeploy.s.sol";
 
-/**
- * @dev Example deployment script for EVMAuth1155
- */
-contract ExampleDeploy1155 is BaseDeploy1155 {
-    /**
-     * @dev Main deployment function. Sets initializer parameters, then executes the deployment.
-     */
-    function run() public {
-        uint48 initialDelay = 2 days; // 48-hour admin transfer delay
-        address initialDefaultAdmin = msg.sender; // Deployer as initial admin
-        address payable initialTreasury = payable(msg.sender); // Deployer address as initial treasury
+abstract contract Deploy {
+    uint48 public initialDelay = 2 days; // 48-hour admin transfer delay
+    address public initialDefaultAdmin = address(0);
+    address payable public initialTreasury = payable(address(0));
+    address public upgradeManager = address(0);
+    address public accessManager = address(0);
+    address public tokenManager = address(0);
+    address public minter = address(0);
+    address public burner = address(0);
+    address public treasurer = address(0);
 
-        // Grant all roles to the deployer
-        EVMAuth.RoleGrant[] memory roleGrants = new EVMAuth.RoleGrant[](6);
-        roleGrants[0] = EVMAuth.RoleGrant(UPGRADE_MANAGER_ROLE, msg.sender);
-        roleGrants[1] = EVMAuth.RoleGrant(ACCESS_MANAGER_ROLE, msg.sender);
-        roleGrants[2] = EVMAuth.RoleGrant(TOKEN_MANAGER_ROLE, msg.sender);
-        roleGrants[3] = EVMAuth.RoleGrant(MINTER_ROLE, msg.sender);
-        roleGrants[4] = EVMAuth.RoleGrant(BURNER_ROLE, msg.sender);
-        roleGrants[5] = EVMAuth.RoleGrant(TREASURER_ROLE, msg.sender);
-
-        // Example token URI with {id} placeholder, per ERC-1155 metadata standard
-        string memory uri = "https://token-cdn-domain/{id}.json";
-
-        // Execute the deployment
-        deploy(initialDelay, initialDefaultAdmin, initialTreasury, roleGrants, uri);
+    function setUp() public virtual {
+        if (initialDefaultAdmin == address(0)) initialDefaultAdmin = msg.sender;
+        if (initialTreasury == payable(address(0))) initialTreasury = payable(msg.sender);
+        if (upgradeManager == address(0)) upgradeManager = msg.sender;
+        if (accessManager == address(0)) accessManager = msg.sender;
+        if (tokenManager == address(0)) tokenManager = msg.sender;
+        if (minter == address(0)) minter = msg.sender;
+        if (burner == address(0)) burner = msg.sender;
+        if (treasurer == address(0)) treasurer = msg.sender;
     }
 }
 
 /**
- * @dev Example deployment script for EVMAuth6909
+ * @dev Deployment script for EVMAuth1155
  */
-contract ExampleDeploy6909 is BaseDeploy6909 {
+contract Deploy1155 is BaseDeploy1155, Deploy {
     /**
      * @dev Main deployment function. Sets initializer parameters, then executes the deployment.
      */
     function run() public {
-        uint48 initialDelay = 2 days; // 48-hour admin transfer delay
-        address initialDefaultAdmin = msg.sender; // Deployer as initial admin
-        address payable initialTreasury = payable(msg.sender); // Deployer address as initial treasury
+        setUp();
 
-        // Grant all roles to the deployer
         EVMAuth.RoleGrant[] memory roleGrants = new EVMAuth.RoleGrant[](6);
-        roleGrants[0] = EVMAuth.RoleGrant(UPGRADE_MANAGER_ROLE, msg.sender);
-        roleGrants[1] = EVMAuth.RoleGrant(ACCESS_MANAGER_ROLE, msg.sender);
-        roleGrants[2] = EVMAuth.RoleGrant(TOKEN_MANAGER_ROLE, msg.sender);
-        roleGrants[3] = EVMAuth.RoleGrant(MINTER_ROLE, msg.sender);
-        roleGrants[4] = EVMAuth.RoleGrant(BURNER_ROLE, msg.sender);
-        roleGrants[5] = EVMAuth.RoleGrant(TREASURER_ROLE, msg.sender);
+        roleGrants[0] = EVMAuth.RoleGrant(UPGRADE_MANAGER_ROLE, upgradeManager);
+        roleGrants[1] = EVMAuth.RoleGrant(ACCESS_MANAGER_ROLE, accessManager);
+        roleGrants[2] = EVMAuth.RoleGrant(TOKEN_MANAGER_ROLE, tokenManager);
+        roleGrants[3] = EVMAuth.RoleGrant(MINTER_ROLE, minter);
+        roleGrants[4] = EVMAuth.RoleGrant(BURNER_ROLE, burner);
+        roleGrants[5] = EVMAuth.RoleGrant(TREASURER_ROLE, treasurer);
 
-        // Example contract URI, per EIP-6909 content URI extension
-        string memory uri = "https://token-cdn-domain/contract-metadata.json";
+        deploy(initialDelay, initialDefaultAdmin, initialTreasury, roleGrants, "");
+    }
+}
 
-        // Execute the deployment
-        deploy(initialDelay, initialDefaultAdmin, initialTreasury, roleGrants, uri);
+/**
+ * @dev Deployment script for EVMAuth6909
+ */
+contract Deploy6909 is BaseDeploy6909, Deploy {
+    /**
+     * @dev Main deployment function. Sets initializer parameters, then executes the deployment.
+     */
+    function run() public {
+        setUp();
+
+        EVMAuth.RoleGrant[] memory roleGrants = new EVMAuth.RoleGrant[](6);
+        roleGrants[0] = EVMAuth.RoleGrant(UPGRADE_MANAGER_ROLE, upgradeManager);
+        roleGrants[1] = EVMAuth.RoleGrant(ACCESS_MANAGER_ROLE, accessManager);
+        roleGrants[2] = EVMAuth.RoleGrant(TOKEN_MANAGER_ROLE, tokenManager);
+        roleGrants[3] = EVMAuth.RoleGrant(MINTER_ROLE, minter);
+        roleGrants[4] = EVMAuth.RoleGrant(BURNER_ROLE, burner);
+        roleGrants[5] = EVMAuth.RoleGrant(TREASURER_ROLE, treasurer);
+
+        deploy(initialDelay, initialDefaultAdmin, initialTreasury, roleGrants, "");
     }
 }

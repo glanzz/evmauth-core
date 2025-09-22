@@ -33,7 +33,7 @@ For Radius Testnet, you can use the `--gas-price 0` flag to avoid needing enough
 ## Check ETH Balance
 
 ```sh
-cast balance $ADDRESS --rpc-url radius-testnet
+cast balance $ADDRESS --rpc-url $RPC
 ```
 
 ## EVMAuth View Functions (Read-Only)

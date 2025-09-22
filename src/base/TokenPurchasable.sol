@@ -222,18 +222,6 @@ abstract contract TokenPurchasable is PausableUpgradeable, ReentrancyGuardTransi
     }
 
     /**
-     * @notice Checks if ERC-20 token is accepted for payment.
-     * @dev Returns true if price > 0.
-     * @param id Token type identifier
-     * @param paymentToken ERC-20 contract address to check
-     * @return True if accepted, false otherwise
-     */
-    function isAcceptedERC20PaymentToken(uint256 id, address paymentToken) public view virtual returns (bool) {
-        TokenPurchasableStorage storage $ = _getTokenPurchasableStorage();
-        return $.erc20Prices[id][paymentToken] > 0;
-    }
-
-    /**
      * @notice Gets current treasury address.
      * @dev All purchase revenues are sent to this address.
      * @return Treasury address

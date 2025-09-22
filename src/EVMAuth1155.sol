@@ -162,6 +162,15 @@ contract EVMAuth1155 is ERC1155URIStorageUpgradeable, EVMAuth {
         _setURI(id, tokenURI);
     }
 
+    /// @inheritdoc TokenEphemeral
+    function _burnPrunedTokens(address account, uint256 id, uint256 amount) internal virtual override {
+        uint256[] memory ids = new uint256[](1);
+        uint256[] memory values = new uint256[](1);
+        ids[0] = id;
+        values[0] = amount;
+        super._update(account, address(0), ids, values);
+    }
+
     /// @inheritdoc TokenPurchasable
     function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual override {
         _mint(to, id, amount, "");

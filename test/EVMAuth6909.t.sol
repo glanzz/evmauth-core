@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.24;
 
+import { AccountFreezable } from "src/base/AccountFreezable.sol";
 import { EVMAuth } from "src/base/EVMAuth.sol";
 import { EVMAuth6909 } from "src/EVMAuth6909.sol";
-import { TokenPurchasable } from "src/base/TokenPurchasable.sol";
 import { TokenEphemeral } from "src/base/TokenEphemeral.sol";
 import { TokenEnumerable } from "src/base/TokenEnumerable.sol";
+import { TokenPurchasable } from "src/base/TokenPurchasable.sol";
 import { TokenTransferable } from "src/base/TokenTransferable.sol";
-import { AccountFreezable } from "src/base/AccountFreezable.sol";
 import { BaseTestWithAccessControlAndERC20s } from "test/_helpers/BaseTest.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IERC6909 } from "@openzeppelin/contracts/interfaces/draft-IERC6909.sol";
@@ -243,7 +243,7 @@ contract EVMAuth6909Test is BaseTestWithAccessControlAndERC20s {
         });
 
         vm.expectEmit(true, false, false, true);
-        emit EVMAuthTokenConfigured(1, config);
+        emit EVMAuth.EVMAuthTokenConfigured(1, config);
 
         vm.prank(tokenManager);
         uint256 tokenId = v1.createToken(config);
@@ -309,7 +309,7 @@ contract EVMAuth6909Test is BaseTestWithAccessControlAndERC20s {
         });
 
         vm.expectEmit(true, false, false, true);
-        emit EVMAuthTokenConfigured(tokenId, newConfig);
+        emit EVMAuth.EVMAuthTokenConfigured(tokenId, newConfig);
 
         vm.prank(tokenManager);
         v1.updateToken(tokenId, newConfig);
@@ -434,6 +434,7 @@ contract EVMAuth6909Test is BaseTestWithAccessControlAndERC20s {
     // ============ Ephemeral Token Behavior Tests ============= //
 
     function test_ephemeralToken_expiration() public {
+        // Create ephemeral token
         uint256 ttl = 3600; // 1 hour
         vm.prank(tokenManager);
         uint256 tokenId = v1.createToken(
@@ -445,6 +446,7 @@ contract EVMAuth6909Test is BaseTestWithAccessControlAndERC20s {
             })
         );
 
+        // Mint tokens to Alice
         vm.prank(minter);
         v1.mint(alice, tokenId, 100);
 
@@ -460,7 +462,79 @@ contract EVMAuth6909Test is BaseTestWithAccessControlAndERC20s {
         assertEq(v1.balanceOf(alice, tokenId), 0);
     }
 
+    function test_ephemeralToken_multipleExpirations() public {
+        uint48 ttl1 = 1800; // 30 minutes
+        uint48 ttl2 = 3600; // 1 hour
+        uint256 bucketSize1 = ttl1 / 100; // DEFAULT_MAX_BALANCE_RECORDS = 100
+        uint256 bucketSize2 = ttl2 / 100; // DEFAULT_MAX_BALANCE_RECORDS = 100
+
+        // Create two ephemeral tokens with different TTLs
+        vm.startPrank(tokenManager);
+        uint256 tokenId1 = v1.createToken(
+            EVMAuth.EVMAuthTokenConfig({
+                price: 0,
+                erc20Prices: new TokenPurchasable.PaymentToken[](0),
+                ttl: ttl1,
+                transferable: true
+            })
+        );
+        uint256 tokenId2 = v1.createToken(
+            EVMAuth.EVMAuthTokenConfig({
+                price: 0,
+                erc20Prices: new TokenPurchasable.PaymentToken[](0),
+                ttl: ttl2,
+                transferable: true
+            })
+        );
+        vm.stopPrank();
+
+        // Mint tokens
+        vm.startPrank(minter);
+        v1.mint(alice, tokenId1, 50);
+        v1.mint(alice, tokenId2, 100);
+        vm.stopPrank();
+
+        // Initially both should have full balance
+        assertEq(v1.balanceOf(alice, tokenId1), 50);
+        assertEq(v1.balanceOf(alice, tokenId2), 100);
+
+        // Fast forward past first expiration but before second
+        vm.warp(block.timestamp + ttl1 + bucketSize1);
+        assertEq(v1.balanceOf(alice, tokenId1), 0); // Expired
+        assertEq(v1.balanceOf(alice, tokenId2), 100); // Still valid
+
+        // Fast forward past second expiration
+        vm.warp(block.timestamp + (ttl2 - ttl1 + bucketSize2));
+        assertEq(v1.balanceOf(alice, tokenId1), 0); // Still expired
+        assertEq(v1.balanceOf(alice, tokenId2), 0); // Now expired
+    }
+
+    function test_permanentToken_noExpiration() public {
+        // Create permanent token (TTL = 0)
+        vm.prank(tokenManager);
+        uint256 tokenId = v1.createToken(
+            EVMAuth.EVMAuthTokenConfig({
+                price: 0,
+                erc20Prices: new TokenPurchasable.PaymentToken[](0),
+                ttl: 0, // Permanent
+                transferable: true
+            })
+        );
+
+        // Mint tokens
+        vm.prank(minter);
+        v1.mint(alice, tokenId, 100);
+
+        // Initially alice should have full balance
+        assertEq(v1.balanceOf(alice, tokenId), 100);
+
+        // Fast forward a very long time - tokens should still be valid
+        vm.warp(block.timestamp + 365 days);
+        assertEq(v1.balanceOf(alice, tokenId), 100);
+    }
+
     function test_ephemeralToken_balanceRecords() public {
+        // Create ephemeral token
         uint256 ttl = 7200; // 2 hours
         vm.prank(tokenManager);
         uint256 tokenId = v1.createToken(
@@ -487,6 +561,7 @@ contract EVMAuth6909Test is BaseTestWithAccessControlAndERC20s {
     }
 
     function test_ephemeralToken_pruning() public {
+        // Create token with short TTL
         uint256 ttl = 60; // 1 minute
         vm.prank(tokenManager);
         uint256 tokenId = v1.createToken(
@@ -498,11 +573,14 @@ contract EVMAuth6909Test is BaseTestWithAccessControlAndERC20s {
             })
         );
 
+        // Mint tokens
         vm.prank(minter);
         v1.mint(alice, tokenId, 100);
+        assertEq(v1.balanceOf(alice, tokenId), 100);
 
         // Let tokens expire
-        vm.warp(block.timestamp + ttl + 1);
+        vm.warp(block.timestamp + ttl * 2);
+        assertEq(v1.balanceOf(alice, tokenId), 0);
 
         // Prune expired records
         v1.pruneBalanceRecords(alice, tokenId);
@@ -705,6 +783,17 @@ contract EVMAuth6909Test is BaseTestWithAccessControlAndERC20s {
         v1.setTreasury(newTreasury);
     }
 
+    function test_supportsInterface() public view {
+        // Test that the contract supports required interfaces
+        bytes4 erc6909InterfaceId = 0x0f632fb3; // IERC6909
+        bytes4 erc165InterfaceId = 0x01ffc9a7; // IERC165
+        bytes4 accessControlInterfaceId = 0x7965db0b; // IAccessControl
+
+        assertTrue(v1.supportsInterface(erc6909InterfaceId), "Should support IERC6909");
+        assertTrue(v1.supportsInterface(erc165InterfaceId), "Should support IERC165");
+        assertTrue(v1.supportsInterface(accessControlInterfaceId), "Should support IAccessControl");
+    }
+
     // ============ Helper Functions ============= //
 
     function _createPurchasableToken(uint256 price) internal returns (uint256) {
@@ -725,8 +814,4 @@ contract EVMAuth6909Test is BaseTestWithAccessControlAndERC20s {
         v1.mint(to, tokenId, amount);
         return tokenId;
     }
-
-    // ============ Event Definitions ============= //
-
-    event EVMAuthTokenConfigured(uint256 indexed id, EVMAuth.EVMAuthTokenConfig config);
 }
