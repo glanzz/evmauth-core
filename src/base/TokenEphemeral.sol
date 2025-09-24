@@ -44,6 +44,14 @@ abstract contract TokenEphemeral is ContextUpgradeable {
     }
 
     /**
+     * @notice Emitted when pruned tokens are burned.
+     * @param from Address from which tokens were pruned
+     * @param id Token type identifier
+     * @param amount Quantity of tokens that were pruned (expired)
+     */
+    event ExpiredTokensPruned(address indexed from, uint256 indexed id, uint256 amount);
+
+    /**
      * @notice EIP-7201 storage slot for TokenEphemeral state.
      * @dev Computed as: keccak256(abi.encode(uint256(keccak256("tokenephemeral.storage.TokenEphemeral")) - 1))
      * & ~bytes32(uint256(0xff)). Prevents storage collisions in upgradeable contracts.
@@ -133,6 +141,7 @@ abstract contract TokenEphemeral is ContextUpgradeable {
      * @dev Public function for manual storage cleanup. Automatically called during transfers.
      * @param account Address to prune records for
      * @param id Token type identifier
+     * @custom:emits ExpiredTokensPruned if any tokens were pruned.
      */
     function pruneBalanceRecords(address account, uint256 id) public virtual {
         TokenEphemeralStorage storage $ = _getTokenEphemeralStorage();
@@ -140,15 +149,23 @@ abstract contract TokenEphemeral is ContextUpgradeable {
         uint256 currentTime = block.timestamp;
         uint256 writeIndex = 0;
         uint256 currentLength = records.length;
+        uint256 expiredAmount = 0; // This amount must be burned using the token standard's burn method
 
         // Compact valid records to the front
         for (uint256 i = 0; i < currentLength; i++) {
-            bool isValid = records[i].amount > 0 && records[i].expiresAt > currentTime;
-            if (isValid) {
+            if (records[i].amount == 0) {
+                continue; // Skip empty records
+            }
+
+            if (records[i].expiresAt > currentTime) {
+                // Record is still valid; move it to the write index if needed
                 if (i != writeIndex) {
                     records[writeIndex] = records[i];
                 }
                 writeIndex++;
+            } else {
+                // Record is expired; accumulate expired amount
+                expiredAmount += records[i].amount;
             }
         }
 
@@ -170,7 +187,23 @@ abstract contract TokenEphemeral is ContextUpgradeable {
                 records.pop();
             }
         }
+
+        // If any tokens were pruned (expired), call the _burnPrunedTokens hook and emit event
+        if (expiredAmount > 0) {
+            _burnPrunedTokens(account, id, expiredAmount);
+            emit ExpiredTokensPruned(account, id, expiredAmount);
+        }
     }
+
+    /**
+     * @notice Internal hook to handle burning of pruned tokens.
+     * @dev Override this function to integrate with the token standard's burn mechanism.
+     * Called automatically during pruning if expired tokens are found.
+     * @param account Address from which tokens were pruned
+     * @param id Token type identifier
+     * @param amount Quantity of tokens that were pruned (expired)
+     */
+    function _burnPrunedTokens(address account, uint256 id, uint256 amount) internal virtual;
 
     /**
      * @notice Internal function to configure token TTL.

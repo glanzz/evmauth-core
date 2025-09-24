@@ -23,8 +23,8 @@ contract MockTokenEnumerableV1 is TokenEnumerable, OwnableUpgradeable, UUPSUpgra
      * @param initialOwner The address to be set as the owner of the contract.
      */
     function __MockTokenEnumerableV1_init(address initialOwner) internal onlyInitializing {
-        __Ownable_init(initialOwner);
         __TokenEnumerable_init();
+        __Ownable_init(initialOwner);
         __MockTokenEnumerableV1_init_unchained();
     }
 

@@ -3,13 +3,14 @@
 pragma solidity ^0.8.24;
 
 import { EVMAuth } from "src/base/EVMAuth.sol";
-import { TokenPurchasable } from "src/base/TokenPurchasable.sol";
 import { TokenEnumerable } from "src/base/TokenEnumerable.sol";
+import { TokenEphemeral } from "src/base/TokenEphemeral.sol";
+import { TokenPurchasable } from "src/base/TokenPurchasable.sol";
 import { BaseTestWithAccessControlAndERC20s } from "test/_helpers/BaseTest.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 
 contract MockEVMAuthV1 is EVMAuth {
-    // For testing only; in a real implementation, use a token standard like ERC-1155 or ERC-6909.
+    // Mapping of address to token ID to balance, simulating an ERC-1155 or ERC-6909 implementation
     mapping(address => mapping(uint256 => uint256)) public balances;
 
     /**
@@ -54,7 +55,14 @@ contract MockEVMAuthV1 is EVMAuth {
 
     /// @inheritdoc TokenPurchasable
     function _mintPurchasedTokens(address to, uint256 id, uint256 amount) internal virtual override {
+        _updateBalanceRecords(address(0), to, id, amount);
         balances[to][id] += amount;
+    }
+
+    /// @inheritdoc TokenEphemeral
+    function _burnPrunedTokens(address account, uint256 id, uint256 amount) internal virtual override {
+        // This is only called by pruneBalanceRecords, so we don't need to update balance records again
+        balances[account][id] -= amount;
     }
 }
 
@@ -122,7 +130,7 @@ contract EVMAuthTest is BaseTestWithAccessControlAndERC20s {
         // Create token
         vm.prank(tokenManager);
         vm.expectEmit(true, false, false, true);
-        emit EVMAuthTokenConfigured(1, config);
+        emit EVMAuth.EVMAuthTokenConfigured(1, config);
         uint256 tokenId = v1.createToken(config);
 
         // Verify token was created
@@ -243,7 +251,7 @@ contract EVMAuthTest is BaseTestWithAccessControlAndERC20s {
 
         vm.prank(tokenManager);
         vm.expectEmit(true, false, false, true);
-        emit EVMAuthTokenConfigured(tokenId, newConfig);
+        emit EVMAuth.EVMAuthTokenConfigured(tokenId, newConfig);
         v1.updateToken(tokenId, newConfig);
 
         // Verify updated configuration
@@ -342,7 +350,7 @@ contract EVMAuthTest is BaseTestWithAccessControlAndERC20s {
         // Update treasury
         vm.prank(treasurer);
         vm.expectEmit(false, true, false, true);
-        emit TreasuryUpdated(treasurer, newTreasury);
+        emit TokenPurchasable.TreasuryUpdated(treasurer, newTreasury);
         v1.setTreasury(newTreasury);
 
         // Verify treasury was updated
@@ -586,8 +594,49 @@ contract EVMAuthTest is BaseTestWithAccessControlAndERC20s {
         assertFalse(v1.isFrozen(alice));
     }
 
-    // ============ Event Tests ============= //
+    // ============ Pruning Tests ============= //
 
-    event EVMAuthTokenConfigured(uint256 indexed id, EVMAuth.EVMAuthTokenConfig config);
-    event TreasuryUpdated(address caller, address indexed account);
+    function test_pruneBalanceRecords() public {
+        uint48 ttl = 10;
+
+        // Create token
+        vm.prank(tokenManager);
+        uint256 tokenId = v1.createToken(
+            EVMAuth.EVMAuthTokenConfig({
+                price: 1 ether,
+                erc20Prices: new TokenPurchasable.PaymentToken[](0),
+                ttl: ttl,
+                transferable: true
+            })
+        );
+
+        // Fund Alice
+        vm.deal(alice, 10 ether);
+
+        // Mint tokens
+        vm.prank(alice);
+        v1.purchase{ value: 5 ether }(tokenId, 5);
+        assertEq(v1.balanceOf(alice, tokenId), 5);
+        assertEq(v1.balances(alice, tokenId), 5);
+
+        // Let tokens expire
+        vm.warp(block.timestamp + ttl * 2);
+
+        // Verify balanceOf does not show a balance, but the underlying balance still exists
+        assertEq(v1.balanceOf(alice, tokenId), 0);
+        assertEq(v1.balances(alice, tokenId), 5);
+
+        // Expect the PrunedTokensBurned event to be emitted when pruning
+        vm.expectEmit(true, true, false, true);
+        emit TokenEphemeral.ExpiredTokensPruned(alice, tokenId, 5);
+        v1.pruneBalanceRecords(alice, tokenId);
+
+        // Verify the underlying balance has been updated
+        assertEq(v1.balanceOf(alice, tokenId), 0);
+        assertEq(v1.balances(alice, tokenId), 0);
+
+        // Verify all records are pruned
+        TokenEphemeral.BalanceRecord[] memory records = v1.balanceRecordsOf(alice, tokenId);
+        assertEq(records.length, 0);
+    }
 }

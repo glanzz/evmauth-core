@@ -54,6 +54,16 @@ contract MockTokenPurchasableV1 is TokenPurchasable, OwnableUpgradeable, UUPSUpg
 
     // ========== Helper Functions for Testing ==========
 
+    function isAcceptedERC20PaymentToken(uint256 id, address token) public view returns (bool) {
+        TokenPurchasable.PaymentToken[] memory prices = tokenERC20Prices(id);
+        for (uint256 i = 0; i < prices.length; i++) {
+            if (prices[i].token == token && prices[i].price > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// @dev Expose internal function for testing
     function setPrice(uint256 id, uint256 price) external onlyOwner {
         _setPrice(id, price);
@@ -179,12 +189,13 @@ contract TokenPurchasableTest is BaseTestWithERC20s {
         uint256 tokenId = 1;
         uint256 price = 100e6; // 100 USDC
 
+        // Set ERC-20 token price
         vm.expectEmit(true, true, false, true);
         emit TokenPurchasable.ERC20PriceSet(tokenId, address(usdc), price);
-
         vm.prank(owner);
         v1.setERC20Price(tokenId, address(usdc), price);
 
+        // Check price was set
         assertTrue(v1.isAcceptedERC20PaymentToken(tokenId, address(usdc)));
     }
 
@@ -199,7 +210,7 @@ contract TokenPurchasableTest is BaseTestWithERC20s {
         vm.prank(owner);
         v1.setERC20Price(tokenId, address(usdc), 100e6);
 
-        // Check it was added
+        // Check USDC is now accepted
         prices = v1.tokenERC20Prices(tokenId);
         assertEq(prices.length, 1);
         assertEq(prices[0].token, address(usdc));

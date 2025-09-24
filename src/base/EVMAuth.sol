@@ -222,10 +222,10 @@ abstract contract EVMAuth is
     function _createToken(EVMAuthTokenConfig calldata config) internal virtual returns (uint256 id) {
         id = _claimNextTokenID();
 
-        _setPrice(id, config.price);
-        _setERC20Prices(id, config.erc20Prices);
-        _setTTL(id, config.ttl);
-        _setTransferable(id, config.transferable);
+        TokenPurchasable._setPrice(id, config.price);
+        TokenPurchasable._setERC20Prices(id, config.erc20Prices);
+        TokenEphemeral._setTTL(id, config.ttl);
+        TokenTransferable._setTransferable(id, config.transferable);
 
         emit EVMAuthTokenConfigured(id, config);
 
@@ -240,37 +240,12 @@ abstract contract EVMAuth is
      * @custom:emits EVMAuthTokenConfigured
      */
     function _updateToken(uint256 id, EVMAuthTokenConfig calldata config) internal virtual tokenExists(id) {
-        _setPrice(id, config.price);
-        _setERC20Prices(id, config.erc20Prices);
-        _setTTL(id, config.ttl);
-        _setTransferable(id, config.transferable);
+        TokenPurchasable._setPrice(id, config.price);
+        TokenPurchasable._setERC20Prices(id, config.erc20Prices);
+        TokenEphemeral._setTTL(id, config.ttl);
+        TokenTransferable._setTransferable(id, config.transferable);
 
         emit EVMAuthTokenConfigured(id, config);
-    }
-
-    /// @inheritdoc TokenPurchasable
-    function _setPrice(uint256 id, uint256 price) internal virtual override tokenExists(id) {
-        TokenPurchasable._setPrice(id, price);
-    }
-
-    /// @inheritdoc TokenPurchasable
-    function _setERC20Price(uint256 id, address token, uint256 price) internal virtual override tokenExists(id) {
-        TokenPurchasable._setERC20Price(id, token, price);
-    }
-
-    /// @inheritdoc TokenPurchasable
-    function _setERC20Prices(uint256 id, PaymentToken[] calldata prices) internal virtual override tokenExists(id) {
-        TokenPurchasable._setERC20Prices(id, prices);
-    }
-
-    /// @inheritdoc TokenEphemeral
-    function _setTTL(uint256 id, uint256 ttl) internal virtual override tokenExists(id) {
-        TokenEphemeral._setTTL(id, ttl);
-    }
-
-    /// @inheritdoc TokenTransferable
-    function _setTransferable(uint256 id, bool transferable) internal virtual override tokenExists(id) {
-        super._setTransferable(id, transferable);
     }
 
     /// @inheritdoc UUPSUpgradeable

@@ -11,7 +11,7 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/P
  * @title TokenAccessControl
  * @author EVMAuth
  * @notice Provides comprehensive role-based access control for token management.
- * @dev Abstract contract implementing six distinct roles for granular permission control:.
+ * @dev Abstract contract implementing six distinct roles for granular permission control:
  * upgrade management, access management, token management, minting, burning, and treasury operations.
  * Includes account freezing via AccountFreezable and contract pausing via PausableUpgradeable.
  */

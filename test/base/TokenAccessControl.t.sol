@@ -5,6 +5,8 @@ pragma solidity ^0.8.24;
 import { TokenAccessControl } from "src/base/TokenAccessControl.sol";
 import { BaseTestWithAccessControl } from "test/_helpers/BaseTest.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { IAccessControlDefaultAdminRules } from
+    "@openzeppelin/contracts/access/extensions/IAccessControlDefaultAdminRules.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract MockTokenAccessControlV1 is TokenAccessControl, UUPSUpgradeable {
@@ -212,5 +214,74 @@ contract TokenAccessControlTest is BaseTestWithAccessControl {
         );
         v1.unpause();
         vm.stopPrank();
+    }
+
+    // ============ Default Admin Tests ============= //
+
+    function test_beginDefaultAdminTransfer() public {
+        // Verify that owner has the DEFAULT_ADMIN_ROLE
+        assertTrue(v1.hasRole(DEFAULT_ADMIN_ROLE, owner));
+
+        // Begin transfer of default admin role to Alice
+        vm.prank(owner);
+        v1.beginDefaultAdminTransfer(alice);
+
+        // Get transfer delay
+        uint48 delay = v1.defaultAdminDelay();
+
+        // Verify that Alice is the pending default admin
+        (address pendingAdmin, uint48 schedule) = v1.pendingDefaultAdmin();
+        assertEq(pendingAdmin, alice);
+        assertEq(schedule, uint48(block.timestamp + delay));
+
+        // Verify that the transfer cannot be completed immediately
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControlDefaultAdminRules.AccessControlEnforcedDefaultAdminDelay.selector, schedule
+            )
+        );
+        vm.prank(alice);
+        v1.acceptDefaultAdminTransfer();
+
+        // Fast forward time
+        vm.warp(block.timestamp + delay + 1);
+
+        // Now accept the transfer
+        vm.prank(alice);
+        v1.acceptDefaultAdminTransfer();
+
+        // Verify that Alice is now the default admin
+        assertTrue(v1.hasRole(DEFAULT_ADMIN_ROLE, alice));
+        assertFalse(v1.hasRole(DEFAULT_ADMIN_ROLE, owner));
+    }
+
+    function test_changeDefaultAdminDelay() public {
+        // Verify that owner has the DEFAULT_ADMIN_ROLE
+        assertTrue(v1.hasRole(DEFAULT_ADMIN_ROLE, owner));
+
+        // Begin change of default admin delay
+        uint48 oldDelay = v1.defaultAdminDelay(); // 172800
+        vm.prank(owner);
+        v1.changeDefaultAdminDelay(oldDelay + 1 days);
+
+        // Verify that the delay change is pending
+        (uint48 pendingDelay, uint48 schedule) = v1.pendingDefaultAdminDelay();
+        assertEq(pendingDelay, oldDelay + 1 days);
+
+        // Expected delay change schedule depends on whether the delay was increased or decreased
+        uint48 expectedSchedule;
+        if (pendingDelay > oldDelay) {
+            expectedSchedule = uint48(block.timestamp + pendingDelay);
+        } else {
+            expectedSchedule = uint48(block.timestamp + oldDelay - pendingDelay);
+        }
+        assertEq(schedule, expectedSchedule);
+
+        // Fast forward time
+        vm.warp(expectedSchedule + 1);
+
+        // Now the delay change should be in effect
+        uint48 newDelay = v1.defaultAdminDelay();
+        assertEq(newDelay, pendingDelay);
     }
 }
