@@ -1,4 +1,199 @@
 \section{EVMAuth Design}
 \label{sec:design}
 
-% TODO: Complete in Week 3
+\subsection{System Overview}
+
+EVMAuth provides a comprehensive authorization framework by combining on-chain token ownership with off-chain API access control. The system architecture separates responsibilities between blockchain operations (token issuance, transfer, configuration) and service provider infrastructure (token verification, access decision enforcement).
+
+\textbf{High-Level Architecture.} Client applications or AI agents interact with EVMAuth-protected APIs by presenting their wallet address. The API service queries blockchain state through RPC calls to verify token ownership, checks token validity (TTL expiration, account freeze status), and grants or denies access based on the verification result. Unlike traditional OAuth flows that require interactive authentication, this model enables fully autonomous access: agents can purchase tokens via smart contract transactions, hold them in their wallets, and present proof of ownership through standard blockchain mechanisms.
+
+\textbf{On-Chain vs Off-Chain Responsibilities.} Table~\ref{tab:responsibilities} summarizes the architectural separation. The blockchain provides persistent state management (token balances, configurations, freeze lists), cryptographic proof of ownership through wallet signatures, and atomic transactions for purchases. Service providers handle stateless verification through cached RPC calls, access policy enforcement (mapping token types to API permissions), and rate limiting or usage tracking. This separation enables decentralization: any party can verify token ownership without depending on centralized authorization servers.
+
+\begin{table}[h]
+\centering
+\caption{Distribution of responsibilities between on-chain and off-chain components.}
+\label{tab:responsibilities}
+\begin{tabular}{ll}
+\toprule
+\textbf{On-Chain (Smart Contract)} & \textbf{Off-Chain (API Service)} \\
+\midrule
+Token balance storage & RPC-based balance queries \\
+Token purchase transactions & Cached verification results \\
+Account freeze management & Access decision enforcement \\
+Token configuration (TTL, price, transferability) & Permission mapping to API scopes \\
+Immutable audit trail & Rate limiting \& usage tracking \\
+Atomic payment + authorization & Request authentication \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Verification Flow for API Access.} A typical authorization check follows these steps: (1) Client sends API request with wallet address in headers, (2) API service queries the smart contract's \texttt{balanceOf(address, tokenId)} function via blockchain RPC, (3) Smart contract computes effective balance by pruning expired records (for ephemeral tokens) and checking freeze status, (4) API service caches the verification result with short TTL (e.g., 30 seconds) to minimize RPC calls, (5) Access granted if balance > 0 and account not frozen, otherwise 403 Forbidden returned. This flow requires no database writes, no session management, and no coordination with payment processors---authorization state exists entirely on-chain. Figure~\ref{fig:evmauth-architecture} illustrates this architecture and interaction flow.
+
+\input{figures/evmauth-architecture}
+
+\subsection{Authorization Primitives}
+
+EVMAuth introduces seven composable primitives that combine to support diverse access control patterns. Each primitive is implemented as a separate base contract, enabling modular composition.
+
+\subsubsection{Role-Based Access Control}
+
+Token management operations are protected by six specialized roles implemented through OpenZeppelin's \texttt{AccessControlDefaultAdminRules}~\cite{openzeppelin}:
+
+\begin{itemize}
+\item \textbf{DEFAULT\_ADMIN\_ROLE}: Root administrator with time-delayed transfer capability (e.g., 2-day delay) to prevent instant takeover attacks. Can grant/revoke all other roles.
+
+\item \textbf{UPGRADE\_MANAGER\_ROLE}: Authorized to upgrade contract implementation via UUPS proxy pattern. Separated from admin role to enable specialized key management for upgrades.
+
+\item \textbf{ACCESS\_MANAGER\_ROLE}: Controls pause/unpause operations and account freezing. Enables instant revocation without token burning.
+
+\item \textbf{TOKEN\_MANAGER\_ROLE}: Creates new token types and modifies configurations (price, TTL, transferability, metadata URIs).
+
+\item \textbf{MINTER\_ROLE}: Mints tokens to accounts, supporting both manual issuance and automated purchase flows.
+
+\item \textbf{BURNER\_ROLE}: Burns tokens from accounts, enabling refunds or forced revocation.
+
+\item \textbf{TREASURER\_ROLE}: Updates the treasury address where purchase revenue is sent.
+\end{itemize}
+
+This role separation follows the principle of least privilege: different operational concerns (financial, technical, security) can be managed by specialized keys or multi-signature wallets. The time-delayed admin transfer prevents malicious admin changes from taking effect immediately, providing a window for detection and rollback.
+
+\subsubsection{Account Freezing}
+
+Account freezing provides instant, non-destructive revocation by maintaining an on-chain mapping of frozen addresses. When an account is frozen via \texttt{freezeAccount(address)}, all token operations (transfers, purchases, minting) revert with \texttt{AccountFrozen} errors. Critically, \texttt{balanceOf} returns zero for frozen accounts, causing API authorization checks to fail immediately---without requiring token burns or distributed cache invalidation.
+
+Freezing preserves the immutable audit trail: token balances remain recorded on-chain, and unfreezing via \texttt{unfreezeAccount(address)} restores access instantly. This enables temporary suspensions for security investigations, compliance holds, or payment disputes. Gas costs are minimal (54K-71K for freeze, 12K-21K for unfreeze) compared to transferring or burning tokens.
+
+Use cases include: compromised wallet mitigation (freeze attacker's account while investigating), regulatory compliance (freeze accounts pending KYC verification), and abuse prevention (freeze accounts exhibiting bot-like API usage patterns).
+
+\subsubsection{Token Enumeration}
+
+Token types are assigned sequential IDs through the \texttt{TokenEnumerable} base contract. The \texttt{nextTokenId} counter starts at 1 (reserving 0 as invalid) and increments on each \texttt{createToken} call. This enables:
+
+\textbf{Multi-tier authorization:} Service providers can define multiple access levels (Free tier = token 1, Pro tier = token 2, Enterprise tier = token 3) and check for specific token ownership. Authorization logic becomes: "Grant access if \texttt{balanceOf(user, PRO\_TIER\_ID) > 0}".
+
+\textbf{Subscription discovery:} Users can query \texttt{totalSupply()} to iterate over all token types, retrieve configurations via \texttt{tokenConfig(id)}, and discover available subscription options without relying on off-chain metadata servers.
+
+\textbf{Metadata association:} Each token ID maps to a URI (ERC-1155) or can be queried for configuration (ERC-6909), enabling rich metadata (tier names, feature descriptions, legal terms) stored on IPFS or Arweave.
+
+The enumerable pattern simplifies administrative operations: operators can loop through token IDs to update prices, check total minted supply per tier, or generate analytics reports directly from on-chain state.
+
+\subsubsection{Ephemeral Tokens with Time-To-Live}
+
+EVMAuth implements time-bounded access through the time-bucketed balance records algorithm detailed in our previous work~\cite{tbbr}. Each token type has a configurable TTL (time-to-live in seconds). When TTL > 0, token balances are stored as timestamped records partitioned into time buckets.
+
+\textbf{Algorithm summary (from Paper 1):} Balance records are grouped into buckets of width $w = \text{TTL} / k$, where $k$ is the maximum number of records per account per token. Minting adds a record to the current bucket (or updates if it exists). Transfers split balances across time buckets, potentially creating multiple records. The pruning operation removes expired records before returning effective balance. Storage is bounded to $k+1$ records, with the oldest bucket dropped when exceeded.
+
+\textbf{Subscription model benefits:} Services can mint 30-day access tokens that automatically expire without recurring transactions. Users purchase once, receive immediate access, and authorization revokes automatically after TTL elapses. This eliminates the need for subscription databases, renewal webhooks, or recurring payment authorization---access is determined purely by on-chain token age.
+
+\textbf{Gas cost trade-offs:} With $k=100$ and 30-day TTL, worst-case transfers cost 11M gas when splitting balances across full record sets. Services mitigate this through: (1) using soulbound tokens (non-transferable) to avoid transfer complexity, (2) periodic pruning via \texttt{pruneBalanceRecords} (28K gas), or (3) accepting higher $k$ values for less frequent users.
+
+\subsubsection{Transfer Control}
+
+The \texttt{TokenTransferable} base contract enables per-token configurability of transferability. Each token type has a boolean \texttt{transferable} flag set during creation or updated via \texttt{updateToken}.
+
+\textbf{Transferable tokens} (flag = true) enable secondary markets: users can resell unused subscriptions, gift access to others, or trade API credits on DEXes. Transfers follow standard ERC-1155/6909 semantics with ephemeral token record splitting.
+
+\textbf{Soulbound tokens} (flag = false) implement non-transferable credentials tied to the original recipient. All transfer operations revert with \texttt{NonTransferableToken} errors. Only minting (by MINTER\_ROLE) and burning (by BURNER\_ROLE or owner) are permitted. This enforces personal licenses, prevents Sybil attacks (one wallet = one access), and ensures compliance with regulations prohibiting credential resale.
+
+The \texttt{\_update} hook in both ERC-1155 and ERC-6909 implementations checks transferability before executing operations, providing a single enforcement point for this constraint.
+
+\subsubsection{Direct Purchase}
+
+The \texttt{TokenPurchasable} base contract enables atomic payment-authorization transactions, eliminating coordination overhead between payment processors and authorization systems.
+
+\textbf{Native currency support:} Each token has a \texttt{price} in the blockchain's native currency (ETH on Ethereum/Base, MATIC on Polygon). Users call \texttt{purchase(tokenId, amount)} with \texttt{msg.value >= price * amount}, receiving tokens and sending payment to the treasury in a single atomic transaction. Failed payments (insufficient funds, treasury transfer failure) revert the entire transaction, ensuring payment and authorization never desynchronize.
+
+\textbf{Multi-ERC20 support:} Tokens can accept multiple ERC-20 payment options via the \texttt{PaymentToken[]} array. For example, a Pro tier might accept USDC at \$50/month, USDT at \$50/month, or ETH at 0.02 ETH/month. Users call \texttt{purchaseWithERC20(tokenId, amount, erc20Address)} after approving token spending. The contract validates the ERC-20 is in the accepted list, transfers payment via \texttt{safeTransferFrom}, and mints authorization tokens atomically.
+
+\textbf{Independent pricing:} Native and ERC-20 prices are set independently, allowing services to adjust for exchange rate volatility, transaction fee differences, or preferred payment methods without complex oracles. Prices can be updated via \texttt{updateToken} by TOKEN\_MANAGER\_ROLE to respond to market conditions.
+
+\subsubsection{Dynamic Token Configuration}
+
+Token types are defined by the \texttt{EVMAuthTokenConfig} struct containing four parameters: \texttt{price} (native currency), \texttt{erc20Prices} (array of accepted stablecoins), \texttt{ttl} (time-to-live in seconds), and \texttt{transferable} (boolean). Configurations are:
+
+\textbf{Created:} Via \texttt{createToken(config)} which assigns a sequential ID and emits \texttt{EVMAuthTokenConfigured}. Initial token supply is zero; tokens are minted on-demand via purchase or manual minting.
+
+\textbf{Updated:} Via \texttt{updateToken(id, config)} which modifies the configuration for an existing token type. Price changes take effect immediately for new purchases but do not affect existing token holders. TTL changes apply to new mints; existing balances retain their original timestamps.
+
+\textbf{Queried:} Via \texttt{tokenConfig(id)} which returns the complete \texttt{EVMAuthToken} struct including ID and configuration. This enables client applications to discover pricing, check transferability, and determine expiration behavior without parsing events.
+
+The unified configuration struct simplifies administration: operators update a single on-chain record rather than coordinating changes across databases, payment gateways, and authorization services.
+
+\subsection{Composition Examples}
+
+The seven primitives compose to support diverse authorization patterns. We present three representative examples.
+
+\textbf{Example 1: Monthly API Subscription (Soulbound, Ephemeral).}
+\begin{lstlisting}[language=Solidity,basicstyle=\ttfamily\footnotesize]
+// Create 30-day non-transferable subscription token
+EVMAuthTokenConfig memory config = EVMAuthTokenConfig({
+    price: 0.01 ether,  // 0.01 ETH/month
+    erc20Prices: [PaymentToken(USDC, 50e6)],  // or 50 USDC
+    ttl: 30 days,       // Auto-expires after 30 days
+    transferable: false // Soulbound to purchaser
+});
+uint256 subId = createToken(config);
+
+// User purchases subscription autonomously
+// Token auto-expires after 30 days, no renewal needed
+\end{lstlisting}
+
+\textbf{Example 2: Transferable Pro License (Tradeable, Permanent).}
+\begin{lstlisting}[language=Solidity,basicstyle=\ttfamily\footnotesize]
+// Create permanent transferable license
+EVMAuthTokenConfig memory config = EVMAuthTokenConfig({
+    price: 1 ether,     // One-time purchase
+    erc20Prices: [],    // Native currency only
+    ttl: 0,             // Permanent (no expiration)
+    transferable: true  // Can resell on secondary market
+});
+uint256 licenseId = createToken(config);
+
+// Users can trade licenses on OpenSea, Uniswap, etc.
+\end{lstlisting}
+
+\textbf{Example 3: Metered API Credits (Burnable, Non-Expiring).}
+\begin{lstlisting}[language=Solidity,basicstyle=\ttfamily\footnotesize]
+// Create pay-per-use credit token
+EVMAuthTokenConfig memory config = EVMAuthTokenConfig({
+    price: 0.0001 ether,  // 0.0001 ETH per credit
+    erc20Prices: [PaymentToken(USDC, 1e5)],  // or $0.10 USDC
+    ttl: 0,               // No expiration
+    transferable: true    // Can gift or sell credits
+});
+uint256 creditId = createToken(config);
+
+// API decrements balance on usage via burn
+// Users purchase more credits as needed
+\end{lstlisting}
+
+\subsection{Token Standard Implementations}
+
+EVMAuth provides dual implementations based on ERC-1155~\cite{erc1155} and ERC-6909~\cite{erc6909}, demonstrating how authorization primitives integrate with different token architectures.
+
+\textbf{ERC-1155 Implementation (\texttt{EVMAuth1155}).} Builds on OpenZeppelin's \texttt{ERC1155Upgradeable} with \texttt{ERC1155URIStorage} for per-token metadata. Advantages: (1) Batch operations (\texttt{safeBatchTransferFrom}, \texttt{balanceOfBatch}) reduce gas costs for multi-token transfers by 30\%, (2) Mature tooling and indexer support (OpenSea, Rarible), (3) URI storage enables rich metadata without external servers. Disadvantages: (1) Mandatory safe transfer callbacks increase gas costs, (2) All-or-nothing operator approvals (\texttt{setApprovalForAll}) lack per-token granularity.
+
+\textbf{ERC-6909 Implementation (\texttt{EVMAuth6909}).} Provides a minimal multi-token interface without callbacks. Advantages: (1) Lower deployment cost (4.9M vs 5.4M gas), (2) Granular allowances via three-dimensional mapping (\texttt{allowance[owner][spender][id]}), (3) No callback overhead on transfers. Disadvantages: (1) No standardized batch operations (can be added as extensions), (2) Newer standard with less ecosystem support, (3) Metadata requires custom implementation.
+
+Table~\ref{tab:standard-comparison} compares key features. Both implementations expose identical \texttt{EVMAuth} interfaces for token configuration, purchase, freezing, and enumeration, ensuring API services can integrate with either standard without modification.
+
+\begin{table}[h]
+\centering
+\caption{Feature comparison between EVMAuth's ERC-1155 and ERC-6909 implementations.}
+\label{tab:standard-comparison}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Feature} & \textbf{EVMAuth1155} & \textbf{EVMAuth6909} \\
+\midrule
+Deployment cost (gas) & 5,355,027 & 4,864,022 \\
+Safe transfer callbacks & Required & None \\
+Batch operations & Native & Custom extension \\
+Approval model & Operator-based & Granular per-token \\
+Metadata standard & ERC-1155 URI & Custom \\
+Ecosystem support & High (OpenSea, etc.) & Emerging \\
+Transfer gas (single) & 53,454 & 27,377 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Trade-off Discussion.} ERC-1155 suits use cases prioritizing ecosystem compatibility, batch operations, and standardized metadata (e.g., NFT-based access passes tradeable on marketplaces). ERC-6909 suits use cases prioritizing gas efficiency, fine-grained permissions, and minimal overhead (e.g., high-frequency API authorization where token transfers are rare). Both implementations provide identical security properties and authorization capabilities; the choice depends on integration requirements and gas budget constraints.

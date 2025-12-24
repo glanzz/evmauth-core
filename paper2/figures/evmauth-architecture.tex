@@ -1,0 +1,51 @@
+% Figure 2: EVMAuth System Architecture
+% Shows component interaction: Client/Agent → API → RPC → Contract → Decision
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm and 2cm,
+    component/.style={rectangle, draw, thick, minimum width=2.5cm, minimum height=1cm, align=center, fill=blue!10},
+    agent/.style={rectangle, draw, thick, minimum width=2cm, minimum height=0.8cm, align=center, fill=green!10},
+    contract/.style={rectangle, draw, thick, minimum width=2.5cm, minimum height=1cm, align=center, fill=orange!10},
+    decision/.style={diamond, draw, thick, minimum width=1.5cm, minimum height=1.5cm, align=center, fill=yellow!10, aspect=2},
+    arrow/.style={->, >=stealth, thick},
+    label/.style={font=\small, above, sloped}
+]
+
+% Nodes
+\node[agent] (client) {Client/Agent\\(Wallet)};
+\node[component, right=of client] (api) {API Service\\(Off-Chain)};
+\node[component, right=of api] (rpc) {Blockchain\\RPC};
+\node[contract, right=of rpc] (contract) {EVMAuth\\Contract};
+\node[decision, below=1.5cm of api] (decision) {Grant\\Access?};
+
+% Arrows - Request flow
+\draw[arrow] (client) -- node[label] {1. API Request\\+ Wallet Address} (api);
+\draw[arrow] (api) -- node[label] {2. balanceOf\\Query} (rpc);
+\draw[arrow] (rpc) -- node[label] {3. Read\\State} (contract);
+
+% Response flow
+\draw[arrow] (contract) -- node[label, below, sloped] {4. Balance\\+ Freeze Status} (rpc);
+\draw[arrow] (rpc) -- node[label, below, sloped] {5. Verification\\Result} (api);
+\draw[arrow] (api) -- (decision);
+
+% Decision outcomes
+\node[below left=0.5cm and 0.5cm of decision, align=center] (grant) {✓ 200 OK\\Access Granted};
+\node[below right=0.5cm and 0.5cm of decision, align=center] (deny) {✗ 403 Forbidden\\Access Denied};
+
+\draw[arrow] (decision) -- node[right, font=\small] {balance > 0\\not frozen} (grant);
+\draw[arrow] (decision) -- node[left, font=\small] {balance = 0\\or frozen} (deny);
+
+% Purchase flow (dashed)
+\node[below=3cm of client] (purchase) {Purchase Flow};
+\draw[arrow, dashed, bend right=45] (client) to node[label, below] {purchase(tokenId)\\+ Payment} (contract);
+\draw[arrow, dashed, bend left=45] (contract) to node[label, above] {Mint Tokens\\Update Balance} (client);
+
+% Legend/annotations
+\node[draw, dashed, fit=(purchase), inner sep=0.3cm, label=below:\textit{Atomic Purchase Transaction}] {};
+
+\end{tikzpicture}
+\caption{EVMAuth system architecture showing authorization verification flow. Clients/agents present wallet addresses to API services, which verify token ownership via blockchain RPC calls. The smart contract computes effective balance (pruning expired records, checking freeze status) and returns verification results. Access decisions are made off-chain based on on-chain state. Dashed arrows show the optional atomic purchase flow where payment and token minting occur in a single transaction.}
+\label{fig:evmauth-architecture}
+\end{figure}
