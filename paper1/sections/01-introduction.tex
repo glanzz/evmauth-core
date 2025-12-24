@@ -1,0 +1,35 @@
+\section{Introduction}
+\label{sec:introduction}
+
+% Problem context
+Many decentralized applications require fungible tokens with expiration semantics.
+API access credits, subscription tokens, and time-limited authorization grants all share a common requirement: tokens should become invalid after a configured time-to-live (TTL) period.
+Unlike non-fungible tokens~\cite{erc721} where expiration can be tracked per-token~\cite{erc4907,erc7858}, fungible tokens~\cite{erc20} present a unique challenge---each deposited unit may have a different expiration time, yet the tokens remain interchangeable for spending purposes.
+
+% The naive approach and its problems
+A straightforward implementation maintains a list of balance records, each containing an amount and expiration timestamp.
+Every deposit appends a new record, and withdrawals consume from the oldest records first (FIFO semantics).
+However, this approach suffers from two critical problems:
+
+\begin{enumerate}
+    \item \textbf{Unbounded storage growth:} An account receiving frequent small deposits accumulates arbitrarily many records, increasing storage costs linearly with deposit count.
+    \item \textbf{Denial-of-service vulnerability:} An adversary can deliberately create many small deposits to a victim's account, causing the victim's subsequent operations to iterate over numerous records and potentially exceed gas limits~\cite{madmax,attacks}.
+\end{enumerate}
+
+% Our solution
+We present \emph{time-bucketed balance records}, a data structure that addresses both problems while preserving essential TTL guarantees.
+Our key insight is that expiration times can be discretized into $k$ buckets without violating the minimum TTL requirement---we simply round expiration times \emph{up} to the next bucket boundary.
+This bounds the number of distinct expiration timestamps to at most $k$, enabling record coalescing and guaranteeing $\bigO(k)$ storage per account.
+
+% Contributions
+Our contributions are:
+
+\begin{enumerate}
+    \item \textbf{Problem formalization:} We define requirements for bounded-storage TTL tracking, including storage bounds, TTL guarantees, FIFO semantics, and expiration-preserving transfers (Section~\ref{sec:problem}).
+
+    \item \textbf{Algorithm design:} We present the time-bucketing mechanism with four core operations: insert, consume, transfer, and prune (Section~\ref{sec:algorithm}).
+
+    \item \textbf{Formal analysis:} We prove storage bounds, TTL guarantees, and DoS resistance properties with complexity analysis (Section~\ref{sec:analysis}).
+
+    \item \textbf{Empirical validation:} We present gas benchmarks demonstrating practical efficiency on Ethereum (Section~\ref{sec:implementation}).
+\end{enumerate}

@@ -1,0 +1,57 @@
+\begin{algorithm}[htbp]
+\caption{Time-Bucketed Balance Record Operations}
+\label{alg:operations}
+\small
+\begin{algorithmic}[1]
+\Require Balance records $\mathcal{B}$, bucket width $w$, current time $t_{\text{now}}$
+
+\Function{BucketedExpiry}{$t$, $T$, $w$}
+    \State \Return $\lceil (t + T) / w \rceil \times w$
+\EndFunction
+
+\Function{Insert}{$\mathcal{B}$, $a$, $e$, $t_{\text{now}}$}
+    \State \Call{Prune}{$\mathcal{B}$, $t_{\text{now}}$} \Comment{Remove expired records}
+    \For{$i \gets 0$ \textbf{to} $|\mathcal{B}| - 1$}
+        \If{$\mathcal{B}[i].e = e$}
+            $\mathcal{B}[i].a \gets \mathcal{B}[i].a + a$; \Return \Comment{Coalesce}
+        \EndIf
+        \If{$\mathcal{B}[i].e > e$}
+            \textsc{ShiftInsert}$(\mathcal{B}, i, (a, e))$; \Return
+        \EndIf
+    \EndFor
+    \State $\mathcal{B}.\text{append}((a, e))$
+\EndFunction
+
+\Function{Consume}{$\mathcal{B}$, $a$, $t_{\text{now}}$}
+    \State $r \gets a$; $C \gets []$ \Comment{Remaining; collected pairs}
+    \For{$i \gets 0$ \textbf{to} $|\mathcal{B}| - 1$}
+        \If{$\mathcal{B}[i].e \leq t_{\text{now}}$} \textbf{continue} \EndIf \Comment{Skip expired}
+        \State $\delta \gets \min(r, \mathcal{B}[i].a)$
+        \State $\mathcal{B}[i].a \gets \mathcal{B}[i].a - \delta$; $C.\text{append}((\delta, \mathcal{B}[i].e))$
+        \State $r \gets r - \delta$
+        \If{$r = 0$} \Return $(\textsc{Success}, C)$ \EndIf
+    \EndFor
+    \State \Return $(\textsc{InsufficientBalance}, \emptyset)$
+\EndFunction
+
+\Function{Transfer}{$\mathcal{B}_s$, $\mathcal{B}_r$, $a$, $t_{\text{now}}$}
+    \State $(status, C) \gets$ \Call{Consume}{$\mathcal{B}_s$, $a$, $t_{\text{now}}$}
+    \If{$status \neq \textsc{Success}$} \Return $status$ \EndIf
+    \For{$(a_i, e_i) \in C$}
+        \Call{Insert}{$\mathcal{B}_r$, $a_i$, $e_i$, $t_{\text{now}}$} \Comment{Preserve expiration}
+    \EndFor
+    \State \Return \textsc{Success}
+\EndFunction
+
+\Function{Prune}{$\mathcal{B}$, $t_{\text{now}}$}
+    \State $j \gets 0$
+    \For{$i \gets 0$ \textbf{to} $|\mathcal{B}| - 1$}
+        \If{$\mathcal{B}[i].e > t_{\text{now}}$ \textbf{and} $\mathcal{B}[i].a > 0$}
+            $\mathcal{B}[j] \gets \mathcal{B}[i]$; $j \gets j + 1$
+        \EndIf
+    \EndFor
+    \State $\mathcal{B}.\text{truncate}(j)$
+\EndFunction
+
+\end{algorithmic}
+\end{algorithm}

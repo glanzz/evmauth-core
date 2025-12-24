@@ -1,0 +1,64 @@
+\section{Problem Formulation}
+\label{sec:problem}
+
+\subsection{System Model}
+
+We consider resource-constrained execution environments where storage and computation have explicit costs.
+The Ethereum Virtual Machine (EVM)~\cite{yellowpaper} serves as our motivating example, where each 256-bit storage slot costs 20,000 gas to initialize and operations are bounded by block gas limits.
+However, our approach generalizes to any system with:
+
+\begin{itemize}
+    \item \textbf{Per-slot storage costs:} Writing to storage incurs cost proportional to the number of slots used.
+    \item \textbf{Per-operation computation costs:} Iterating over data structures incurs cost proportional to the iteration count.
+    \item \textbf{Operation cost limits:} Individual operations must complete within a cost budget (e.g., block gas limit).
+\end{itemize}
+
+\subsection{Requirements}
+
+Let $\mathcal{B}$ denote a balance record data structure for an account-resource pair.
+We define four requirements:
+
+\begin{description}
+    \item[R1: Bounded Storage.] The number of records $|\mathcal{B}| \leq k + 1$ for a configurable constant $k$, regardless of the number of deposits.
+
+    \item[R2: TTL Guarantee.] For any deposit at time $t$ with configured TTL $T$, the deposited amount must remain valid until at least time $t + T$. Formally:
+    \[
+    \forall \text{ deposit at time } t: \text{expiresAt} \geq t + T
+    \]
+
+    \item[R3: FIFO Consumption.] When withdrawing or transferring tokens, the oldest (earliest-expiring) valid tokens are consumed first.
+
+    \item[R4: Expiration-Preserving Transfers.] When tokens are transferred between accounts, their original expiration times are preserved. The recipient receives tokens that expire at the same time they would have expired for the sender.
+\end{description}
+
+\subsection{Threat Model}
+
+We consider an adversary with the following capabilities:
+
+\begin{itemize}
+    \item \textbf{Deposit capability:} The adversary can make arbitrarily many deposits of arbitrary (possibly minimal) amounts to any account, including a victim's account.
+    \item \textbf{Timing control:} The adversary can choose when to make deposits, potentially spreading them across different time buckets.
+\end{itemize}
+
+The adversary's goals are:
+
+\begin{itemize}
+    \item \textbf{Storage exhaustion:} Force unbounded growth in the victim's balance records, increasing their storage costs.
+    \item \textbf{Operation DoS:} Increase the victim's operation costs (gas) to the point where operations fail or become prohibitively expensive.
+    \item \textbf{TTL violation:} Cause tokens to expire before their configured TTL.
+\end{itemize}
+
+A secure solution must ensure that none of these goals are achievable, regardless of the adversary's deposit patterns.
+
+\subsection{Design Space}
+
+Before presenting our solution, we briefly survey the design space:
+
+\begin{enumerate}
+    \item \textbf{Unbounded array:} Store all records; violates R1 and enables DoS attacks.
+    \item \textbf{Single timestamp:} Track only one expiration per account; violates R4 (cannot preserve different expirations) and R2 (resetting timestamp on deposit shortens existing tokens' TTL).
+    \item \textbf{Circular buffer:} Fixed-size buffer that evicts the oldest record when full; violates R2 (newly deposited tokens can be evicted before their TTL expires, as eviction is based on insertion order rather than expiration time).
+    \item \textbf{Time bucketing (ours):} Discretize time into $k$ buckets; satisfies all requirements.
+\end{enumerate}
+
+Only time bucketing achieves all four requirements simultaneously.

@@ -1,0 +1,81 @@
+\section{Implementation \& Validation}
+\label{sec:implementation}
+
+\subsection{Experimental Setup}
+
+We measured gas costs using Foundry's~\cite{foundry} gas tracing functionality with the following configuration:
+\begin{itemize}
+    \item Solidity compiler: v0.8.24
+    \item Optimizer: enabled with 200 runs
+    \item Parameters: $k = 100$ maximum records, TTL = 30 days
+    \item Bucket width: $\lceil \text{TTL} / k \rceil = 25{,}920$ seconds ($\approx$7.2 hours)
+\end{itemize}
+
+Gas measurements were obtained via \texttt{forge test -vvvv} tracing, which reports the exact gas consumed by each contract call excluding test harness overhead. All the benchmarks are reproducible via the test suite. \footnote{\url{https://github.com/glanzz/tbbr}} 
+
+\subsection{Gas Costs}
+
+Table~\ref{tab:gas} shows costs for typical operations with $k = 100$ and a 30-day TTL.
+
+\begin{table}[h]
+\centering
+\caption{Measured gas costs with $k = 100$ maximum records.}
+\label{tab:gas}
+\begin{tabular}{lrl}
+\toprule
+\textbf{Operation} & \textbf{Gas Cost} & \textbf{Notes} \\
+\midrule
+Mint (new record) & 95,407 & Creates new balance record \\
+Mint (coalesce) & 4,931 & Adds to existing bucket \\
+Transfer & 94,853 & FIFO consume + insert \\
+Burn & 4,511 & FIFO consumption \\
+Balance query & 2,265 & View function, no state change \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The significant difference between ``new record'' and ``coalesce'' operations (95K vs 5K gas) demonstrates the efficiency of time-bucketing: deposits within the same bucket coalesce into a single storage write rather than creating new records.
+
+Table~\ref{tab:worst-case} shows worst-case gas costs when an account has accumulated $k$ records (one per bucket) and must consume from all of them.
+
+\begin{table}[h]
+\centering
+\caption{Worst-case gas costs with $k = 100$ records.}
+\label{tab:worst-case}
+\begin{tabular}{lrl}
+\toprule
+\textbf{Operation} & \textbf{Gas Cost} & \textbf{Notes} \\
+\midrule
+Burn (all records) & 335,499 & FIFO from 100 records \\
+Transfer (all records) & 9,994,917 & Consume + reinsert all \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Even in the worst case, the transfer operation ($\sim$10M gas) remains well within Ethereum's 30M block gas limit, ensuring operations are always executable.
+
+\subsection{DoS Resistance}
+
+We validated the DoS resistance properties experimentally.
+An adversary making 500 small deposits (each in a different transaction) to a single address would create 500 records in an unbounded approach.
+With our time-bucketing mechanism ($k = 100$), these deposits coalesce into at most $k$ records.
+
+After the simulated attack, subsequent operations remain bounded:
+\begin{itemize}
+    \item Record count: bounded at $k$ (not 500)
+    \item Burn operation: $\sim$335K gas (not unbounded)
+    \item No block gas limit exhaustion
+\end{itemize}
+
+The gas cost scales with $\bigO(k^2)$ in the worst case (when records must be coalesced), which is acceptable since $k$ is a constant configuration parameter chosen by the contract deployer.
+
+\subsection{Comparison with Unbounded Approach}
+
+For comparison, an unbounded array approach would have:
+\begin{itemize}
+    \item Insert: $\bigO(1)$ constant cost per deposit
+    \item Consume/Transfer: $\bigO(n)$ where $n$ is the number of deposits
+\end{itemize}
+
+After 500 deposits, the unbounded approach requires iterating over all 500 records per operation.
+Our bounded approach maintains constant $\bigO(k)$ iteration regardless of deposit count, with worst-case burn gas of approximately 335K and transfer gas of approximately 10M for $k = 100$.

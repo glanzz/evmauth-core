@@ -30,3 +30,4 @@ lcov.info
 # Slither reports
 mutation_campaign/
 mutation.results
+*.DS_Store

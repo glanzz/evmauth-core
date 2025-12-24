@@ -1,0 +1,74 @@
+\section{Algorithm Design}
+\label{sec:algorithm}
+
+\subsection{Time-Bucketing Mechanism}
+
+The key insight is to discretize continuous expiration times into $k$ discrete bucket boundaries.
+Given a TTL of $T$ seconds and a target of at most $k$ balance records per account, we define the bucket width:
+
+\begin{equation}
+w = \left\lceil \frac{T}{k} \right\rceil
+\label{eq:bucket-width}
+\end{equation}
+
+For a deposit at time $t$, the exact expiration would be $t + T$.
+We compute the \emph{bucketed expiration} by rounding up to the next bucket boundary:
+
+\begin{equation}
+\textsc{BucketedExpiry}(t, T, w) = \left\lceil \frac{t + T}{w} \right\rceil \times w
+\label{eq:bucketed-expiry}
+\end{equation}
+
+The ceiling operation in Equation~\ref{eq:bucketed-expiry} \emph{never decreases} the expiration time, ensuring tokens never expire before their configured TTL (satisfying requirement R2 from Section~\ref{sec:problem}).
+The additional lifetime granted by rounding is at most $w - 1$ seconds---a configurable trade-off between expiration precision and storage efficiency.
+Figure~\ref{fig:bucketing} illustrates this mechanism.
+
+\input{figures/time-bucketing}
+
+\subsection{Data Structure}
+
+We maintain a sorted array of balance records per account:
+
+\begin{equation}
+\mathcal{B} = [(a_1, e_1), (a_2, e_2), \ldots, (a_n, e_n)]
+\label{eq:balance-records}
+\end{equation}
+
+\noindent where $a_i > 0$ is the token amount and $e_i$ is the bucketed expiration timestamp, ordered such that $e_1 < e_2 < \ldots < e_n$.
+
+\textbf{Invariant.} All expiration timestamps in $\mathcal{B}$ are \emph{distinct} bucket boundaries.
+The active expiration window spans from the earliest non-expired bucket to the latest possible new deposit expiration, containing at most $k+1$ distinct bucket boundaries, ensuring $|\mathcal{B}| \leq k+1$ (satisfying requirement R1).
+
+\subsection{Operations}
+
+We define four core operations.
+Algorithm~\ref{alg:operations} presents the pseudocode for \textsc{Insert}, \textsc{Consume}, \textsc{Transfer}, and \textsc{Prune}.
+
+\input{algorithms/operations}
+
+\paragraph{Insert.}
+To deposit amount $a$ with bucketed expiration $e$:
+(1) search for an existing record with expiration $e$;
+(2) if found, add $a$ to the existing record's amount (\emph{coalescing});
+(3) otherwise, insert a new record $(a, e)$ maintaining sorted order.
+Coalescing is the key mechanism that bounds storage: multiple deposits mapping to the same bucket boundary share a single record.
+
+\paragraph{Consume.}
+To withdraw amount $a$ (for burns or the sender side of transfers):
+(1) iterate through records from oldest (earliest expiration) to newest;
+(2) skip expired records where $e_i \leq t_{\text{now}}$;
+(3) deduct from each valid record until $a$ is fully satisfied.
+This implements FIFO semantics (requirement R3): oldest tokens are consumed first.
+
+\paragraph{Transfer.}
+To transfer amount $a$ from sender to recipient:
+(1) consume from sender using FIFO, collecting $(amount, expiration)$ pairs rather than discarding them;
+(2) insert each collected pair into the recipient's records using the \emph{original} expiration timestamp.
+Crucially, expirations are \emph{not} re-bucketed on transfer---the recipient inherits the sender's expiration times exactly, satisfying requirement R4 (expiration-preserving transfers).
+
+\paragraph{Prune.}
+To remove stale records:
+(1) iterate through all records;
+(2) compact valid records (non-expired with $e_i > t_{\text{now}}$ and non-zero $a_i > 0$) to the front of the array;
+(3) truncate the array.
+Pruning is invoked automatically before insertions to reclaim storage from expired records.
