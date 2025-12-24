@@ -1,0 +1,22 @@
+% Table: EVMAuth vs Traditional OAuth Comparison
+\begin{table*}[t]
+\centering
+\caption{Comparison of EVMAuth with traditional OAuth-based authorization infrastructure.}
+\label{tab:comparison}
+\begin{tabular}{lp{5.5cm}p{5.5cm}}
+\toprule
+\textbf{Aspect} & \textbf{Traditional (OAuth + DB)} & \textbf{EVMAuth} \\
+\midrule
+Infrastructure & OAuth server, database, payment processor, session management & Single smart contract \\
+Monthly Cost & \$100--\$500 (Auth0/Cognito) + database + payment gateway & Gas costs only (deployment amortized) \\
+Verification Latency & $\sim$100ms (OAuth introspection API call) & $\sim$50ms (RPC call, cached) \\
+Revocation Propagation & Minutes to hours (cache invalidation) & Instant (on-chain state) \\
+Audit Trail & Separate logging service & Built-in (blockchain history) \\
+Vendor Lock-in & High (provider-specific APIs) & None (open standard) \\
+Cross-platform & Requires per-platform integration & Native (wallet-based) \\
+Privacy & Centralized PII storage & Pseudonymous addresses \\
+Single Point of Failure & Yes (auth server) & No (decentralized) \\
+Setup Complexity & High (multiple services) & Medium (smart contract + RPC) \\
+\bottomrule
+\end{tabular}
+\end{table*}

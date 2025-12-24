@@ -1,0 +1,32 @@
+% Table: Operation Gas Costs
+\begin{table*}[t]
+\centering
+\caption{Gas costs for core operations in EVMAuth1155 and EVMAuth6909 implementations.}
+\label{tab:operations}
+\begin{tabular}{lrrp{5cm}}
+\toprule
+\textbf{Operation} & \textbf{EVM Auth1155} & \textbf{EVMAuth6909} & \textbf{Notes} \\
+\midrule
+\multicolumn{4}{l}{\textit{Token Configuration}} \\
+createToken & TBD & TBD & New token type creation \\
+updateToken & TBD & TBD & Modify existing configuration \\
+\midrule
+\multicolumn{4}{l}{\textit{Token Operations}} \\
+mint & TBD & TBD & Single token issuance \\
+burn & TBD & TBD & Single token burn \\
+transfer & TBD & TBD & Single token transfer \\
+batchMint (10 tokens) & TBD & N/A & Batch issuance (1155 only) \\
+batchTransfer (10 tokens) & TBD & N/A & Batch transfer (1155 only) \\
+\midrule
+\multicolumn{4}{l}{\textit{Purchase Operations}} \\
+purchase (native, new) & TBD & TBD & ETH purchase, new record \\
+purchase (native, coalesce) & TBD & TBD & ETH purchase, existing bucket \\
+purchase (ERC-20) & TBD & TBD & USDC/USDT purchase \\
+\midrule
+\multicolumn{4}{l}{\textit{Access Control}} \\
+grantRole & TBD & TBD & Role assignment \\
+freezeAccount & TBD & TBD & Instant revocation \\
+pause & TBD & TBD & Emergency stop \\
+\bottomrule
+\end{tabular}
+\end{table*}
