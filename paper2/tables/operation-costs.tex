@@ -8,25 +8,25 @@
 \textbf{Operation} & \textbf{EVM Auth1155} & \textbf{EVMAuth6909} & \textbf{Notes} \\
 \midrule
 \multicolumn{4}{l}{\textit{Token Configuration}} \\
-createToken & TBD & TBD & New token type creation \\
-updateToken & TBD & TBD & Modify existing configuration \\
+createToken & 54,224 & 73,130 & New token type creation \\
+updateToken & 14,337 & 15,472 & Modify existing configuration \\
 \midrule
 \multicolumn{4}{l}{\textit{Token Operations}} \\
-mint & TBD & TBD & Single token issuance \\
-burn & TBD & TBD & Single token burn \\
-transfer & TBD & TBD & Single token transfer \\
-batchMint (10 tokens) & TBD & N/A & Batch issuance (1155 only) \\
-batchTransfer (10 tokens) & TBD & N/A & Batch transfer (1155 only) \\
+mint & 105,091 & 101,146 & Single token issuance \\
+burn & 21,526 & 17,776 & Single token burn \\
+transfer & 53,454 & 27,377 & Single token transfer \\
+batchMint (10 tokens) & 156,985 & N/A & Batch issuance (1155 only) \\
+batchTransfer (10 tokens) & 241,299 & N/A & Batch transfer (1155 only) \\
 \midrule
 \multicolumn{4}{l}{\textit{Purchase Operations}} \\
-purchase (native, new) & TBD & TBD & ETH purchase, new record \\
-purchase (native, coalesce) & TBD & TBD & ETH purchase, existing bucket \\
-purchase (ERC-20) & TBD & TBD & USDC/USDT purchase \\
+purchase (native, max) & 148,182 & 146,990 & ETH purchase, new record \\
+purchase (native, min) & 76,816 & 146,990 & ETH purchase, existing bucket \\
+purchase (ERC-20) & 83,098 & 153,739 & USDC/USDT purchase \\
 \midrule
 \multicolumn{4}{l}{\textit{Access Control}} \\
-grantRole & TBD & TBD & Role assignment \\
-freezeAccount & TBD & TBD & Instant revocation \\
-pause & TBD & TBD & Emergency stop \\
+freezeAccount & 54,178 & 71,230 & Instant revocation \\
+pause & 20,314 & 26,135 & Emergency stop \\
+pruneBalanceRecords & 28,203 & 27,629 & Remove expired records \\
 \bottomrule
 \end{tabular}
 \end{table*}
