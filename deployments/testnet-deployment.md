@@ -68,40 +68,46 @@ All roles granted to deployer address (same as EVMAuth1155).
 
 ## Sample Token Types Configuration
 
-The following 5 token types demonstrate different EVMAuth use cases:
+✅ **Status**: All 5 token types successfully created on both contracts
 
-### Token ID 1: Basic API Access
+**Configuration Gas Costs**:
+- EVMAuth1155: 677,723 gas (0.0000326 ETH)
+- EVMAuth6909: 670,577 gas (0.0000319 ETH)
+- **Total**: 1,348,300 gas (0.0000645 ETH)
+
+### Token ID 1: Basic API Access ✅
 - **Price**: 0.001 ETH (~$3 USD)
-- **TTL**: 7 days
+- **TTL**: 7 days (604,800 seconds)
 - **Transferable**: No
 - **Use Case**: Entry-level API access, non-transferable subscription
 
-### Token ID 2: Premium API Access
+### Token ID 2: Premium API Access ✅
 - **Price**: 0.005 ETH (~$15 USD)
-- **TTL**: 30 days
+- **TTL**: 30 days (2,592,000 seconds)
 - **Transferable**: Yes
 - **Use Case**: Premium tier with secondary market capability
 
-### Token ID 3: AI Agent License
+### Token ID 3: AI Agent License ✅
 - **Price**: 0.01 ETH (~$30 USD)
-- **TTL**: 90 days
+- **TTL**: 90 days (7,776,000 seconds)
 - **Transferable**: No
 - **Use Case**: AI agent authentication, prevents unauthorized redistribution
 
-### Token ID 4: Enterprise Tier
+### Token ID 4: Enterprise Tier ✅
 - **Price**: 0.05 ETH (~$150 USD)
-- **TTL**: 365 days (1 year)
+- **TTL**: 365 days (31,536,000 seconds)
 - **Transferable**: Yes
 - **Use Case**: Long-term enterprise access with transferability
 
-### Token ID 5: Developer Credits
+### Token ID 5: Developer Credits ✅
 - **Price**: 0.0001 ETH (~$0.30 USD per credit)
 - **TTL**: Unlimited (0 = no expiration)
 - **Transferable**: Yes
 - **Use Case**: Pay-per-use credits that don't expire
 
-> **Note**: Token configuration script is available at `script/ConfigureTokens.s.sol`.
-> Run with: `./configure-tokens.sh` (requires TOKEN_MANAGER_ROLE)
+> **Configuration Script**: `script/ConfigureTokens.s.sol`
+> **Deployment**: `./configure-tokens.sh`
+> **Transaction Logs**: `broadcast/ConfigureTokens.s.sol/84532/run-latest.json`
 
 ---
 
@@ -124,7 +130,7 @@ The following 5 token types demonstrate different EVMAuth use cases:
 - [x] Both contracts verified on Basescan
 - [x] Proxy pattern working (UUPS upgradeable)
 - [x] All roles granted correctly
-- [ ] Token creation tested
+- [x] Token creation tested (5 token types created)
 - [ ] Purchase flow tested
 - [ ] Transfer restrictions verified
 - [ ] TTL expiration tested
