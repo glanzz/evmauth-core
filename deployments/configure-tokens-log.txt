@@ -1,0 +1,14 @@
+=== Token Configuration Script ===
+Network: Base Sepolia
+EVMAuth1155: 0x67b8dD172f50784F6eaffe27d4f79360e44367eC
+EVMAuth6909: 0x8B00e86C73128e4Ccc3CAB2D63F74aaA58937539
+
+Configuring EVMAuth1155 tokens...
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 507.03ms
+Error: Compiler run failed:
+Error (9582): Member "create" not found or not visible after argument-dependent lookup in contract EVMAuth1155.
+  --> script/ConfigureTokens.s.sol:44:9:
+   |
+44 |         evmauth.create(BASIC_API_ACCESS, false, true);
+   |         ^^^^^^^^^^^^^^

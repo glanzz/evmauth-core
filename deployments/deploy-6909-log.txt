@@ -1,0 +1,85 @@
+=== EVMAuth6909 Deployment Script ===
+Network: Base Sepolia
+RPC: https://sepolia.base.org
+
+Deploying EVMAuth6909...
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  EVMAuth deployed to: 0x8B00e86C73128e4Ccc3CAB2D63F74aaA58937539
+  Default Admin: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  Treasury: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  Granted role UPGRADE_MANAGER_ROLE to: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  Granted role ACCESS_MANAGER_ROLE to: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  Granted role TOKEN_MANAGER_ROLE to: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  Granted role MINTER_ROLE to: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  Granted role BURNER_ROLE to: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  Granted role TREASURER_ROLE to: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  URI: 
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 84532
+
+Estimated gas price: 0.01748144 gwei
+
+Estimated total gas used for script: 6892914
+
+Estimated amount required: 0.00012049806251616 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+##
+Start verification for (2) contracts
+Start verifying contract `0x279F599E8589A443B1BAd561f567d53733122DA5` deployed on base-sepolia
+EVM version: cancun
+Compiler version: 0.8.24
+Optimizations:    200
+
+Submitting verification for [src/EVMAuth6909.sol:EVMAuth6909] 0x279F599E8589A443B1BAd561f567d53733122DA5.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `ni7x7ev5u8vfeh9reayfv1bbhtk9quxjfkw1hjm4v9zhwdiqpn`
+	URL: https://sepolia.basescan.org/address/0x279f599e8589a443b1bad561f567d53733122da5
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `OK`
+Details: `Pass - Verified`
+Contract successfully verified
+Start verifying contract `0x8B00e86C73128e4Ccc3CAB2D63F74aaA58937539` deployed on base-sepolia
+EVM version: cancun
+Compiler version: 0.8.24
+Optimizations:    200
+Constructor args: 000000000000000000000000279f599e8589a443b1bad561f567d53733122da5000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000002642d99179e000000000000000000000000000000000000000000000000000000000002a30000000000000000000000000058498884edf3f56e0ca94285908bd2578d7cdbfe00000000000000000000000058498884edf3f56e0ca94285908bd2578d7cdbfe00000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000002400000000000000000000000000000000000000000000000000000000000000006a76ace73a908083d89af9ff88e5b4f7cadb3591a80631063f68b695fda726db500000000000000000000000058498884edf3f56e0ca94285908bd2578d7cdbfe46f3eccdd88dd62792ae8eed1be7b9b658477566c49fd85b0d08cf44261c920800000000000000000000000058498884edf3f56e0ca94285908bd2578d7cdbfe74f7a545c65c11839a48d7453738b30c295408df2d944516167556759ddc6d0600000000000000000000000058498884edf3f56e0ca94285908bd2578d7cdbfe9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a600000000000000000000000058498884edf3f56e0ca94285908bd2578d7cdbfe3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a84800000000000000000000000058498884edf3f56e0ca94285908bd2578d7cdbfe3496e2e73c4d42b75d702e60d9e48102720b8691234415963a5a857b86425d0700000000000000000000000058498884edf3f56e0ca94285908bd2578d7cdbfe000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+Submitting verification for [lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy] 0x8B00e86C73128e4Ccc3CAB2D63F74aaA58937539.
+Submitted contract for verification:
+	Response: `OK`
+	GUID: `ud8gmn7veeunfaabzik8akpwjl1j7fauj3zkcayatb589yur7j`
+	URL: https://sepolia.basescan.org/address/0x8b00e86c73128e4ccc3cab2d63f74aaa58937539
+Contract verification status:
+Response: `NOTOK`
+Details: `Pending in queue`
+Warning: Verification is still pending...; waiting 15 seconds before trying again (7 tries remaining)
+Contract verification status:
+Response: `NOTOK`
+Details: `Already Verified`
+Contract source code already verified
+All (2) contracts were verified!
+
+Transactions saved to: /Users/bhargavcn/Projects/evmauth-core/broadcast/ExampleDeploy.s.sol/84532/run-latest.json
+
+Sensitive values saved to: /Users/bhargavcn/Projects/evmauth-core/cache/ExampleDeploy.s.sol/84532/run-latest.json
+
+
+Deployment complete! Check deployments/deploy-6909-log.txt for details.
