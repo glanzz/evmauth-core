@@ -31,3 +31,5 @@ lcov.info
 mutation_campaign/
 mutation.results
 *.DS_Store
+
+node_modules/
