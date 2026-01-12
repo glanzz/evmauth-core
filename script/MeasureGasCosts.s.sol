@@ -27,6 +27,7 @@ struct EVMAuthTokenConfig {
 }
 
 interface IERC1155 {
+    function createToken(EVMAuthTokenConfig calldata config) external returns (uint256 id);
     function updateToken(uint256 id, EVMAuthTokenConfig calldata config) external;
     function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data) external;
     function safeBatchTransferFrom(address from, address to, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external;
@@ -42,6 +43,7 @@ interface IERC1155 {
 }
 
 interface IERC6909 {
+    function createToken(EVMAuthTokenConfig calldata config) external returns (uint256 id);
     function updateToken(uint256 id, EVMAuthTokenConfig calldata config) external;
     function transfer(address to, uint256 id, uint256 amount) external returns (bool);
     function pause() external;
@@ -64,6 +66,7 @@ contract MeasureGasCosts is Script {
     IERC6909 evmauth6909;
 
     struct GasResults {
+        uint256 createToken;
         uint256 updateToken;
         uint256 transfer;
         uint256 batchTransfer5;
@@ -107,8 +110,6 @@ contract MeasureGasCosts is Script {
         address testRecipient = makeAddr("recipient_1155");
         address testFreezeAddr = makeAddr("freeze_1155");
 
-        // 1. Update Token (updates price, TTL, transferability)
-        console.log("1. updateToken...");
         PaymentToken[] memory emptyERC20Prices = new PaymentToken[](0);
         EVMAuthTokenConfig memory config = EVMAuthTokenConfig({
             price: 0.002 ether,
@@ -116,7 +117,18 @@ contract MeasureGasCosts is Script {
             ttl: 14 days,
             transferable: true
         });
+
+        // 1. Create Token (create new token type)
+        console.log("1. createToken...");
         uint256 gasBefore = gasleft();
+        uint256 newTokenId = evmauth1155.createToken(config);
+        results.createToken = gasBefore - gasleft();
+        console.log("   Gas:", results.createToken);
+        console.log("   Created Token ID:", newTokenId);
+
+        // 2. Update Token (updates price, TTL, transferability)
+        console.log("2. updateToken...");
+        gasBefore = gasleft();
         evmauth1155.updateToken(1, config);
         results.updateToken = gasBefore - gasleft();
         console.log("   Gas:", results.updateToken);
@@ -192,8 +204,6 @@ contract MeasureGasCosts is Script {
         address testRecipient = makeAddr("recipient_6909");
         address testFreezeAddr = makeAddr("freeze_6909");
 
-        // 1. Update Token
-        console.log("1. updateToken...");
         PaymentToken[] memory emptyERC20Prices = new PaymentToken[](0);
         EVMAuthTokenConfig memory config = EVMAuthTokenConfig({
             price: 0.002 ether,
@@ -201,7 +211,18 @@ contract MeasureGasCosts is Script {
             ttl: 14 days,
             transferable: true
         });
+
+        // 1. Create Token (create new token type)
+        console.log("1. createToken...");
         uint256 gasBefore = gasleft();
+        uint256 newTokenId = evmauth6909.createToken(config);
+        results.createToken = gasBefore - gasleft();
+        console.log("   Gas:", results.createToken);
+        console.log("   Created Token ID:", newTokenId);
+
+        // 2. Update Token
+        console.log("2. updateToken...");
+        gasBefore = gasleft();
         evmauth6909.updateToken(1, config);
         results.updateToken = gasBefore - gasleft();
         console.log("   Gas:", results.updateToken);
@@ -273,6 +294,7 @@ contract MeasureGasCosts is Script {
         console.log("SUMMARY FOR PAPER TABLE");
         console.log("=================================================================");
         console.log("ERC-1155 Results:");
+        console.log("  createToken:", r1155.createToken);
         console.log("  updateToken:", r1155.updateToken);
         console.log("  mint:", r1155.mint);
         console.log("  transfer:", r1155.transfer);
@@ -284,6 +306,7 @@ contract MeasureGasCosts is Script {
         console.log("  unfreezeAccount:", r1155.unfreezeAccount);
         console.log("");
         console.log("ERC-6909 Results:");
+        console.log("  createToken:", r6909.createToken);
         console.log("  updateToken:", r6909.updateToken);
         console.log("  mint:", r6909.mint);
         console.log("  transfer:", r6909.transfer);
