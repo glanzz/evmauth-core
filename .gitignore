@@ -17,6 +17,9 @@ script/*.s.sol
 !script/BaseDeploy.s.sol
 !script/ExampleDeploy.s.sol
 !script/Upgrade.s.sol
+!script/MeasureGasCosts.s.sol
+!script/GrantMeasurementRoles.s.sol
+!script/ConfigureTokens.s.sol
 
 # JetBrains IDEs
 .idea/
@@ -30,3 +33,7 @@ lcov.info
 # Slither reports
 mutation_campaign/
 mutation.results
+*.DS_Store
+
+node_modules/
+*.md

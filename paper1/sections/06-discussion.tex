@@ -1,0 +1,49 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Trade-offs}
+
+\subsubsection{Precision vs. Storage.}
+The parameter $k$ controls the trade-off between expiration precision and storage consumption.
+Larger $k$ provides finer-grained expiration (smaller buckets) at the cost of more storage slots and higher worst-case operation costs.
+For a 30-day TTL, $k = 100$ provides 7.2-hour bucket granularity (1\% precision loss) with worst-case transfer costs of 10M gas (33\% of Ethereum's block limit), while $k = 50$ yields 14.4-hour buckets with 2.5M gas transfers, and $k = 200$ achieves 3.6-hour precision but requires 40M gas (exceeding single-block execution on mainnet).
+For most applications, $k = 100$ balances precision, storage, and execution costs effectively, particularly on Layer 2 networks with higher gas limits.
+
+\subsubsection{Worst-case Insert Cost.}
+Insertion requires maintaining sorted order, incurring $\bigO(k)$ worst-case cost for shifting elements.
+In practice, most insertions either coalesce with existing records (when deposits occur within the same bucket window) or append to the end (for monotonically increasing time), resulting in $\bigO(1)$ amortized cost.
+
+\subsection{Generalization Beyond Blockchain}
+
+While we motivated our design with EVM constraints, time-bucketed balance records apply to any resource-constrained system tracking expiring fungible resources:
+
+\begin{itemize}
+    \item \textbf{Database systems:} Row-level TTL with bounded index size per entity.
+    \item \textbf{Caching systems:} Bounded metadata for cache entries with heterogeneous expiration.
+    \item \textbf{IoT devices:} Resource tracking on memory-constrained embedded systems.
+    \item \textbf{Rate limiting:} Sliding window counters with bounded state.
+\end{itemize}
+
+The core algorithm is platform-agnostic; only the storage and computation cost model differs.
+
+\subsection{Limitations}
+
+\begin{itemize}
+    \item \textbf{Precision loss:} Tokens may live up to $\lceil T/k \rceil - 1$ seconds beyond their configured TTL. Applications requiring exact expiration should use larger $k$ or alternative approaches.
+
+    \item \textbf{Fixed TTL:} The system requires a single, pre-configured TTL value for all deposits, as the bucket width $w = \lceil T/k \rceil$ depends on a constant TTL. Applications requiring heterogeneous TTLs must either deploy separate instances per TTL tier (multiplying storage by the number of tiers) or configure bucket width based on the maximum TTL (reducing coalescing efficiency for shorter-lived tokens).
+
+    \item \textbf{Sorted insertion:} The $\bigO(k)$ insertion cost, while bounded, may be significant for very large $k$. Alternative data structures (e.g., skip lists) could reduce this to $\bigO(\log k)$ at the cost of implementation complexity.
+
+    \item \textbf{Single-resource tracking:} Our approach tracks one resource type per data structure instance. Multi-resource scenarios require separate instances per resource, multiplying storage by the number of resource types.
+\end{itemize}
+
+\subsection{Future Work}
+
+\begin{itemize}
+    \item \textbf{Formal verification:} Machine-checked proofs in Coq or Dafny to increase confidence in correctness.
+
+    \item \textbf{Cross-chain extension:} Extending expiration semantics across multiple blockchain networks while maintaining consistency guarantees.
+
+    \item \textbf{Dynamic $k$:} Adaptive bucket sizing based on observed deposit patterns to optimize the precision-storage trade-off dynamically.
+\end{itemize}

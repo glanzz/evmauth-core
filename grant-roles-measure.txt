@@ -1,0 +1,62 @@
+=== Grant Measurement Roles Script ===
+Network: Base Sepolia
+
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 553.47ms
+Compiler run successful!
+Script ran successfully.
+
+== Logs ==
+  =================================================================
+  Granting Measurement Roles
+  =================================================================
+  Measurement Address: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  
+  Granting roles for EVMAuth1155: 0x67b8dD172f50784F6eaffe27d4f79360e44367eC
+    MINTER_ROLE already granted
+    BURNER_ROLE already granted
+    Granting PAUSER_ROLE...
+    ACCESS_MANAGER_ROLE already granted
+    All roles granted!
+  
+  Granting roles for EVMAuth6909: 0x8B00e86C73128e4Ccc3CAB2D63F74aaA58937539
+    MINTER_ROLE already granted
+    BURNER_ROLE already granted
+    Granting PAUSER_ROLE...
+    ACCESS_MANAGER_ROLE already granted
+    All roles granted!
+  
+  =================================================================
+  Role grants complete!
+  =================================================================
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 84532
+
+Estimated gas price: 0.0012 gwei
+
+Estimated total gas used for script: 156694
+
+Estimated amount required: 0.0000001880328 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /Users/bhargavcn/Projects/evmauth-core/broadcast/GrantMeasurementRoles.s.sol/84532/run-latest.json
+
+Sensitive values saved to: /Users/bhargavcn/Projects/evmauth-core/cache/GrantMeasurementRoles.s.sol/84532/run-latest.json
+
+
+Role grants complete!
+Setting up EMSDK environment (suppress these messages with EMSDK_QUIET=1)
+Setting environment variables:
+PATH = /Users/bhargavcn/Projects/emsdk:/Users/bhargavcn/Projects/emsdk/upstream/emscripten:/Library/Frameworks/Python.framework/Versions/3.12/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Applications/Forest SDK/bin:/Users/bhargavcn/.cargo/bin:/Users/bhargavcn/.antigravity/antigravity/bin:/opt/homebrew/opt/rustup/bin:/Users/bhargavcn/.pyenv/shims:/Users/bhargavcn/.nvm/versions/node/v23.11.1/bin:/opt/homebrew/opt/openjdk@17/bin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/opt/homebrew/anaconda3/bin/conda:/Users/bhargavcn/.foundry/bin
+Setting up EMSDK environment (suppress these messages with EMSDK_QUIET=1)
+Setting environment variables:

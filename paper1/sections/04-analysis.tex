@@ -1,0 +1,120 @@
+\section{Formal Analysis}
+\label{sec:analysis}
+
+We prove three theorems establishing the key properties of time-bucketed balance records.
+
+\subsection{Theorem 1: Storage Bound}
+
+\begin{theorem}[Storage Bound]
+\label{thm:storage}
+For any sequence of operations on a balance record structure with parameter $k$ and bucket width $w = \lceil T/k \rceil$, the number of records satisfies $|\mathcal{B}| \leq k + 1$ at all times.
+\end{theorem}
+
+\begin{proof}
+Each record in $\mathcal{B}$ has a distinct bucketed expiration timestamp at some bucket boundary $i \times w$ for $i \in \mathbb{Z}^+$.
+
+At any time $t$ after pruning, all remaining records satisfy $e > t$. The minimum possible expiration is the smallest bucket boundary greater than $t$, which is $\lceil t/w \rceil \times w$.
+
+A new deposit at time $t$ creates a record with expiration $e = \lceil (t+T)/w \rceil \times w$.
+
+The number of distinct bucket boundaries in the range $[\lceil t/w \rceil \times w, \lceil (t+T)/w \rceil \times w]$ is:
+\[
+\left\lceil \frac{t+T}{w} \right\rceil - \left\lceil \frac{t}{w} \right\rceil + 1
+\]
+
+Using the ceiling function property $\lceil a \rceil - \lceil b \rceil \leq \lceil a - b \rceil$ for $a > b$:
+\[
+\left\lceil \frac{t+T}{w} \right\rceil - \left\lceil \frac{t}{w} \right\rceil \leq \left\lceil \frac{T}{w} \right\rceil = \left\lceil \frac{T}{\lceil T/k \rceil} \right\rceil \leq k
+\]
+
+Therefore, the total number of buckets is at most $k + 1$, and since each bucket corresponds to at most one record, $|\mathcal{B}| \leq k + 1$. \qed
+\end{proof}
+
+\subsection{Theorem 2: TTL Guarantee}
+
+\begin{theorem}[TTL Guarantee]
+\label{thm:ttl}
+For any deposit at time $t$ with configured TTL $T$, the bucketed expiration $e$ satisfies $e \geq t + T$.
+\end{theorem}
+
+\begin{proof}
+The bucketed expiration is computed as:
+\[
+e = \left\lceil \frac{t + T}{\text{bucketSize}} \right\rceil \times \text{bucketSize}
+\]
+
+By the ceiling function property:
+\[
+\left\lceil x \right\rceil \geq x \quad \forall x \in \mathbb{R}
+\]
+
+Therefore:
+\[
+\left\lceil \frac{t + T}{\text{bucketSize}} \right\rceil \geq \frac{t + T}{\text{bucketSize}}
+\]
+
+Multiplying both sides by $\text{bucketSize}$:
+\[
+e = \left\lceil \frac{t + T}{\text{bucketSize}} \right\rceil \times \text{bucketSize} \geq t + T
+\]
+
+Thus, the bucketed expiration is always at least the exact expiration, and tokens never expire before their configured TTL. \qed
+\end{proof}
+
+\subsection{Theorem 3: DoS Resistance}
+
+\begin{theorem}[DoS Resistance]
+\label{thm:dos}
+No adversary can increase a victim's operation cost beyond $\bigO(k^2)$, regardless of the number of adversarial deposits.
+\end{theorem}
+
+\begin{proof}
+We show that each operation has worst-case complexity bounded by $k$:
+
+\textbf{Insert:} Searches for matching expiration ($\bigO(k)$), then either updates existing record ($\bigO(1)$) or inserts maintaining sorted order ($\bigO(k)$ for shifting). Total: $\bigO(k)$.
+
+\textbf{Consume:} Iterates through at most $k$ records. Total: $\bigO(k)$.
+
+\textbf{Transfer:} Consumes from sender ($\bigO(k)$) and inserts into recipient. In the worst case where all $k$ records are transferred with distinct expirations, this requires $k$ insertions of $\bigO(k)$ each. Total: $\bigO(k^2)$ worst case.
+
+\textbf{Prune:} Single pass through at most $k$ records. Total: $\bigO(k)$.
+
+Since $|\mathcal{B}| \leq k+1$ by Theorem~\ref{thm:storage}, the adversary cannot increase $|\mathcal{B}|$ beyond $k+1$ regardless of deposit frequency.
+Therefore, operation costs are bounded by $\bigO(k^2)$ (for transfers) and $\bigO(k)$ (for other operations), independent of adversarial deposits. \qed
+\end{proof}
+
+\subsection{Complexity Summary}
+
+\begin{table}[h]
+\centering
+\caption{Operation complexity with $k$ maximum records.}
+\label{tab:complexity}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Time} & \textbf{Space} \\
+\midrule
+Insert & $\bigO(k)$ & $\bigO(1)$ \\
+Consume & $\bigO(k)$ & $\bigO(1)$ \\
+Transfer & $\bigO(k^2)$ & $\bigO(1)$ \\
+Prune & $\bigO(k)$ & $\bigO(1)$ \\
+Balance Query & $\bigO(k)$ & $\bigO(1)$ \\
+\midrule
+Storage per account & --- & $\bigO(k)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Trade-off Analysis}
+
+The precision-storage trade-off is characterized by:
+
+\[
+\text{maxExtraLifetime} = \text{bucketSize} - 1 = \left\lceil \frac{T}{k} \right\rceil - 1
+\]
+
+For example, with $T = 30$ days and $k = 100$:
+\[
+\text{bucketSize} = \frac{30 \times 86400}{100} = 25920 \text{ seconds} \approx 7.2 \text{ hours}
+\]
+
+Tokens may live up to 7.2 hours beyond their configured TTL---acceptable for most applications while guaranteeing bounded storage.

@@ -1,0 +1,123 @@
+=== EVMAuth Gas Measurement Script ===
+Network: Base Sepolia
+Measuring gas costs for both EVMAuth1155 and EVMAuth6909
+
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 659.87ms
+Compiler run successful!
+Script ran successfully.
+
+== Logs ==
+  =================================================================
+  EVMAuth Gas Cost Measurements - Base Sepolia
+  =================================================================
+  Signer: 0x58498884EDF3f56E0CA94285908Bd2578D7CDbFe
+  
+  =================================================================
+  Measuring EVMAuth1155 (ERC-1155)
+  Contract: 0x67b8dD172f50784F6eaffe27d4f79360e44367eC
+  =================================================================
+  1. createToken...
+     Gas: 90140
+     Created Token ID: 6
+  2. updateToken...
+     Gas: 14511
+  2. mint...
+     Gas: 106396
+  4. transfer (safeTransferFrom)...
+     Gas: 34864
+  5. batchTransfer - Skipped
+  6. burn...
+     Gas: 13841
+  7. pause...
+     Gas: 25090
+  8. unpause...
+     Gas: 3190
+  9. freezeAccount...
+     Gas: 70134
+  10. unfreezeAccount...
+     Gas: 5836
+  
+  =================================================================
+  Measuring EVMAuth6909 (ERC-6909)
+  Contract: 0x8B00e86C73128e4Ccc3CAB2D63F74aaA58937539
+  =================================================================
+  1. createToken...
+     Gas: 90124
+     Created Token ID: 6
+  2. updateToken...
+     Gas: 14515
+  3. mint...
+     Gas: 104793
+  4. transfer...
+     Gas: 30473
+  5. batchTransfer - N/A for ERC-6909 (no native batch)
+  6. burn...
+     Gas: 12889
+  7. pause...
+     Gas: 25018
+  8. unpause...
+     Gas: 3140
+  9. freezeAccount...
+     Gas: 70096
+  10. unfreezeAccount...
+     Gas: 5906
+  
+  =================================================================
+  SUMMARY FOR PAPER TABLE
+  =================================================================
+  ERC-1155 Results:
+    createToken: 90140
+    updateToken: 14511
+    mint: 106396
+    transfer: 34864
+    burn: 13841
+    batchTransfer(5): 0
+    pause: 25090
+    unpause: 3190
+    freezeAccount: 70134
+    unfreezeAccount: 5836
+  
+  ERC-6909 Results:
+    createToken: 90124
+    updateToken: 14515
+    mint: 104793
+    transfer: 30473
+    burn: 12889
+    pause: 25018
+    unpause: 3140
+    freezeAccount: 70096
+    unfreezeAccount: 5906
+  =================================================================
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 84532
+
+Estimated gas price: 0.0012 gwei
+
+Estimated total gas used for script: 2146668
+
+Estimated amount required: 0.0000025760016 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /Users/bhargavcn/Projects/evmauth-core/broadcast/MeasureGasCosts.s.sol/84532/run-latest.json
+
+Sensitive values saved to: /Users/bhargavcn/Projects/evmauth-core/cache/MeasureGasCosts.s.sol/84532/run-latest.json
+
+
+Gas measurement complete!
+Results have been printed above and saved to broadcast logs
+Setting up EMSDK environment (suppress these messages with EMSDK_QUIET=1)
+Setting environment variables:
+PATH = /Users/bhargavcn/Projects/emsdk:/Users/bhargavcn/Projects/emsdk/upstream/emscripten:/Library/Frameworks/Python.framework/Versions/3.12/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Applications/Forest SDK/bin:/Users/bhargavcn/.cargo/bin:/Users/bhargavcn/.antigravity/antigravity/bin:/opt/homebrew/opt/rustup/bin:/Users/bhargavcn/.pyenv/shims:/Users/bhargavcn/.nvm/versions/node/v23.11.1/bin:/opt/homebrew/opt/openjdk@17/bin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/opt/homebrew/anaconda3/bin/conda:/Users/bhargavcn/.foundry/bin
+Setting up EMSDK environment (suppress these messages with EMSDK_QUIET=1)
+Setting environment variables:

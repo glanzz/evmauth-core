@@ -1,0 +1,43 @@
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Token Standards with Time Semantics}
+
+ERC-4907~\cite{erc4907} introduces rental semantics for NFTs with automatic expiration of the ``user'' role.
+ERC-7858~\cite{erc7858} extends ERC-721 with explicit expiration timestamps for NFTs and soulbound tokens.
+Both standards address \emph{non-fungible} tokens where each token has a single expiration.
+Our work addresses \emph{fungible} tokens where individual units within a balance may have different expiration times.
+
+ERC-5192~\cite{erc5192} defines minimal soulbound (non-transferable) NFTs.
+Our approach can be combined with soulbound semantics for non-transferable expiring credentials.
+
+\subsection{Streaming Payment Protocols}
+
+Sablier~\cite{sablier} and Superfluid~\cite{superfluid} enable continuous token streaming where balances increase linearly over time.
+These protocols solve the inverse problem: tokens \emph{unlock} gradually rather than \emph{expire}.
+Streaming requires continuous state updates (or lazy evaluation), while our discrete expiration model requires no state changes until consumption.
+
+\subsection{Token Vesting}
+
+Vesting contracts~\cite{openzeppelin} lock tokens with scheduled release over time.
+Vesting tracks \emph{future availability}, while we track \emph{future expiration}---tokens exist immediately and become invalid later.
+Vesting typically serves single beneficiaries per contract instance, while our approach efficiently handles multi-user scenarios within a single contract.
+
+\subsection{DoS Mitigation in Smart Contracts}
+
+Denial-of-service vulnerabilities in smart contracts have received significant attention~\cite{attacks,dos-ethereum,multilayer-security}.
+Grech \etal~\cite{madmax} analyze out-of-gas vulnerabilities from unbounded loops, while recent work~\cite{gas-patterns} detects gas-expensive patterns automatically.
+Common mitigations include pull-over-push patterns~\cite{consensys} and fixed array sizes.
+Our contribution is a \emph{semantically meaningful} bound: time-bucketing limits storage to $k$ records while preserving TTL guarantees, rather than arbitrarily capping array size and potentially violating application invariants.
+
+\subsection{DeFi Security}
+
+The DeFi ecosystem has suffered significant losses from smart contract vulnerabilities~\cite{defi-survey,defi-security-tools}.
+Flash loan attacks~\cite{flashloans,flashsyn} exploit atomicity guarantees to manipulate protocol state within single transactions.
+While our work does not directly address these attack vectors, bounded storage provides defense-in-depth against adversarial state manipulation.
+
+\subsection{Bounded Data Structures}
+
+Circular buffers and LRU caches provide bounded storage but evict oldest entries regardless of semantic validity.
+For TTL tracking, eviction violates the minimum lifetime guarantee.
+Our time-bucketing preserves TTL semantics by coalescing entries rather than evicting them.

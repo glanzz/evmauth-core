@@ -1,0 +1,116 @@
+% Time-Bucketing Diagram
+% Include in main document with: \input{figures/time-bucketing}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    >=stealth,
+    bucket/.style={draw, minimum height=0.6cm, minimum width=2.2cm, fill=gray!10},
+    deposit/.style={circle, fill=black, inner sep=2pt},
+    expiry/.style={circle, draw, inner sep=2pt},
+    bucketed/.style={diamond, fill=black, inner sep=2pt},
+    arrow/.style={->, thick},
+    dashedarrow/.style={->, dashed, gray}
+]
+
+% === Part A: Bucket Structure ===
+\node[anchor=west, font=\footnotesize\bfseries] at (-0.5, 3.8) {(a) Time divided into $k$ buckets};
+
+% Timeline
+\draw[thick, ->] (0, 2.5) -- (10, 2.5) node[right] {\footnotesize time};
+
+% Bucket boxes
+\foreach \i/\label in {0/1, 1/2, 2/3, 3/4} {
+    \node[bucket] at (1.1 + \i*2.2, 2.5) {\footnotesize Bucket \label};
+}
+
+% Bucket boundaries
+\foreach \i/\label in {0/$b_1$, 1/$b_2$, 2/$b_3$, 3/$b_4$, 4/$b_5$} {
+    \draw[thick] (\i*2.2, 2.2) -- (\i*2.2, 2.8);
+    \node[below, font=\footnotesize] at (\i*2.2, 2.15) {\label};
+}
+
+% TTL annotation
+\draw[<->] (0, 3.0) -- (8.8, 3.0);
+\node[above, font=\footnotesize] at (4.4, 3.0) {TTL = $T$};
+
+% Bucket size annotation
+\draw[<->] (0, 1.7) -- (2.2, 1.7);
+\node[below, font=\footnotesize] at (1.1, 1.75) {$w = \lceil T/k \rceil$};
+
+% === Part B: Deposit to Bucket Mapping ===
+\node[anchor=west, font=\footnotesize\bfseries] at (-0.5, 0.9) {(b) Deposits mapped to bucket boundaries};
+
+% Timeline
+\draw[thick, ->] (0, 0) -- (10, 0) node[right] {\footnotesize time};
+
+% Bucket boundaries (lighter)
+\foreach \i in {0, 1, 2, 3, 4} {
+    \draw[gray, dashed] (\i*2.2, -0.3) -- (\i*2.2, 0.3);
+}
+
+% Deposits
+\node[deposit, label={above:\footnotesize $D_1$}] (d1) at (0.8, 0) {};
+\node[deposit, label={above:\footnotesize $D_2$}] (d2) at (3.5, 0) {};
+\node[deposit, label={above:\footnotesize $D_3$}] (d3) at (6.0, 0) {};
+
+% Exact expiries (below timeline)
+\node[expiry, label={below:\footnotesize exact}] (e1) at (3.0, -1.2) {};
+\node[expiry, label={below:\footnotesize exact}] (e2) at (5.7, -1.2) {};
+\node[expiry, label={below:\footnotesize exact}] (e3) at (8.2, -1.2) {};
+
+% Arrows from deposits to exact expiries
+\draw[dashedarrow] (d1) -- node[right, font=\tiny, pos=0.5] {$+T$} (e1);
+\draw[dashedarrow] (d2) -- node[right, font=\tiny, pos=0.5] {$+T$} (e2);
+\draw[dashedarrow] (d3) -- node[right, font=\tiny, pos=0.5] {$+T$} (e3);
+
+% Bucketed expiries (on timeline markers)
+\node[bucketed] (b1) at (4.4, -1.2) {};
+\node[bucketed] (b2) at (6.6, -1.2) {};
+\node[bucketed] (b3) at (8.8, -1.2) {};
+
+% Arrows from exact to bucketed (ceiling)
+\draw[arrow, blue] (e1) -- node[above, font=\tiny] {$\lceil\cdot\rceil$} (b1);
+\draw[arrow, blue] (e2) -- node[above, font=\tiny] {$\lceil\cdot\rceil$} (b2);
+\draw[arrow, blue] (e3) -- node[above, font=\tiny] {$\lceil\cdot\rceil$} (b3);
+
+% Labels for bucketed expiries
+\node[below, font=\footnotesize] at (4.4, -1.5) {$b_3$};
+\node[below, font=\footnotesize] at (6.6, -1.5) {$b_4$};
+\node[below, font=\footnotesize] at (8.8, -1.5) {$b_5$};
+
+% === Part C: Resulting Records ===
+\node[anchor=west, font=\footnotesize\bfseries] at (-0.5, -2.5) {(c) Balance records after coalescing};
+
+% Table
+\draw (0, -3.0) rectangle (4.5, -4.5);
+\draw (0, -3.5) -- (4.5, -3.5);
+\draw (2.0, -3.0) -- (2.0, -4.5);
+
+% Headers
+\node[font=\footnotesize\bfseries] at (1.0, -3.25) {amount};
+\node[font=\footnotesize\bfseries] at (3.25, -3.25) {expiresAt};
+
+% Row 1
+\draw (0, -4.0) -- (4.5, -4.0);
+\node[font=\footnotesize] at (1.0, -3.75) {$a_1 + a_2$};
+\node[font=\footnotesize] at (3.25, -3.75) {$b_4$};
+
+% Row 2
+\node[font=\footnotesize] at (1.0, -4.25) {$a_3$};
+\node[font=\footnotesize] at (3.25, -4.25) {$b_5$};
+
+% % Annotation
+\node[anchor=west, font=\scriptsize, text=blue] at (-0.2, -0.95) {$D_1, D_2$ coalesced};
+\node[anchor=west, font=\scriptsize, gray] at (-0.2, -1.25) {(same bucket)};
+
+% Legend
+\node[anchor=west, font=\footnotesize] at (6.5, -2.8) {\textbf{Legend:}};
+\node[deposit, label={right:\footnotesize deposit}] at (6.7, -3.2) {};
+\node[expiry, label={right:\footnotesize exact expiry}] at (6.7, -3.6) {};
+\node[bucketed, label={right:\footnotesize bucketed expiry}] at (6.7, -4.0) {};
+
+\end{tikzpicture}
+\caption{Time-bucketing mechanism. (a) The TTL period $T$ is divided into $k$ buckets of width $w = \lceil T/k \rceil$. (b) Each deposit $D_i$ is assigned a bucketed expiration by rounding $t_i + T$ up to the next bucket boundary via Equation~\ref{eq:bucketed-expiry}. (c) Deposits with identical bucketed expirations coalesce into a single balance record, bounding storage to at most $k$ records per account.}
+\label{fig:bucketing}
+\end{figure}

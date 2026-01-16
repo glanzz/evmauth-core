@@ -1,0 +1,84 @@
+=== Token Configuration Script ===
+Network: Base Sepolia
+EVMAuth1155: 0x67b8dD172f50784F6eaffe27d4f79360e44367eC
+EVMAuth6909: 0x8B00e86C73128e4Ccc3CAB2D63F74aaA58937539
+
+Configuring EVMAuth1155 tokens...
+Compiling 1 files with Solc 0.8.24
+Solc 0.8.24 finished in 2.12s
+Compiler run successful!
+Script ran successfully.
+
+== Logs ==
+  Configuring token types for EVMAuth1155 at: 0x67b8dD172f50784F6eaffe27d4f79360e44367eC
+  
+  Token 1: Basic API Access - 0.001 ETH, 7 days, non-transferable
+  Token 2: Premium API Access - 0.005 ETH, 30 days, transferable
+  Token 3: AI Agent License - 0.01 ETH, 90 days, non-transferable
+  Token 4: Enterprise Tier - 0.05 ETH, 365 days, transferable
+  Token 5: Developer Credits - 0.0001 ETH, unlimited, transferable
+  Token configuration complete!
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 84532
+
+Estimated gas price: 0.048042486 gwei
+
+Estimated total gas used for script: 677723
+
+Estimated amount required: 0.000032559497739378 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /Users/bhargavcn/Projects/evmauth-core/broadcast/ConfigureTokens.s.sol/84532/run-latest.json
+
+Sensitive values saved to: /Users/bhargavcn/Projects/evmauth-core/cache/ConfigureTokens.s.sol/84532/run-latest.json
+
+
+Configuring EVMAuth6909 tokens...
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Configuring token types for EVMAuth6909 at: 0x8B00e86C73128e4Ccc3CAB2D63F74aaA58937539
+  
+  Token 1: Basic API Access - 0.001 ETH, 7 days, non-transferable
+  Token 2: Premium API Access - 0.005 ETH, 30 days, transferable
+  Token 3: AI Agent License - 0.01 ETH, 90 days, non-transferable
+  Token 4: Enterprise Tier - 0.05 ETH, 365 days, transferable
+  Token 5: Developer Credits - 0.0001 ETH, unlimited, transferable
+  Token configuration complete!
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 84532
+
+Estimated gas price: 0.04759068 gwei
+
+Estimated total gas used for script: 670577
+
+Estimated amount required: 0.00003191321542236 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /Users/bhargavcn/Projects/evmauth-core/broadcast/ConfigureTokens.s.sol/84532/run-latest.json
+
+Sensitive values saved to: /Users/bhargavcn/Projects/evmauth-core/cache/ConfigureTokens.s.sol/84532/run-latest.json
+
+
+Token configuration complete!

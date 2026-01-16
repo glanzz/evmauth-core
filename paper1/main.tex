@@ -1,0 +1,65 @@
+\documentclass[runningheads]{llncs}
+
+% Packages
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+
+% Custom commands
+\newcommand{\ie}{\textit{i.e.}}
+\newcommand{\eg}{\textit{e.g.}}
+\newcommand{\etal}{\textit{et al.}}
+\newcommand{\bigO}{\mathcal{O}}
+
+% Theorem environments (LNCS provides these, but we define extras)
+% \newtheorem{property}{Property}
+
+% Algorithm styling
+\algrenewcommand\algorithmicrequire{\textbf{Input:}}
+\algrenewcommand\algorithmicensure{\textbf{Output:}}
+
+\begin{document}
+\titlerunning{Time-Bucketed Balance Records}
+\title{Time-Bucketed Balance Records: Bounded-Storage Ephemeral Tokens for Resource-Constrained Systems}
+
+\author{Shaun Scovil\inst{1} \and Bhargav Chickmagalur Nanjundappa\inst{1}}
+
+\institute{
+Radius Technology Systems, Cambridge, USA
+}
+
+\maketitle
+\markboth{Time-Bucketed Balance Records}{Time-Bucketed Balance Records}
+
+\begin{abstract}
+Fungible tokens with time-to-live (TTL) semantics require tracking individual expiration times for each deposited unit.
+A naive implementation creates a new balance record per deposit, leading to unbounded storage growth and vulnerability to denial-of-service attacks.
+We present \emph{time-bucketed balance records}, a data structure that bounds storage to $\bigO(k)$ records per account while guaranteeing that tokens never expire before their configured TTL.
+Our approach discretizes time into $k$ buckets, coalescing deposits within the same bucket to limit unique expiration timestamps.
+We prove three key properties: (1) storage is bounded by $k+1$ records regardless of deposit frequency, (2) actual expiration time is always at least the configured TTL, and (3) adversaries cannot increase a victim's operation cost beyond $\bigO(k^2)$ worst case ($\bigO(k)$ amortized).
+We provide a reference implementation in Solidity with measured gas costs demonstrating practical efficiency.
+
+\keywords{Ephemeral tokens \and Bounded storage \and Smart contracts \and Time-to-live \and DoS resistance}
+\end{abstract}
+
+% Include sections
+\input{sections/01-introduction}
+\input{sections/02-problem}
+\input{sections/03-algorithm}
+\input{sections/04-analysis}
+\input{sections/05-implementation}
+\input{sections/06-discussion}
+\input{sections/07-related}
+\input{sections/08-conclusion}
+
+\bibliographystyle{splncs04}
+\bibliography{references}
+
+\end{document}

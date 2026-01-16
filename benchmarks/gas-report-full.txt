@@ -1,0 +1,934 @@
+Missing dependencies found. Installing now...
+
+Submodule 'lib/openzeppelin-contracts-upgradeable' (https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable) registered for path 'lib/openzeppelin-contracts-upgradeable'
+Submodule 'lib/openzeppelin-foundry-upgrades' (https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades) registered for path 'lib/openzeppelin-foundry-upgrades'
+Cloning into '/Users/bhargavcn/Projects/evmauth-core/lib/openzeppelin-contracts-upgradeable'...
+Compiling 105 files with Solc 0.8.24
+Solc 0.8.24 finished in 17.27s
+Compiler run successful!
+
+Ran 52 tests for test/EVMAuth1155.t.sol:EVMAuth1155Test
+[PASS] testRevert_BaseTest_authorizeUpgrade_Unauthorized() (gas: 5436944)
+[PASS] testRevert_BaseTest_initialize_InvalidInitialization() (gas: 67652)
+[PASS] testRevert_burnBatch_unauthorizedAccount() (gas: 42752)
+[PASS] testRevert_burn_unauthorizedAccount() (gas: 252368)
+[PASS] testRevert_createToken_unauthorizedAccount() (gas: 40899)
+[PASS] testRevert_freezeAccount_unauthorizedAccount() (gas: 41979)
+[PASS] testRevert_mintBatch_unauthorizedAccount() (gas: 43533)
+[PASS] testRevert_mint_unauthorizedAccount() (gas: 111581)
+[PASS] testRevert_pause_unauthorizedAccount() (gas: 39389)
+[PASS] testRevert_purchaseWithERC20_insufficientAllowance() (gas: 311362)
+[PASS] testRevert_purchase_insufficientPayment() (gas: 140109)
+[PASS] testRevert_setBaseURI_unauthorizedAccount() (gas: 40810)
+[PASS] testRevert_setTokenURI_unauthorizedAccount() (gas: 41132)
+[PASS] testRevert_transfer_AccountFrozen() (gas: 392539)
+[PASS] testRevert_transfer_TokenIsNonTransferable() (gas: 279110)
+[PASS] testRevert_transfer_selfTransfer() (gas: 260999)
+[PASS] testRevert_transfer_zeroAmount() (gas: 265234)
+[PASS] testRevert_unfreezeAccount_unauthorizedAccount() (gas: 142616)
+[PASS] testRevert_unpause_unauthorizedAccount() (gas: 94520)
+[PASS] testRevert_updateTokenConfig_unauthorizedAccount() (gas: 131468)
+[PASS] test_BaseTest_authorizeUpgrade_succeeds() (gas: 5444512)
+[PASS] test_BaseTest_initialize_succeeds() (gas: 5811986)
+[PASS] test_balanceOfBatch() (gas: 607045)
+[PASS] test_burnBatch_multipleTokens() (gas: 483294)
+[PASS] test_burn_singleToken() (gas: 278886)
+[PASS] test_createToken_ephemeral() (gas: 161774)
+[PASS] test_createToken_multipleTokens() (gas: 323044)
+[PASS] test_createToken_permanent() (gas: 165157)
+[PASS] test_createToken_withERC20Prices() (gas: 233294)
+[PASS] test_ephemeralToken_balanceRecords() (gas: 422500)
+[PASS] test_ephemeralToken_expiration() (gas: 301504)
+[PASS] test_ephemeralToken_multipleExpirations() (gas: 592903)
+[PASS] test_ephemeralToken_pruning() (gas: 350289)
+[PASS] test_exists() (gas: 167517)
+[PASS] test_freezeAccount_unfreezeAccount() (gas: 214776)
+[PASS] test_initialize() (gas: 197580)
+[PASS] test_mintBatch_multipleTokens() (gas: 431786)
+[PASS] test_mint_singleToken() (gas: 240366)
+[PASS] test_pause_unpause() (gas: 129438)
+[PASS] test_permanentToken_noExpiration() (gas: 260284)
+[PASS] test_purchaseFor() (gas: 327636)
+[PASS] test_purchase_withERC20() (gas: 508410)
+[PASS] test_purchase_withNativeCurrency() (gas: 319727)
+[PASS] test_safeBatchTransferFrom_multipleTokens() (gas: 751044)
+[PASS] test_safeTransferFrom_singleToken() (gas: 420739)
+[PASS] test_setApprovalForAll() (gas: 125351)
+[PASS] test_setBaseURI() (gas: 205956)
+[PASS] test_setTokenURI() (gas: 230610)
+[PASS] test_supportsInterface() (gas: 41050)
+[PASS] test_transfer_transferableToken() (gas: 417536)
+[PASS] test_transfer_whenPaused_thenWhenUnpaused() (gas: 531584)
+[PASS] test_updateTokenConfig() (gas: 213884)
+Suite result: ok. 52 passed; 0 failed; 0 skipped; finished in 10.51s (14.40ms CPU time)
+
+Ran 18 tests for test/base/AccountFreezable.t.sol:AccountFreezableTest
+[PASS] testRevert_BaseTest_authorizeUpgrade_Unauthorized() (gas: 1006604)
+[PASS] testRevert_BaseTest_initialize_InvalidInitialization() (gas: 42678)
+[PASS] testRevert_freezeAccount_InvalidAddress() (gas: 39908)
+[PASS] testRevert_modifier_notFrozen_AccountFrozen() (gas: 238990)
+[PASS] test_BaseTest_authorizeUpgrade_succeeds() (gas: 1013579)
+[PASS] test_BaseTest_initialize_succeeds() (gas: 1041487)
+[PASS] test_constants() (gas: 26282)
+[PASS] test_freezeAccount_eventNotEmitted() (gas: 143046)
+[PASS] test_freezeAccount_idempotent() (gas: 172446)
+[PASS] test_freezeAccount_succeeds() (gas: 111655)
+[PASS] test_frozenAccounts_succeeds() (gas: 271301)
+[PASS] test_initialize() (gas: 18413)
+[PASS] test_isFrozen_succeeds() (gas: 184698)
+[PASS] test_modifier_notFrozen_succeeds() (gas: 35364)
+[PASS] test_unfreezeAccount_arrayIntegrity() (gas: 471007)
+[PASS] test_unfreezeAccount_eventNotEmitted() (gas: 59753)
+[PASS] test_unfreezeAccount_idempotent() (gas: 221427)
+[PASS] test_unfreezeAccount_succeeds() (gas: 141205)
+Suite result: ok. 18 passed; 0 failed; 0 skipped; finished in 10.59s (6.55ms CPU time)
+
+Ran 17 tests for test/base/TokenAccessControl.t.sol:TokenAccessControlTest
+[PASS] testRevert_BaseTest_authorizeUpgrade_Unauthorized() (gas: 1892985)
+[PASS] testRevert_BaseTest_initialize_InvalidInitialization() (gas: 43064)
+[PASS] testRevert_freezeAccount_AccessControlUnauthorizedAccount() (gas: 58383)
+[PASS] testRevert_pause_AccessControlUnauthorizedAccount() (gas: 55707)
+[PASS] testRevert_unfreezeAccount_AccessControlUnauthorizedAccount() (gas: 58305)
+[PASS] testRevert_unpause_AccessControlUnauthorizedAccount() (gas: 55775)
+[PASS] test_BaseTest_authorizeUpgrade_succeeds() (gas: 1900484)
+[PASS] test_BaseTest_initialize_succeeds() (gas: 1974807)
+[PASS] test_beginDefaultAdminTransfer() (gas: 220728)
+[PASS] test_changeDefaultAdminDelay() (gas: 109036)
+[PASS] test_freezeAccount() (gas: 136160)
+[PASS] test_hasRole() (gas: 106805)
+[PASS] test_initialize() (gas: 17952)
+[PASS] test_pause() (gas: 88266)
+[PASS] test_roles() (gas: 92075)
+[PASS] test_unfreezeAccount() (gas: 185520)
+[PASS] test_unpause() (gas: 131918)
+Suite result: ok. 17 passed; 0 failed; 0 skipped; finished in 10.63s (3.25ms CPU time)
+
+Ran 31 tests for test/base/EVMAuth.t.sol:EVMAuthTest
+[PASS] testRevert_BaseTest_authorizeUpgrade_Unauthorized() (gas: 3984069)
+[PASS] testRevert_BaseTest_initialize_InvalidInitialization() (gas: 65860)
+[PASS] testRevert_createToken_AccessControlUnauthorizedAccount() (gas: 49272)
+[PASS] testRevert_isTransferable_InvalidTokenID() (gas: 16202)
+[PASS] testRevert_setTreasury_AccessControlUnauthorizedAccount() (gas: 52292)
+[PASS] testRevert_setTreasury_InvalidTreasuryAddress() (gas: 40179)
+[PASS] testRevert_tokenConfig_InvalidTokenID() (gas: 18981)
+[PASS] testRevert_tokenERC20Prices_InvalidTokenID() (gas: 18288)
+[PASS] testRevert_tokenPrice_InvalidTokenID() (gas: 16157)
+[PASS] testRevert_tokenTTL_InvalidTokenID() (gas: 16123)
+[PASS] testRevert_updateToken_AccessControlUnauthorizedAccount() (gas: 162117)
+[PASS] testRevert_updateToken_InvalidTokenID() (gas: 43768)
+[PASS] test_BaseTest_authorizeUpgrade_succeeds() (gas: 3991548)
+[PASS] test_BaseTest_initialize_succeeds() (gas: 4286625)
+[PASS] test_createToken_basic() (gas: 185142)
+[PASS] test_createToken_multipleTokens() (gas: 308026)
+[PASS] test_createToken_withERC20Prices() (gas: 286523)
+[PASS] test_freezeAccount() (gas: 170392)
+[PASS] test_initialize() (gas: 213472)
+[PASS] test_isTransferable() (gas: 196743)
+[PASS] test_pause() (gas: 116712)
+[PASS] test_pruneBalanceRecords() (gas: 453173)
+[PASS] test_purchase_withERC20() (gas: 641243)
+[PASS] test_purchase_withNativeCurrency() (gas: 319717)
+[PASS] test_setTreasury() (gas: 60488)
+[PASS] test_tokenConfig() (gas: 283718)
+[PASS] test_tokenERC20Prices() (gas: 253105)
+[PASS] test_tokenPrice() (gas: 110783)
+[PASS] test_tokenTTL() (gas: 130567)
+[PASS] test_updateToken_basic() (gas: 213781)
+[PASS] test_updateToken_withERC20Prices() (gas: 307511)
+Suite result: ok. 31 passed; 0 failed; 0 skipped; finished in 10.65s (7.35ms CPU time)
+
+Ran 12 tests for test/base/TokenEnumerable.t.sol:TokenEnumerableTest
+[PASS] testRevert_BaseTest_authorizeUpgrade_Unauthorized() (gas: 847668)
+[PASS] testRevert_BaseTest_initialize_InvalidInitialization() (gas: 42583)
+[PASS] testRevert_modifier_allTokensExist_InvalidTokenID() (gas: 65358)
+[PASS] testRevert_modifier_tokenExists_InvalidTokenID() (gas: 43551)
+[PASS] test_BaseTest_authorizeUpgrade_succeeds() (gas: 854552)
+[PASS] test_BaseTest_initialize_succeeds() (gas: 904282)
+[PASS] test_claimNextTokenID_succeeds() (gas: 234972)
+[PASS] test_exists_succeeds() (gas: 106887)
+[PASS] test_initialize() (gas: 16214)
+[PASS] test_modifier_allTokensExist_succeeds() (gas: 116982)
+[PASS] test_modifier_tokenExists_succeeds() (gas: 50317)
+[PASS] test_nextTokenID_succeeds() (gas: 15425)
+Suite result: ok. 12 passed; 0 failed; 0 skipped; finished in 10.68s (1.56ms CPU time)
+
+Ran 10 tests for test/base/TokenTransferable.t.sol:TokenTransferableTest
+[PASS] testRevert_BaseTest_authorizeUpgrade_Unauthorized() (gas: 910646)
+[PASS] testRevert_BaseTest_initialize_InvalidInitialization() (gas: 42561)
+[PASS] testRevert_modifier_allTokensTransferable_TokenIsNonTransferable() (gas: 110455)
+[PASS] testRevert_modifier_tokenTransferable_TokenIsNonTransferable() (gas: 54861)
+[PASS] test_BaseTest_authorizeUpgrade_succeeds() (gas: 917560)
+[PASS] test_BaseTest_initialize_succeeds() (gas: 944692)
+[PASS] test_initialize() (gas: 16168)
+[PASS] test_modifier_allTokensTransferable_succeeds() (gas: 233030)
+[PASS] test_modifier_tokenTransferable_succeeds() (gas: 174057)
+[PASS] test_setTransferable() (gas: 128685)
+Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 1.14s (971.67µs CPU time)
+
+Ran 47 tests for test/EVMAuth6909.t.sol:EVMAuth6909Test
+[PASS] testRevert_BaseTest_authorizeUpgrade_Unauthorized() (gas: 4945221)
+[PASS] testRevert_BaseTest_initialize_InvalidInitialization() (gas: 67821)
+[PASS] testRevert_burn_AccessControlUnauthorizedAccount() (gas: 53305)
+[PASS] testRevert_mint_AccessControlUnauthorizedAccount() (gas: 53372)
+[PASS] testRevert_setContractURI_AccessControlUnauthorizedAccount() (gas: 53898)
+[PASS] testRevert_setTokenMetadata_AccessControlUnauthorizedAccount() (gas: 147655)
+[PASS] testRevert_setTreasury_AccessControlUnauthorizedAccount() (gas: 56988)
+[PASS] testRevert_transferFrom_InsufficientAllowance() (gas: 275250)
+[PASS] testRevert_transfer_AccountFrozen() (gas: 373305)
+[PASS] testRevert_transfer_EnforcedPause() (gas: 324848)
+[PASS] testRevert_transfer_InvalidSelfTransfer() (gas: 275614)
+[PASS] testRevert_transfer_InvalidZeroValueTransfer() (gas: 279311)
+[PASS] testRevert_transfer_TokenIsNonTransferable() (gas: 294181)
+[PASS] testRevert_updateToken_InvalidTokenID() (gas: 43918)
+[PASS] test_BaseTest_authorizeUpgrade_succeeds() (gas: 4952677)
+[PASS] test_BaseTest_initialize_succeeds() (gas: 5317446)
+[PASS] test_approve_and_allowance() (gas: 78730)
+[PASS] test_balanceOf_query() (gas: 270794)
+[PASS] test_burn_withBurnerRole() (gas: 318488)
+[PASS] test_createToken_ephemeral() (gas: 128688)
+[PASS] test_createToken_permanent() (gas: 165227)
+[PASS] test_createToken_withERC20Prices() (gas: 269893)
+[PASS] test_ephemeralToken_balanceRecords() (gas: 413576)
+[PASS] test_ephemeralToken_expiration() (gas: 316976)
+[PASS] test_ephemeralToken_multipleExpirations() (gas: 584055)
+[PASS] test_ephemeralToken_pruning() (gas: 345532)
+[PASS] test_freezeAccount_unfreezeAccount() (gas: 199742)
+[PASS] test_initialize() (gas: 212049)
+[PASS] test_mint_withMinterRole() (gas: 255957)
+[PASS] test_pause_unpause() (gas: 116800)
+[PASS] test_permanentToken_noExpiration() (gas: 255881)
+[PASS] test_purchaseFor_functionality() (gas: 320781)
+[PASS] test_purchaseWithERC20For_functionality() (gas: 649152)
+[PASS] test_purchase_withERC20() (gas: 664541)
+[PASS] test_purchase_withNativeCurrency() (gas: 310143)
+[PASS] test_setContractURI() (gas: 74605)
+[PASS] test_setOperator_and_isOperator() (gas: 125666)
+[PASS] test_setTokenMetadata() (gas: 228935)
+[PASS] test_setTokenURI() (gas: 198953)
+[PASS] test_setTreasury() (gas: 60465)
+[PASS] test_supportsInterface() (gas: 42187)
+[PASS] test_tokenConfig_fullInformation() (gas: 220437)
+[PASS] test_transferFrom_partialAllowance() (gas: 511846)
+[PASS] test_transferFrom_withAllowance() (gas: 505570)
+[PASS] test_transferFrom_withOperator() (gas: 488881)
+[PASS] test_transfer_direct() (gas: 431254)
+[PASS] test_updateToken_configuration() (gas: 213957)
+Suite result: ok. 47 passed; 0 failed; 0 skipped; finished in 12.16s (9.72ms CPU time)
+
+Ran 28 tests for test/base/TokenEphemeral.t.sol:TokenEphemeralTest
+[PASS] tableTest_maxBalanceRecords((uint256,uint48)) (runs: 35, μ: 186200956, ~: 88964148)
+[PASS] testFuzz_balanceRecordsOf_maxArraySize(uint256,uint48,uint256) (runs: 256, μ: 60015544, ~: 66655238)
+[PASS] testFuzz_expiresAt_largerTimeBuckets(uint256,uint48,uint256) (runs: 256, μ: 106949, ~: 106993)
+[PASS] testFuzz_expiresAt_oneSecondTimeBuckets(uint256,uint48,uint256) (runs: 256, μ: 93968, ~: 93802)
+[PASS] testFuzz_expiresAt_permanentTokens(uint256,uint256) (runs: 256, μ: 38107, ~: 37893)
+[PASS] testFuzz_setTTL_succeeds(uint256,uint48) (runs: 256, μ: 75719, ~: 76200)
+[PASS] testRevert_BaseTest_authorizeUpgrade_Unauthorized() (gas: 1656917)
+[PASS] testRevert_BaseTest_initialize_InvalidInitialization() (gas: 42688)
+[PASS] testRevert_deductFromBalanceRecords_InsufficientBalance() (gas: 229504)
+[PASS] testRevert_deductFromBalanceRecords_InsufficientBalance_allExpired() (gas: 223826)
+[PASS] testRevert_deductFromBalanceRecords_InsufficientBalance_someExpired() (gas: 340008)
+[PASS] testRevert_transferBalanceRecords_InsufficientBalance() (gas: 297458)
+[PASS] test_BaseTest_authorizeUpgrade_succeeds() (gas: 1664217)
+[PASS] test_BaseTest_initialize_succeeds() (gas: 1691908)
+[PASS] test_addToBalanceRecords_permanentTokens() (gas: 236996)
+[PASS] test_addToBalanceRecords_sameTimeBucket() (gas: 344727)
+[PASS] test_balanceOf_multipleTokens() (gas: 517359)
+[PASS] test_balanceOf_succeeds() (gas: 263751)
+[PASS] test_balanceRecordsOf_afterPruning() (gas: 288660)
+[PASS] test_balanceRecordsOf_succeeds() (gas: 520065)
+[PASS] test_deductFromBalanceRecords_FIFO() (gas: 592819)
+[PASS] test_deductFromBalanceRecords_exactAmount() (gas: 249152)
+[PASS] test_initialize() (gas: 16272)
+[PASS] test_pruneBalanceRecords_callsBurnPrunedTokens() (gas: 232588)
+[PASS] test_pruneBalanceRecords_shrinksArray() (gas: 39037738)
+[PASS] test_transferBalanceRecords_FIFO() (gas: 694410)
+[PASS] test_transferBalanceRecords_multipleTransfers() (gas: 627857)
+[PASS] test_transferBalanceRecords_preservesExpiration() (gas: 383713)
+Suite result: ok. 28 passed; 0 failed; 0 skipped; finished in 17.43s (10.12s CPU time)
+
+Ran 45 tests for test/base/TokenPurchasable.t.sol:TokenPurchasableTest
+[PASS] testFuzz_purchase(uint256,uint256,uint256) (runs: 256, μ: 198185, ~: 198282)
+[PASS] testFuzz_setPrice(uint256,uint256) (runs: 256, μ: 74353, ~: 74324)
+[PASS] testRevert_BaseTest_authorizeUpgrade_Unauthorized() (gas: 1766366)
+[PASS] testRevert_BaseTest_initialize_InvalidInitialization() (gas: 45373)
+[PASS] testRevert_purchaseFor_InvalidReceiverAddress() (gas: 103468)
+[PASS] testRevert_purchaseFor_whenPaused() (gas: 157761)
+[PASS] testRevert_purchaseWithERC20For_whenPaused() (gas: 473418)
+[PASS] testRevert_purchaseWithERC20_InsufficientERC20Allowance() (gas: 427960)
+[PASS] testRevert_purchaseWithERC20_InsufficientERC20Balance() (gas: 430810)
+[PASS] testRevert_purchaseWithERC20_InvalidERC20PaymentToken() (gas: 423622)
+[PASS] testRevert_purchaseWithERC20_TokenNotForSaleWithERC20() (gas: 313328)
+[PASS] testRevert_purchaseWithERC20_whenPaused() (gas: 470935)
+[PASS] testRevert_purchase_InsufficientPayment() (gas: 106091)
+[PASS] testRevert_purchase_InvalidTokenQuantity() (gas: 103279)
+[PASS] testRevert_purchase_TokenNotForSaleWithNativeCurrency() (gas: 49911)
+[PASS] testRevert_purchase_whenPaused() (gas: 155158)
+[PASS] testRevert_setERC20Price_InvalidERC20PaymentToken() (gas: 40378)
+[PASS] testRevert_setTreasury_InvalidTreasuryAddress() (gas: 39962)
+[PASS] testRevert_tokenPrice_TokenNotForSaleWithNativeCurrency() (gas: 16106)
+[PASS] test_BaseTest_authorizeUpgrade_succeeds() (gas: 1773852)
+[PASS] test_BaseTest_initialize_succeeds() (gas: 1827959)
+[PASS] test_initialize() (gas: 18352)
+[PASS] test_isAcceptedERC20PaymentToken() (gas: 165834)
+[PASS] test_pause_succeeds() (gas: 87113)
+[PASS] test_purchaseFor_succeeds() (gas: 201026)
+[PASS] test_purchaseWithERC20For_succeeds() (gas: 504067)
+[PASS] test_purchaseWithERC20_multipleAcceptedTokens() (gas: 947596)
+[PASS] test_purchaseWithERC20_sendsTokensToTreasury() (gas: 493691)
+[PASS] test_purchaseWithERC20_succeeds() (gas: 522790)
+[PASS] test_purchaseWithERC20_transfersExactAmount() (gas: 522025)
+[PASS] test_purchase_exactPayment() (gas: 195866)
+[PASS] test_purchase_mintsCorrectAmount() (gas: 253745)
+[PASS] test_purchase_sendsNativeToTreasury() (gas: 171676)
+[PASS] test_purchase_withRefund() (gas: 199741)
+[PASS] test_setERC20Price_addsToAcceptedList() (gas: 144422)
+[PASS] test_setERC20Price_succeeds() (gas: 129603)
+[PASS] test_setERC20Price_updateExistingPrice() (gas: 172652)
+[PASS] test_setERC20Price_zeroRemovesFromList() (gas: 308060)
+[PASS] test_setERC20Prices_batchSet() (gas: 185027)
+[PASS] test_setPrice_succeeds() (gas: 75555)
+[PASS] test_setPrice_zeroDisablesNativePurchases() (gas: 117610)
+[PASS] test_setTreasury_succeeds() (gas: 60204)
+[PASS] test_tokenERC20Prices_returnsAllAccepted() (gas: 225715)
+[PASS] test_treasury_returnsCurrentAddress() (gas: 17701)
+[PASS] test_unpause_succeeds() (gas: 117684)
+Suite result: ok. 45 passed; 0 failed; 0 skipped; finished in 17.44s (6.89s CPU time)
+
+╭--------------------------------------------------------------------------------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/mocks/token/ERC20Mock.sol:ERC20Mock Contract |                 |       |        |       |         |
++===============================================================================================================================================================================+
+| Deployment Cost                                                                                                          | Deployment Size |       |        |       |         |
+|--------------------------------------------------------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 532663                                                                                                                   | 2447            |       |        |       |         |
+|--------------------------------------------------------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                                                                                          |                 |       |        |       |         |
+|--------------------------------------------------------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                                                                                            | Min             | Avg   | Median | Max   | # Calls |
+|--------------------------------------------------------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| allowance                                                                                                                | 2833            | 2833  | 2833   | 2833  | 13      |
+|--------------------------------------------------------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| approve                                                                                                                  | 46331           | 46340 | 46331  | 46379 | 17      |
+|--------------------------------------------------------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| balanceOf                                                                                                                | 2559            | 2559  | 2559   | 2559  | 103     |
+|--------------------------------------------------------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| mint                                                                                                                     | 68428           | 68428 | 68428  | 68428 | 2       |
+╰--------------------------------------------------------------------------------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------╮
+| lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy Contract |                 |         |        |          |         |
++============================================================================================================================================================================================+
+| Deployment Cost                                                                                                                  | Deployment Size |         |        |          |         |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| 204610                                                                                                                           | 1199            |         |        |          |         |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+|                                                                                                                                  |                 |         |        |          |         |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| Function Name                                                                                                                    | Min             | Avg     | Median | Max      | # Calls |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| ACCOUNT_FROZEN_STATUS                                                                                                            | 5145            | 5145    | 5145   | 5145     | 1       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| ACCOUNT_UNFROZEN_STATUS                                                                                                          | 5123            | 5123    | 5123   | 5123     | 1       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| balanceOf                                                                                                                        | 7669            | 59721   | 12412  | 486712   | 20      |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| balanceRecordsOf                                                                                                                 | 7856            | 213832  | 207244 | 465875   | 26878   |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| burn                                                                                                                             | 34508           | 45091   | 42780  | 64459    | 5       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| claimNextTokenID                                                                                                                 | 31299           | 31299   | 31299  | 31299    | 9       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| exists                                                                                                                           | 5292            | 7240    | 7403   | 7403     | 13      |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| expiresAt                                                                                                                        | 7520            | 7846    | 8004   | 8009     | 779     |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| fallback                                                                                                                         | 5124            | 42362   | 9811   | 269446   | 1472    |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| freezeAccount                                                                                                                    | 28788           | 80464   | 97257  | 97257    | 15      |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| frozenAccounts                                                                                                                   | 7504            | 10979   | 10990  | 14410    | 6       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| initialize(address)                                                                                                              | 29057           | 29112   | 29115  | 29162    | 4       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| initialize(address,address)                                                                                                      | 29652           | 29652   | 29652  | 29652    | 1       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| isAcceptedERC20PaymentToken                                                                                                      | 7958            | 12098   | 13115  | 13151    | 5       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| isFrozen                                                                                                                         | 7498            | 7498    | 7498   | 7498     | 14      |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| isTransferable                                                                                                                   | 7366            | 7366    | 7366   | 7366     | 4       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| maxBalanceRecords                                                                                                                | 7236            | 7236    | 7236   | 7236     | 1028    |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| mint                                                                                                                             | 48594           | 342599  | 337826 | 748033   | 26982   |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| nextTokenID                                                                                                                      | 7284            | 7284    | 7284   | 7284     | 4       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| pruneBalanceRecords                                                                                                              | 41032           | 355766  | 268521 | 844989   | 4       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| setCustomMaxBalanceRecords                                                                                                       | 50641           | 50641   | 50641  | 50641    | 1       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| setERC20Price                                                                                                                    | 29164           | 87848   | 98059  | 98059    | 22      |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| setERC20Prices                                                                                                                   | 147049          | 147049  | 147049 | 147049   | 1       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| setPrice                                                                                                                         | 30603           | 52692   | 52683  | 53235    | 525     |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| setTTL                                                                                                                           | 31029           | 50945   | 51013  | 51373    | 1043    |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| setTransferable                                                                                                                  | 29103           | 40859   | 41059  | 51015    | 10      |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| tokenTTL                                                                                                                         | 7433            | 7433    | 7433   | 7433     | 516     |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| transfer                                                                                                                         | 62064           | 1563572 | 134940 | 10172458 | 7       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| unfreezeAccount                                                                                                                  | 31140           | 38218   | 37921  | 45100    | 10      |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| upgradeToAndCall                                                                                                                 | 29806           | 33722   | 33716  | 37684    | 8       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| withModifierAllTokensExist                                                                                                       | 5869            | 7605    | 8305   | 8641     | 3       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| withModifierAllTokensTransferable                                                                                                | 6073            | 7698    | 6169   | 10843    | 6       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| withModifierNotFrozen                                                                                                            | 7561            | 7564    | 7561   | 7574     | 4       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| withModifierTokenExists                                                                                                          | 5374            | 6781    | 7485   | 7485     | 3       |
+|----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| withModifierTokenTransferable                                                                                                    | 5645            | 6390    | 5674   | 7856     | 6       |
+╰----------------------------------------------------------------------------------------------------------------------------------+-----------------+---------+--------+----------+---------╯
+
+╭------------------------------------------+-----------------+--------+--------+--------+---------╮
+| src/EVMAuth1155.sol:EVMAuth1155 Contract |                 |        |        |        |         |
++=================================================================================================+
+| Deployment Cost                          | Deployment Size |        |        |        |         |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| 5355027                                  | 24575           |        |        |        |         |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+|                                          |                 |        |        |        |         |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| Function Name                            | Min             | Avg    | Median | Max    | # Calls |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| ACCESS_MANAGER_ROLE                      | 360             | 360    | 360    | 360    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| ACCOUNT_FROZEN_STATUS                    | 285             | 285    | 285    | 285    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| ACCOUNT_UNFROZEN_STATUS                  | 327             | 327    | 327    | 327    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| BURNER_ROLE                              | 307             | 307    | 307    | 307    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| MINTER_ROLE                              | 305             | 305    | 305    | 305    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| TOKEN_MANAGER_ROLE                       | 381             | 381    | 381    | 381    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| TREASURER_ROLE                           | 327             | 327    | 327    | 327    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| UPGRADE_MANAGER_ROLE                     | 350             | 350    | 350    | 350    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| balanceOf                                | 2863            | 6668   | 7606   | 12349  | 38      |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| balanceOfBatch                           | 24610           | 24610  | 24610  | 24610  | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| balanceRecordsOf                         | 3003            | 7520   | 7520   | 12037  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| burn                                     | 2988            | 21526  | 21526  | 40065  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| burnBatch                                | 3974            | 36097  | 36097  | 68221  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| createToken                              | 2969            | 54224  | 40104  | 158329 | 41      |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| exists                                   | 2556            | 2556   | 2556   | 2556   | 7       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| freezeAccount                            | 2958            | 54178  | 71252  | 71252  | 4       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| hasRole                                  | 2783            | 2783   | 2783   | 2783   | 6       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| initialize                               | 3753            | 359847 | 366029 | 394485 | 54      |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| isApprovedForAll                         | 2851            | 2851   | 2851   | 2851   | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| isFrozen                                 | 2661            | 2661   | 2661   | 2661   | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| isTransferable                           | 4825            | 4825   | 4825   | 4825   | 5       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| mint                                     | 3428            | 105091 | 111449 | 111938 | 21      |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| mintBatch                                | 4445            | 156985 | 207832 | 207832 | 4       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| nextTokenID                              | 2411            | 2411   | 2411   | 2411   | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| pause                                    | 2788            | 20314  | 26157  | 26157  | 4       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| paused                                   | 2425            | 2425   | 2425   | 2425   | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| proxiableUUID                            | 418             | 418    | 418    | 418    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| pruneBalanceRecords                      | 28203           | 28203  | 28203  | 28203  | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchase                                 | 5450            | 76816  | 76816  | 148182 | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchaseFor                              | 150755          | 150755 | 150755 | 150755 | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchaseWithERC20                        | 11352           | 83098  | 83098  | 154844 | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| safeBatchTransferFrom                    | 241299          | 241299 | 241299 | 241299 | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| safeTransferFrom                         | 3523            | 53454  | 12986  | 127100 | 8       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| setApprovalForAll                        | 7636            | 16186  | 16186  | 24736  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| setBaseURI                               | 3244            | 14486  | 14486  | 25728  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| setTokenURI                              | 3315            | 37211  | 31661  | 76658  | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| supportsInterface                        | 671             | 757    | 781    | 819    | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenERC20Prices                         | 15511           | 15511  | 15511  | 15511  | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenPrice                               | 4880            | 4880   | 4880   | 4880   | 5       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenTTL                                 | 4769            | 4769   | 4769   | 4769   | 5       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| unfreezeAccount                          | 2895            | 12124  | 12124  | 21354  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| unpause                                  | 2809            | 6975   | 9058   | 9058   | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| updateToken                              | 3015            | 14337  | 14337  | 25660  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| upgradeToAndCall                         | 3589            | 7509   | 7509   | 11430  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| uri                                      | 6250            | 9461   | 10531  | 10532  | 4       |
+╰------------------------------------------+-----------------+--------+--------+--------+---------╯
+
+╭------------------------------------------+-----------------+--------+--------+--------+---------╮
+| src/EVMAuth6909.sol:EVMAuth6909 Contract |                 |        |        |        |         |
++=================================================================================================+
+| Deployment Cost                          | Deployment Size |        |        |        |         |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| 4864022                                  | 22306           |        |        |        |         |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+|                                          |                 |        |        |        |         |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| Function Name                            | Min             | Avg    | Median | Max    | # Calls |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| ACCESS_MANAGER_ROLE                      | 316             | 316    | 316    | 316    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| ACCOUNT_FROZEN_STATUS                    | 263             | 263    | 263    | 263    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| ACCOUNT_UNFROZEN_STATUS                  | 305             | 305    | 305    | 305    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| BURNER_ROLE                              | 307             | 307    | 307    | 307    | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| MINTER_ROLE                              | 305             | 305    | 305    | 305    | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| TOKEN_MANAGER_ROLE                       | 359             | 359    | 359    | 359    | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| TREASURER_ROLE                           | 327             | 327    | 327    | 327    | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| UPGRADE_MANAGER_ROLE                     | 263             | 263    | 263    | 263    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| allowance                                | 2896            | 2896   | 2896   | 2896   | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| approve                                  | 25261           | 25261  | 25261  | 25261  | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| balanceOf                                | 2885            | 6859   | 7628   | 12371  | 34      |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| balanceRecordsOf                         | 3025            | 7542   | 7542   | 12059  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| burn                                     | 2966            | 17776  | 17776  | 32586  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| contractURI                              | 7608            | 7608   | 7608   | 7608   | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| createToken                              | 40092           | 73130  | 59992  | 198117 | 31      |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| decimals                                 | 2600            | 2600   | 2600   | 2600   | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| exists                                   | 2578            | 2578   | 2578   | 2578   | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| freezeAccount                            | 71230           | 71230  | 71230  | 71230  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| hasRole                                  | 2761            | 2761   | 2761   | 2761   | 6       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| initialize                               | 3752            | 356272 | 363020 | 391668 | 49      |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| isFrozen                                 | 2661            | 2661   | 2661   | 2661   | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| isOperator                               | 2829            | 2829   | 2829   | 2829   | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| isTransferable                           | 4781            | 4781   | 4781   | 4781   | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| mint                                     | 2969            | 101146 | 107330 | 107819 | 21      |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| name                                     | 3458            | 3458   | 3458   | 3458   | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| nextTokenID                              | 2411            | 2411   | 2411   | 2411   | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| pause                                    | 26135           | 26135  | 26135  | 26135  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| paused                                   | 2447            | 2447   | 2447   | 2447   | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| proxiableUUID                            | 440             | 440    | 440    | 440    | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| pruneBalanceRecords                      | 27629           | 27629  | 27629  | 27629  | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchase                                 | 146990          | 146990 | 146990 | 146990 | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchaseFor                              | 147063          | 147063 | 147063 | 147063 | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchaseWithERC20                        | 153739          | 153739 | 153739 | 153739 | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchaseWithERC20For                     | 153790          | 153790 | 153790 | 153790 | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| setContractURI                           | 3265            | 11503  | 11503  | 19742  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| setOperator                              | 7697            | 19097  | 24797  | 24797  | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| setTokenMetadata                         | 3745            | 30465  | 30465  | 57185  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| setTokenURI                              | 72827           | 72827  | 72827  | 72827  | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| setTreasury                              | 2860            | 6119   | 6119   | 9379   | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| supportsInterface                        | 664             | 742    | 757    | 806    | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| symbol                                   | 3462            | 3462   | 3462   | 3462   | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenConfig                              | 18599           | 18599  | 18599  | 18599  | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenERC20Prices                         | 15511           | 15511  | 15511  | 15511  | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenPrice                               | 4880            | 4880   | 4880   | 4880   | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenTTL                                 | 4814            | 4814   | 4814   | 4814   | 3       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| transfer                                 | 2764            | 27377  | 10902  | 122700 | 6       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| transferFrom                             | 5647            | 98174  | 128073 | 130903 | 4       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| treasury                                 | 2485            | 2485   | 2485   | 2485   | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| unfreezeAccount                          | 21440           | 21440  | 21440  | 21440  | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| unpause                                  | 9058            | 9058   | 9058   | 9058   | 1       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| updateToken                              | 5274            | 15472  | 15472  | 25670  | 2       |
+|------------------------------------------+-----------------+--------+--------+--------+---------|
+| upgradeToAndCall                         | 3566            | 7497   | 7497   | 11429  | 2       |
+╰------------------------------------------+-----------------+--------+--------+--------+---------╯
+
+╭------------------------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| test/base/AccountFreezable.t.sol:MockAccountFreezableV1 Contract |                 |       |        |       |         |
++=======================================================================================================================+
+| Deployment Cost                                                  | Deployment Size |       |        |       |         |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 930807                                                           | 4119            |       |        |       |         |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                                  |                 |       |        |       |         |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                                    | Min             | Avg   | Median | Max   | # Calls |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| ACCOUNT_FROZEN_STATUS                                            | 261             | 261   | 261    | 261   | 1       |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| ACCOUNT_UNFROZEN_STATUS                                          | 239             | 239   | 239    | 239   | 1       |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| freezeAccount                                                    | 2705            | 54164 | 70941  | 70941 | 15      |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| frozenAccounts                                                   | 2617            | 6085  | 6097   | 9508  | 6       |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| initialize                                                       | 2832            | 48445 | 49718  | 71150 | 20      |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| isFrozen                                                         | 2611            | 2611  | 2611   | 2611  | 14      |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| proxiableUUID                                                    | 374             | 374   | 374    | 374   | 1       |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| unfreezeAccount                                                  | 4824            | 19522 | 21085  | 28384 | 10      |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| upgradeToAndCall                                                 | 3207            | 7117  | 7117   | 11027 | 2       |
+|------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| withModifierNotFrozen                                            | 2674            | 2676  | 2674   | 2683  | 4       |
+╰------------------------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭------------------------------------------------+-----------------+--------+--------+--------+---------╮
+| test/base/EVMAuth.t.sol:MockEVMAuthV1 Contract |                 |        |        |        |         |
++=======================================================================================================+
+| Deployment Cost                                | Deployment Size |        |        |        |         |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| 3904425                                        | 17868           |        |        |        |         |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+|                                                |                 |        |        |        |         |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| Function Name                                  | Min             | Avg    | Median | Max    | # Calls |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| ACCESS_MANAGER_ROLE                            | 316             | 316    | 316    | 316    | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| BURNER_ROLE                                    | 263             | 263    | 263    | 263    | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| DEFAULT_ADMIN_ROLE                             | 261             | 261    | 261    | 261    | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| MINTER_ROLE                                    | 261             | 261    | 261    | 261    | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| TOKEN_MANAGER_ROLE                             | 327             | 327    | 327    | 327    | 3       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| TREASURER_ROLE                                 | 260             | 260    | 260    | 260    | 2       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| UPGRADE_MANAGER_ROLE                           | 284             | 284    | 284    | 284    | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| balanceOf                                      | 2819            | 5187   | 5182   | 7562   | 3       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| balanceRecordsOf                               | 3003            | 3003   | 3003   | 3003   | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| balances                                       | 2687            | 2687   | 2687   | 2687   | 5       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| createToken                                    | 2969            | 87438  | 79868  | 198093 | 17      |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| exists                                         | 2579            | 2579   | 2579   | 2579   | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| freezeAccount                                  | 71252           | 71252  | 71252  | 71252  | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| hasRole                                        | 2761            | 2761   | 2761   | 2761   | 7       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| initialize                                     | 3277            | 286827 | 294829 | 322329 | 33      |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| isFrozen                                       | 2705            | 2705   | 2705   | 2705   | 2       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| isTransferable                                 | 2612            | 4559   | 4803   | 4803   | 9       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| nextTokenID                                    | 2433            | 2433   | 2433   | 2433   | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| pause                                          | 26113           | 26113  | 26113  | 26113  | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| paused                                         | 2447            | 2447   | 2447   | 2447   | 2       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| proxiableUUID                                  | 374             | 374    | 374    | 374    | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| pruneBalanceRecords                            | 24800           | 24800  | 24800  | 24800  | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchase                                       | 139488          | 139490 | 139490 | 139493 | 2       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchaseWithERC20                              | 145732          | 145732 | 145732 | 145732 | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| setTreasury                                    | 2882            | 5085   | 2973   | 9401   | 3       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenConfig                                    | 2820            | 13259  | 13259  | 23699  | 2       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenERC20Prices                               | 2636            | 10994  | 12931  | 15477  | 4       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenPrice                                     | 2656            | 4640   | 4924   | 4924   | 8       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenTTL                                       | 2635            | 4541   | 4814   | 4814   | 8       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| treasury                                       | 2485            | 2485   | 2485   | 2485   | 2       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| unfreezeAccount                                | 21374           | 21374  | 21374  | 21374  | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| unpause                                        | 8992            | 8992   | 8992   | 8992   | 1       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| updateToken                                    | 2927            | 36520  | 15350  | 112455 | 4       |
+|------------------------------------------------+-----------------+--------+--------+--------+---------|
+| upgradeToAndCall                               | 3510            | 7408   | 7408   | 11307  | 2       |
+╰------------------------------------------------+-----------------+--------+--------+--------+---------╯
+
+╭----------------------------------------------------------------------+-----------------+-------+--------+--------+---------╮
+| test/base/TokenAccessControl.t.sol:MockTokenAccessControlV1 Contract |                 |       |        |        |         |
++============================================================================================================================+
+| Deployment Cost                                                      | Deployment Size |       |        |        |         |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| 1816303                                                              | 8213            |       |        |        |         |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+|                                                                      |                 |       |        |        |         |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| Function Name                                                        | Min             | Avg   | Median | Max    | # Calls |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| ACCESS_MANAGER_ROLE                                                  | 271             | 271   | 271    | 271    | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| BURNER_ROLE                                                          | 240             | 240   | 240    | 240    | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| DEFAULT_ADMIN_ROLE                                                   | 305             | 305   | 305    | 305    | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| MINTER_ROLE                                                          | 327             | 327   | 327    | 327    | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| TOKEN_MANAGER_ROLE                                                   | 305             | 305   | 305    | 305    | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| TREASURER_ROLE                                                       | 304             | 304   | 304    | 304    | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| UPGRADE_MANAGER_ROLE                                                 | 328             | 328   | 328    | 328    | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| acceptDefaultAdminTransfer                                           | 2911            | 23566 | 23566  | 44222  | 2       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| beginDefaultAdminTransfer                                            | 12327           | 12327 | 12327  | 12327  | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| changeDefaultAdminDelay                                              | 12249           | 12249 | 12249  | 12249  | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| defaultAdminDelay                                                    | 2659            | 3984  | 4647   | 4647   | 3       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| freezeAccount                                                        | 2964            | 48493 | 71258  | 71258  | 3       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| grantRole                                                            | 29882           | 29882 | 29882  | 29882  | 102     |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| hasRole                                                              | 2751            | 2751  | 2751   | 2751   | 19      |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| initialize                                                           | 2999            | 92373 | 96140  | 117724 | 19      |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| isFrozen                                                             | 2655            | 2655  | 2655   | 2655   | 3       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| pause                                                                | 2786            | 18365 | 26155  | 26155  | 3       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| paused                                                               | 2414            | 2414  | 2414   | 2414   | 3       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| pendingDefaultAdmin                                                  | 2525            | 2525  | 2525   | 2525   | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| pendingDefaultAdminDelay                                             | 2740            | 2740  | 2740   | 2740   | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| proxiableUUID                                                        | 374             | 374   | 374    | 374    | 1       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| unfreezeAccount                                                      | 2899            | 12128 | 12128  | 21358  | 2       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| unpause                                                              | 2787            | 5911  | 5911   | 9036   | 2       |
+|----------------------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| upgradeToAndCall                                                     | 3471            | 7369  | 7369   | 11268  | 2       |
+╰----------------------------------------------------------------------+-----------------+-------+--------+--------+---------╯
+
+╭----------------------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| test/base/TokenEnumerable.t.sol:MockTokenEnumerableV1 Contract |                 |       |        |       |         |
++=====================================================================================================================+
+| Deployment Cost                                                | Deployment Size |       |        |       |         |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 772009                                                         | 3385            |       |        |       |         |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                                |                 |       |        |       |         |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                                  | Min             | Avg   | Median | Max   | # Calls |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| claimNextTokenID                                               | 5351            | 5351  | 5351   | 5351  | 9       |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| exists                                                         | 405             | 2353  | 2516   | 2516  | 13      |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| initialize                                                     | 2759            | 68145 | 71527  | 92959 | 14      |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| nextTokenID                                                    | 2400            | 2400  | 2400   | 2400  | 4       |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| proxiableUUID                                                  | 362             | 362   | 362    | 362   | 1       |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| upgradeToAndCall                                               | 3206            | 7110  | 7110   | 11014 | 2       |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| withModifierAllTokensExist                                     | 963             | 2698  | 3399   | 3733  | 3       |
+|----------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| withModifierTokenExists                                        | 483             | 1891  | 2594   | 2598  | 3       |
+╰----------------------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭--------------------------------------------------------------+-----------------+---------+--------+----------+---------╮
+| test/base/TokenEphemeral.t.sol:MockTokenEphemeralV1 Contract |                 |         |        |          |         |
++========================================================================================================================+
+| Deployment Cost                                              | Deployment Size |         |        |          |         |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| 1580607                                                      | 7123            |         |        |          |         |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+|                                                              |                 |         |        |          |         |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| Function Name                                                | Min             | Avg     | Median | Max      | # Calls |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| balanceOf                                                    | 2779            | 54831   | 7522   | 481822   | 20      |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| balanceRecordsOf                                             | 2963            | 208372  | 201811 | 459692   | 26878   |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| burn                                                         | 7884            | 22534   | 16470  | 47454    | 5       |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| expiresAt                                                    | 2633            | 2959    | 3117   | 3122     | 779     |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| initialize                                                   | 2842            | 48679   | 49521  | 70953    | 30      |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| maxBalanceRecords                                            | 2352            | 2352    | 2352   | 2352     | 1028    |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| mint                                                         | 21989           | 316688  | 310969 | 726992   | 26982   |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| proxiableUUID                                                | 395             | 395     | 395    | 395      | 1       |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| pruneBalanceRecords                                          | 24830           | 418247  | 309192 | 1029777  | 4       |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| setCustomMaxBalanceRecords                                   | 24541           | 24541   | 24541  | 24541    | 1       |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| setTTL                                                       | 4810            | 24576   | 24710  | 24710    | 1043    |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| tokenTTL                                                     | 2546            | 2546    | 2546   | 2546     | 516     |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| transfer                                                     | 35459           | 1678220 | 108335 | 11125041 | 7       |
+|--------------------------------------------------------------+-----------------+---------+--------+----------+---------|
+| upgradeToAndCall                                             | 3250            | 7170    | 7170   | 11091    | 2       |
+╰--------------------------------------------------------------+-----------------+---------+--------+----------+---------╯
+
+╭------------------------------------------------------------------+-----------------+--------+--------+--------+---------╮
+| test/base/TokenPurchasable.t.sol:MockTokenPurchasableV1 Contract |                 |        |        |        |         |
++=========================================================================================================================+
+| Deployment Cost                                                  | Deployment Size |        |        |        |         |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| 1689901                                                          | 7629            |        |        |        |         |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+|                                                                  |                 |        |        |        |         |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| Function Name                                                    | Min             | Avg    | Median | Max    | # Calls |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| balanceOf                                                        | 2654            | 2654   | 2654   | 2654   | 267     |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| initialize                                                       | 2961            | 72579  | 73619  | 95419  | 47      |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| isAcceptedERC20PaymentToken                                      | 3068            | 7208   | 8225   | 8261   | 5       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| pause                                                            | 25962           | 25962  | 25962  | 25962  | 6       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| paused                                                           | 2347            | 2347   | 2347   | 2347   | 4       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| proxiableUUID                                                    | 429             | 429    | 429    | 429    | 1       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchase                                                         | 2521            | 72386  | 73835  | 73835  | 265     |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchaseFor                                                      | 2591            | 24195  | 3048   | 66947  | 3       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchaseWithERC20                                                | 2659            | 40754  | 44006  | 73623  | 10      |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| purchaseWithERC20For                                             | 2706            | 38189  | 38189  | 73673  | 2       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| setERC20Price                                                    | 2768            | 61668  | 71430  | 71430  | 22      |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| setERC20Prices                                                   | 119584          | 119584 | 119584 | 119584 | 1       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| setPrice                                                         | 9184            | 26251  | 26284  | 26284  | 525     |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| setTreasury                                                      | 2770            | 5980   | 5980   | 9190   | 2       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenERC20Prices                                                 | 2936            | 9489   | 8038   | 13126  | 7       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| tokenPrice                                                       | 2529            | 2529   | 2529   | 2536   | 260     |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| treasury                                                         | 2435            | 2435   | 2435   | 2435   | 3       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| unpause                                                          | 8755            | 8755   | 8755   | 8755   | 1       |
+|------------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| upgradeToAndCall                                                 | 3325            | 7262   | 7262   | 11200  | 2       |
+╰------------------------------------------------------------------+-----------------+--------+--------+--------+---------╯
+
+╭--------------------------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| test/base/TokenTransferable.t.sol:MockTokenTransferableV1 Contract |                 |       |        |       |         |
++=========================================================================================================================+
+| Deployment Cost                                                    | Deployment Size |       |        |       |         |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 834923                                                             | 3676            |       |        |       |         |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                                    |                 |       |        |       |         |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                                      | Min             | Avg   | Median | Max   | # Calls |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| initialize                                                         | 2737            | 46922 | 48991  | 70423 | 12      |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| isTransferable                                                     | 2479            | 2479  | 2479   | 2479  | 4       |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| proxiableUUID                                                      | 318             | 318   | 318    | 318   | 1       |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| setTransferable                                                    | 4884            | 15114 | 16234  | 24784 | 10      |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| upgradeToAndCall                                                   | 3225            | 7107  | 7107   | 10989 | 2       |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| withModifierAllTokensTransferable                                  | 1159            | 2782  | 1249   | 5929  | 6       |
+|--------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| withModifierTokenTransferable                                      | 749             | 1493  | 778    | 2960  | 6       |
+╰--------------------------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+
+Ran 9 test suites in 18.25s (101.22s CPU time): 260 tests passed, 0 failed, 0 skipped (260 total tests)

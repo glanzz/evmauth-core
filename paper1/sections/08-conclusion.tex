@@ -1,0 +1,17 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented time-bucketed balance records, a data structure for tracking fungible resources with heterogeneous time-to-live values under bounded storage constraints.
+Our approach discretizes time into $k$ buckets, coalescing deposits with similar expirations to bound storage while guaranteeing that resources never expire before their configured TTL.
+
+We proved three key properties:
+\begin{enumerate}
+    \item Storage is bounded by $k+1$ records regardless of deposit frequency.
+    \item Actual expiration time is always at least the configured TTL.
+    \item Adversaries cannot increase operation costs beyond $\bigO(k^2)$.
+\end{enumerate}
+
+Our Solidity implementation demonstrates practical efficiency, with gas costs bounded by the configurable parameter $k$ rather than growing with deposit count.
+The approach generalizes beyond blockchain to any resource-constrained system managing expiring fungible resources.
+
+Future work includes formal verification via proof assistants, cross-chain extensions, and adaptive bucket sizing for dynamic optimization of the precision-storage trade-off.
